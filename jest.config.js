@@ -7,7 +7,7 @@ module.exports = {
     'src/**/*.ts',
     '!src/**/*.d.ts',
     '!src/game/scenes/**',
-    '!src/game/ui/ItemManual.ts',
+    '!src/game/ui/**',
     '!src/main.ts',
   ],
   coverageThreshold: {

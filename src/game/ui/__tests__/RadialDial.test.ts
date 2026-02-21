@@ -78,6 +78,12 @@ describe('RadialDial', () => {
         exists: jest.fn(() => false),
         list: {},
       },
+      time: {
+        now: 0,
+        addTimer: jest.fn(() => ({
+          remove: jest.fn(),
+        })),
+      },
     };
   };
 

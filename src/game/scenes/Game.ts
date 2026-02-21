@@ -26,19 +26,24 @@ export class Game extends Phaser.Scene {
       // Create the dial at bottom right of screen with margin
       this.radialDial = new RadialDial(this, dialX, dialY, items);
 
-      // Listen for item selection
-      this.events.on('dial:itemSelected', (data: { item: any }) => {
-        console.log('Item selected:', data.item.name, 'Cost:', data.item.cost);
+      // Listen for item confirmation (hold-to-confirm on center)
+      this.events.on('dial:itemConfirmed', (data: { item: any }) => {
+        console.log('Item confirmed:', data.item.name, 'Cost:', data.item.cost);
         // Add to order bucket, check budget, etc.
       });
 
-      // Listen for level changes
+      // Listen for level changes (when drilling into sub-items)
       this.events.on('dial:levelChanged', (data: { level: number; item: any }) => {
         console.log('Entered submenu for:', data.item.name);
       });
 
+      // Listen for going back (tap center to return to root)
+      this.events.on('dial:goBack', () => {
+        console.log('Returned to main menu');
+      });
+
       // Add temporary info text
-      this.add.text(50, 50, 'Game Scene - Dial Active', { fontSize: '20px', color: '#fff' });
+      this.add.text(50, 50, 'Game Scene - Tap slice to navigate, Hold center to confirm', { fontSize: '16px', color: '#fff' });
     } catch (error) {
       console.error('Error creating Game scene:', error);
       this.add.text(50, 50, 'Error loading game data', { fontSize: '20px', color: '#ff0000' });

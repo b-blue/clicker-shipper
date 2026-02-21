@@ -22,11 +22,17 @@ export class ItemManual extends Phaser.Scene {
   }
 
   private setupUI(): void {
+    // Get responsive viewport dimensions
+    const gameWidth = this.cameras.main.width;
+    const gameHeight = this.cameras.main.height;
+    const panelWidth = Math.min(gameWidth * 0.9, 900);
+    const panelHeight = Math.min(gameHeight * 0.9, 700);
+
     // Background
-    this.add.rectangle(400, 300, 800, 600, 0x1a1a1a);
+    this.add.rectangle(gameWidth / 2, gameHeight / 2, panelWidth, panelHeight, 0x1a1a1a);
 
     // Title
-    this.add.text(400, 30, 'ITEM MANUAL', {
+    this.add.text(gameWidth / 2, gameHeight * 0.05, 'ITEM MANUAL', {
       fontSize: '32px',
       color: '#00ff00',
       align: 'center',
@@ -34,17 +40,17 @@ export class ItemManual extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Instructions
-    this.add.text(400, 60, 'Browse items and their descriptions', {
+    this.add.text(gameWidth / 2, gameHeight * 0.1, 'Browse items and their descriptions', {
       fontSize: '12px',
       color: '#cccccc',
       align: 'center',
     }).setOrigin(0.5);
 
     // Close button
-    const closeBtn = this.add.rectangle(750, 30, 40, 40, 0xff3300);
+    const closeBtn = this.add.rectangle(gameWidth * 0.95, gameHeight * 0.05, 40, 40, 0xff3300);
     closeBtn.setInteractive();
     closeBtn.on('pointerdown', () => this.scene.stop());
-    this.add.text(750, 30, 'X', {
+    this.add.text(gameWidth * 0.95, gameHeight * 0.05, 'X', {
       fontSize: '20px',
       color: '#ffffff',
     }).setOrigin(0.5);

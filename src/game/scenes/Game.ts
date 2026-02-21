@@ -17,9 +17,14 @@ export class Game extends Phaser.Scene {
       const gameManager = GameManager.getInstance();
       const items = gameManager.getItems();
 
+      // Calculate dial position based on viewport (responsive)
+      const gameWidth = this.cameras.main.width;
+      const gameHeight = this.cameras.main.height;
+      const dialX = gameWidth - 200;
+      const dialY = gameHeight - 150;
+
       // Create the dial at bottom right of screen with margin
-      // Screen is 1024x768, dial radius is 150, so position with 20px padding
-      this.radialDial = new RadialDial(this, 850, 600, items);
+      this.radialDial = new RadialDial(this, dialX, dialY, items);
 
       // Listen for item selection
       this.events.on('dial:itemSelected', (data: { item: any }) => {

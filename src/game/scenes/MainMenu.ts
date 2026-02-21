@@ -4,11 +4,15 @@ export class MainMenu extends Phaser.Scene {
   }
 
   create() {
+    // Get responsive viewport dimensions
+    const gameWidth = this.cameras.main.width;
+    const gameHeight = this.cameras.main.height;
+
     // Background
-    this.add.rectangle(512, 384, 1024, 768, 0x1a1a2e);
+    this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, 0x1a1a2e);
 
     // Title
-    const titleText = this.add.text(512, 150, 'INTERGALACTIC SHIPPER', {
+    const titleText = this.add.text(gameWidth / 2, gameHeight * 0.15, 'INTERGALACTIC SHIPPER', {
       fontSize: '48px',
       color: '#00ff00',
       fontStyle: 'bold',
@@ -16,27 +20,27 @@ export class MainMenu extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Subtitle
-    this.add.text(512, 220, 'Order Fulfillment Terminal', {
+    this.add.text(gameWidth / 2, gameHeight * 0.25, 'Order Fulfillment Terminal', {
       fontSize: '20px',
       color: '#00ccff',
       fontFamily: 'monospace'
     }).setOrigin(0.5);
 
     // Menu buttons
-    const buttonY = 400;
+    const buttonY = gameHeight * 0.5;
     const buttonSpacing = 80;
 
     // Start Shift button
-    this.createButton(512, buttonY, 'START SHIFT', () => this.punchIn(), '#00ff00');
+    this.createButton(gameWidth / 2, buttonY, 'START SHIFT', () => this.punchIn(), '#00ff00');
 
     // Item Manual button
-    this.createButton(512, buttonY + buttonSpacing, 'ITEM MANUAL', () => this.openManual(), '#00ccff');
+    this.createButton(gameWidth / 2, buttonY + buttonSpacing, 'ITEM MANUAL', () => this.openManual(), '#00ccff');
 
     // Exit button
-    this.createButton(512, buttonY + buttonSpacing * 2, 'EXIT', () => this.exitGame(), '#ff6600');
+    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 2, 'EXIT', () => this.exitGame(), '#ff6600');
 
     // Footer
-    this.add.text(512, 700, 'Press SPACE to START SHIFT • Press M to view MANUAL', {
+    this.add.text(gameWidth / 2, gameHeight * 0.9, 'Press SPACE to START SHIFT • Press M to view MANUAL', {
       fontSize: '12px',
       color: '#666666',
       align: 'center',

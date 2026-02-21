@@ -216,6 +216,20 @@ export class RadialDial {
         text.setOrigin(0.5, 0.5);
         text.setDepth(0);
         this.sliceTexts.push(text);
+
+        // Add corner badge indicator for items with sub-items
+        if (this.currentLevel === 0 && 'subItems' in item && (item as Item).subItems.length > 0) {
+          const badgeX = textX + 20;
+          const badgeY = textY - 20;
+          const badgeText = this.scene.add.text(badgeX, badgeY, '▶', {
+            fontSize: '16px',
+            color: '#ffff00',
+            fontStyle: 'bold'
+          });
+          badgeText.setOrigin(0.5, 0.5);
+          badgeText.setDepth(5);
+          this.sliceTexts.push(badgeText);
+        }
       }
     }
 

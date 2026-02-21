@@ -4,30 +4,35 @@
       "id": "books",
       "name": "Ancient Grimoires",
       "icon": "grimoires",
+      "description": "Rare manuscripts containing arcane knowledge and cosmic wisdom",
       "subItems": [
         {
           "id": "book1",
           "name": "Tome of the Gouged Monks",
           "icon": "tome_of_the_gouged_monks",
-          "cost": 12
+          "cost": 12,
+          "description": "A meditation on sacrifice and enlightenment through pain"
         },
         {
           "id": "book2",
           "name": "Sellsword's Guide to Law",
           "icon": "sellswords_guide_to_law",
-          "cost": 18
+          "cost": 18,
+          "description": "Pragmatic discourse on honor, contracts, and the mercenary's code"
         },
         {
           "id": "book3",
           "name": "Book of Sacred Lattices",
           "icon": "book_of_sacred_lattices",
-          "cost": 15
+          "cost": 15,
+          "description": "Geometric patterns revealing the structure of dimensional boundaries"
         },
         {
           "id": "book4",
           "name": "Hardy's Epigrams",
           "icon": "hardys_epigrams",
-          "cost": 10
+          "cost": 10,
+          "description": "Witty observations on life, death, and the space between them"
         }
       ]
     },
@@ -35,42 +40,49 @@
       "id": "item_2",
       "name": "Metallic Alloys",
       "icon": "metallic",
+      "description": "Advanced metal compounds for structural and industrial applications",
       "subItems": [
         {
           "id": "item_2_1",
           "name": "Titanium Ingot",
           "icon": "titanium_ingot",
-          "cost": 20
+          "cost": 20,
+          "description": "Incredibly strong yet lightweight, prized for aerospace components"
         },
         {
           "id": "item_2_2",
           "name": "Neutron Steel",
           "icon": "neutron_steel",
-          "cost": 25
+          "cost": 25,
+          "description": "Treated in a particle accelerator, exhibits quantum-mechanical properties"
         },
         {
           "id": "item_2_3",
           "name": "Quantum Bronze",
           "icon": "quantum_bronze",
-          "cost": 16
+          "cost": 16,
+          "description": "Bronze infused with probability-warping crystalline matrices"
         },
         {
           "id": "item_2_4",
           "name": "Durasteel Plate",
           "icon": "durasteel_plate",
-          "cost": 19
+          "cost": 19,
+          "description": "Time-tempered alloy known for extreme durability and resilience"
         },
         {
           "id": "item_2_5",
           "name": "Iridium Wire",
           "icon": "iridium_wire",
-          "cost": 11
+          "cost": 11,
+          "description": "Thin conductors with surprising tensile strength and corrosion resistance"
         },
         {
           "id": "item_2_6",
           "name": "Chromium Alloy",
           "icon": "chromium_alloy",
-          "cost": 17
+          "cost": 17,
+          "description": "Mirror-finish metal perfect for reflective and aesthetic applications"
         }
       ]
     },
@@ -78,42 +90,49 @@
       "id": "item_3",
       "name": "Synthetic Lubricants",
       "icon": "synthetic",
+      "description": "Engineered fluids designed to reduce friction in extreme conditions",
       "subItems": [
         {
           "id": "item_3_1",
           "name": "Viscous Compound",
           "icon": "viscous_compound",
-          "cost": 8
+          "cost": 8,
+          "description": "Thick, protective gel for slow-moving machinery and bearings"
         },
         {
           "id": "item_3_2",
           "name": "Plasma Gel",
           "icon": "plasma_gel",
-          "cost": 13
+          "cost": 13,
+          "description": "Ionized lubricant that adapts to temperature changes dynamically"
         },
         {
           "id": "item_3_3",
           "name": "Slipstream Oil",
           "icon": "slipstream_oil",
-          "cost": 9
+          "cost": 9,
+          "description": "Low-viscosity fluid optimized for high-speed engines and turbines"
         },
         {
           "id": "item_3_4",
           "name": "Frictionless Fluid",
           "icon": "frictionless_fluid",
-          "cost": 12
+          "cost": 12,
+          "description": "Theoretical maximum efficiency: nearly zero coefficient of friction"
         },
         {
           "id": "item_3_5",
           "name": "Entropy Lubricant",
           "icon": "entropy_lubricant",
-          "cost": 14
+          "cost": 14,
+          "description": "Paradoxical fluid that remains slippery while increasing system stability"
         },
         {
           "id": "item_3_6",
           "name": "Quantum Slick",
           "icon": "quantum_slick",
-          "cost": 10
+          "cost": 10,
+          "description": "Exists in superposition, lubricating multiple components simultaneously"
         }
       ]
     },
@@ -121,42 +140,49 @@
       "id": "item_4",
       "name": "Electrical Components",
       "icon": "electrical",
+      "description": "Fundamental building blocks for power systems and circuitry",
       "subItems": [
         {
           "id": "item_4_1",
           "name": "Capacitor Module",
           "icon": "capacitor_module",
-          "cost": 15
+          "cost": 15,
+          "description": "Stores and releases electrical energy with precision timing"
         },
         {
           "id": "item_4_2",
           "name": "Positronic Relay",
           "icon": "positronic_relay",
-          "cost": 21
+          "cost": 21,
+          "description": "Antimatter-grade switch for high-voltage circuit control"
         },
         {
           "id": "item_4_3",
           "name": "Conductor Strip",
           "icon": "conductor_strip",
-          "cost": 11
+          "cost": 11,
+          "description": "Pure copper pathway for electrical transmission with minimal loss"
         },
         {
           "id": "item_4_4",
           "name": "Diode Cell",
           "icon": "diode_cell",
-          "cost": 9
+          "cost": 9,
+          "description": "One-way valve for electricity, essential for power regulation"
         },
         {
           "id": "item_4_5",
           "name": "Transformer Coil",
           "icon": "transformer_coil",
-          "cost": 18
+          "cost": 18,
+          "description": "Converts voltage levels through electromagnetic induction"
         },
         {
           "id": "item_4_6",
           "name": "Pulse Circuit",
           "icon": "pulse_circuit",
-          "cost": 13
+          "cost": 13,
+          "description": "Generates timed electrical bursts for synchronized system activation"
         }
       ]
     },
@@ -164,42 +190,49 @@
       "id": "item_5",
       "name": "Mechanical Parts",
       "icon": "mechanical",
+      "description": "Precision-engineered components for movement and force transduction",
       "subItems": [
         {
           "id": "item_5_1",
           "name": "Servo Motor",
           "icon": "servo_motor",
-          "cost": 19
+          "cost": 19,
+          "description": "Intelligent actuator that positions itself with remarkable accuracy"
         },
         {
           "id": "item_5_2",
           "name": "Piston Assembly",
           "icon": "piston_assembly",
-          "cost": 16
+          "cost": 16,
+          "description": "Converts pressure into linear motion with steady, reliable force"
         },
         {
           "id": "item_5_3",
           "name": "Gear Cluster",
           "icon": "gear_cluster",
-          "cost": 12
+          "cost": 12,
+          "description": "Interlocking teeth transmit rotational force with mechanical advantage"
         },
         {
           "id": "item_5_4",
           "name": "Bearing Ring",
           "icon": "bearing_ring",
-          "cost": 10
+          "cost": 10,
+          "description": "Distributes load across a circular race, enabling smooth rotation"
         },
         {
           "id": "item_5_5",
           "name": "Valve Unit",
           "icon": "valve_unit",
-          "cost": 14
+          "cost": 14,
+          "description": "Controls flow direction and pressure with mechanical or electrical actuation"
         },
         {
           "id": "item_5_6",
           "name": "Rotor Blade",
           "icon": "rotor_blade",
-          "cost": 17
+          "cost": 17,
+          "description": "Captures or transfers energy through rotational aerodynamic action"
         }
       ]
     },
@@ -207,42 +240,49 @@
       "id": "item_6",
       "name": "Optical Systems",
       "icon": "optical",
+      "description": "Light manipulation and detection devices for sensing and communication",
       "subItems": [
         {
           "id": "item_6_1",
           "name": "Laser Module",
           "icon": "laser_module",
-          "cost": 24
+          "cost": 24,
+          "description": "Coherent light beam generator for cutting, welding, or measurement"
         },
         {
           "id": "item_6_2",
           "name": "Photon Lens",
           "icon": "photon_lens",
-          "cost": 20
+          "cost": 20,
+          "description": "Focuses or disperses light with quantum-precision optics"
         },
         {
           "id": "item_6_3",
           "name": "Spectrum Prism",
           "icon": "spectrum_prism",
-          "cost": 18
+          "cost": 18,
+          "description": "Separates light into component wavelengths for analysis or art"
         },
         {
           "id": "item_6_4",
           "name": "Sensor Array",
           "icon": "sensor_array",
-          "cost": 16
+          "cost": 16,
+          "description": "Detects light across multiple spectra for imaging and reconnaissance"
         },
         {
           "id": "item_6_5",
           "name": "Mirror Unit",
           "icon": "mirror_unit",
-          "cost": 11
+          "cost": 11,
+          "description": "Perfect reflection surface for redirecting or magnifying light paths"
         },
         {
           "id": "item_6_6",
           "name": "Diffraction Grating",
           "icon": "diffraction_grating",
-          "cost": 13
+          "cost": 13,
+          "description": "Splits light into spectral components for analysis or display effects"
         }
       ]
     }

@@ -3,12 +3,14 @@ export interface SubItem {
   name: string;
   icon: string;
   cost: number;
+  description?: string;
 }
 
 export interface Item {
   id: string;
   name: string;
   icon: string;
+  description?: string;
   subItems: SubItem[];
 }
 

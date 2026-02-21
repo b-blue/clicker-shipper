@@ -1,8 +1,10 @@
 import Phaser from 'phaser';
-import { Item, SubItem } from '../types/GameTypes';
+import { Item, SubItem, GameConfig } from '../types/GameTypes';
+import { GameManager } from '../managers/GameManager';
 
 export class RadialDial {
   private scene: Phaser.Scene;
+  private config: GameConfig;
   private items: Item[];
   private currentLevel: number = 0; // 0 = top level, 1 = sub-items
   private currentParentItem: Item | null = null;
@@ -19,8 +21,7 @@ export class RadialDial {
   private sliceTexts: Phaser.GameObjects.Text[] = [];
   private sliceImages: Phaser.GameObjects.Image[] = [];
   private centerGraphic: Phaser.GameObjects.Graphics;
-  private centerText: Phaser.GameObjects.Text;
-  private centerIcon: Phaser.GameObjects.Text;
+  private centerImage: Phaser.GameObjects.Image;
   private inputZone: Phaser.GameObjects.Zone;
 
   constructor(scene: Phaser.Scene, x: number, y: number, items: Item[]) {
@@ -28,11 +29,12 @@ export class RadialDial {
     this.items = items;
     this.dialX = x;
     this.dialY = y;
+    this.config = GameManager.getInstance().getConfig();
     this.updateSliceCount();
     
     this.centerGraphic = scene.add.graphics();
-    this.centerText = scene.add.text(x, y + 20, '', { fontSize: '14px', color: '#ffffff' }).setOrigin(0.5);
-    this.centerIcon = scene.add.text(x, y - 25, '', { fontSize: '48px' }).setOrigin(0.5);
+    this.centerImage = scene.add.image(x, y, '').setScale(0.6).setOrigin(0.5);
+    this.centerImage.setDepth(10);
     
     // Create invisible zone for input detection
     this.inputZone = scene.add.zone(x, y, 400, 400);
@@ -132,15 +134,21 @@ export class RadialDial {
 
     // Update center display
     if (this.currentLevel === 1 && this.currentParentItem) {
-      this.centerIcon.setText('←');
-      this.centerIcon.setPosition(this.dialX, this.dialY - 25);
-      this.centerText.setText('Back');
-      this.centerText.setPosition(this.dialX, this.dialY + 20);
+      // Display parent item's sprite
+      const itemId = (this.currentParentItem as Item).id;
+      if (this.scene.textures.exists(itemId)) {
+        this.centerImage.setTexture(itemId);
+        this.centerImage.setPosition(this.dialX, this.dialY);
+        this.centerImage.setVisible(true);
+      }
     } else {
-      this.centerIcon.setText('📡');
-      this.centerIcon.setPosition(this.dialX, this.dialY - 25);
-      this.centerText.setText('Dial');
-      this.centerText.setPosition(this.dialX, this.dialY + 20);
+      // Display root dial icon sprite
+      const rootIconId = this.config.rootDialIcon || 'item_1_1';
+      if (this.scene.textures.exists(rootIconId)) {
+        this.centerImage.setTexture(rootIconId);
+        this.centerImage.setPosition(this.dialX, this.dialY);
+        this.centerImage.setVisible(true);
+      }
     }
 
     // Draw slices (behind center)
@@ -209,10 +217,9 @@ export class RadialDial {
       }
     }
 
-    // Draw center circle on top
+    // Ensure center graphics and image are on top
     this.centerGraphic.setDepth(10);
-    this.centerIcon.setDepth(10);
-    this.centerText.setDepth(10);
+    this.centerImage.setDepth(10);
   }
 
   public reset(): void {
@@ -237,8 +244,7 @@ export class RadialDial {
     this.sliceTexts.forEach(t => t.destroy());
     this.sliceImages.forEach(i => i.destroy());
     this.centerGraphic.destroy();
-    this.centerText.destroy();
-    this.centerIcon.destroy();
+    this.centerImage.destroy();
     this.inputZone.destroy();
   }
 }

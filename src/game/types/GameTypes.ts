@@ -20,6 +20,7 @@ export interface GameConfig {
   shiftDuration: number;
   dialLevels: number;
   itemsPerLevel: number;
+  rootDialIcon?: string;
 }
 
 export interface OrderRequirement {

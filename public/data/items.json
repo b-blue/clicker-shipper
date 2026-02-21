@@ -1,45 +1,33 @@
 {
   "items": [
     {
-      "id": "item_1",
-      "name": "Crystalline Components",
-      "icon": "crystalline",
+      "id": "books",
+      "name": "Ancient Grimoires",
+      "icon": "grimoires",
       "subItems": [
         {
-          "id": "item_1_1",
-          "name": "Resonance Crystal",
-          "icon": "resonance_crystal",
+          "id": "book1",
+          "name": "Tome of the Gouged Monks",
+          "icon": "tome_of_the_gouged_monks",
           "cost": 12
         },
         {
-          "id": "item_1_2",
-          "name": "Prism Shard",
-          "icon": "prism_shard",
+          "id": "book2",
+          "name": "Sellsword's Guide to Law",
+          "icon": "sellswords_guide_to_law",
           "cost": 18
         },
         {
-          "id": "item_1_3",
-          "name": "Lattice Fragment",
-          "icon": "lattice_fragment",
+          "id": "book3",
+          "name": "Book of Sacred Lattices",
+          "icon": "book_of_sacred_lattices",
           "cost": 15
         },
         {
-          "id": "item_1_4",
-          "name": "Quartz Nodule",
-          "icon": "quartz_nodule",
+          "id": "book4",
+          "name": "Hardy's Epigrams",
+          "icon": "hardys_epigrams",
           "cost": 10
-        },
-        {
-          "id": "item_1_5",
-          "name": "Refracted Core",
-          "icon": "refracted_core",
-          "cost": 22
-        },
-        {
-          "id": "item_1_6",
-          "name": "Harmonic Facet",
-          "icon": "harmonic_facet",
-          "cost": 14
         }
       ]
     },

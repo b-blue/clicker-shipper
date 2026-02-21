@@ -1,5 +1,5 @@
 import { GameManager } from '../managers/GameManager';
-import { AssetLoader } from '../../managers/AssetLoader';
+import { AssetLoader } from '../managers/AssetLoader';
 
 export class Preloader extends Phaser.Scene {
   constructor() {

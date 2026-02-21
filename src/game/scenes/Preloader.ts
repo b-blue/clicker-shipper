@@ -1,4 +1,5 @@
 import { GameManager } from '../managers/GameManager';
+import { AssetLoader } from '../../managers/AssetLoader';
 
 export class Preloader extends Phaser.Scene {
   constructor() {
@@ -9,6 +10,14 @@ export class Preloader extends Phaser.Scene {
     // Load config and items data
     this.load.json('config', 'data/config.json');
     this.load.json('items', 'data/items.json');
+
+    // Auto-load item sprite assets
+    this.load.once('complete', () => {
+      const itemsData = this.cache.json.get('items');
+      if (itemsData && itemsData.items) {
+        AssetLoader.preloadItemAssets(this, itemsData.items);
+      }
+    });
   }
 
   async create() {

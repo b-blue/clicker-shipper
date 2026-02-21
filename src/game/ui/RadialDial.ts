@@ -15,6 +15,7 @@ export class RadialDial {
   private dialY: number;
   private sliceGraphics: Phaser.GameObjects.Graphics[] = [];
   private sliceTexts: Phaser.GameObjects.Text[] = [];
+  private sliceImages: Phaser.GameObjects.Image[] = [];
   private centerGraphic: Phaser.GameObjects.Graphics;
   private centerText: Phaser.GameObjects.Text;
   private centerIcon: Phaser.GameObjects.Text;
@@ -52,8 +53,17 @@ export class RadialDial {
     const dy = pointer.y - this.dialY;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
+    // Check if pointer is in center (back button)
+    if (distance < this.centerRadius) {
+      if (this.highlightedSliceIndex !== -999) {
+        this.highlightedSliceIndex = -999; // Special index for center
+        this.redrawDial();
+      }
+      return;
+    }
+
     // Check if pointer is within the dial region
-    if (distance < this.sliceRadius + 50 && distance > 40) {
+    if (distance < this.sliceRadius + 50 && distance > this.centerRadius + 5) {
       const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
       const normalizedAngle = (angle + 360) % 360;
       const sliceAngle = 360 / this.sliceCount;
@@ -64,7 +74,7 @@ export class RadialDial {
         this.redrawDial();
       }
     } else {
-      if (this.highlightedSliceIndex !== -1) {
+      if (this.highlightedSliceIndex !== -1 && this.highlightedSliceIndex !== -999) {
         this.highlightedSliceIndex = -1;
         this.redrawDial();
       }
@@ -72,6 +82,15 @@ export class RadialDial {
   }
 
   private handleClick(): void {
+    // Check if center (back button) was clicked
+    if (this.highlightedSliceIndex === -999) {
+      if (this.currentLevel === 1) {
+        this.reset();
+        this.scene.events.emit('dial:goBack');
+      }
+      return;
+    }
+
     if (this.highlightedSliceIndex === -1) return;
 
     if (this.currentLevel === 0) {
@@ -93,22 +112,25 @@ export class RadialDial {
     // Clear previous graphics and texts
     this.sliceGraphics.forEach(g => g.destroy());
     this.sliceTexts.forEach(t => t.destroy());
+    this.sliceImages.forEach(i => i.destroy());
     this.sliceGraphics = [];
     this.sliceTexts = [];
+    this.sliceImages = [];
 
     const displayItems = this.currentLevel === 0 ? this.items : this.currentSubItems;
     const sliceAngle = (Math.PI * 2) / this.sliceCount;
 
     // Draw center circle
     this.centerGraphic.clear();
-    this.centerGraphic.fillStyle(0x333333, 1);
+    const centerColor = this.highlightedSliceIndex === -999 ? 0xff6600 : 0x333333;
+    this.centerGraphic.fillStyle(centerColor, 1);
     this.centerGraphic.fillCircle(this.dialX, this.dialY, this.centerRadius);
 
     // Update center display
     if (this.currentLevel === 1 && this.currentParentItem) {
-      this.centerIcon.setText('🔄');
+      this.centerIcon.setText('←');
       this.centerIcon.setPosition(this.dialX, this.dialY - 25);
-      this.centerText.setText(this.currentParentItem.name);
+      this.centerText.setText('Back');
       this.centerText.setPosition(this.dialX, this.dialY + 20);
     } else {
       this.centerIcon.setText('📡');
@@ -117,7 +139,7 @@ export class RadialDial {
       this.centerText.setPosition(this.dialX, this.dialY + 20);
     }
 
-    // Draw slices
+    // Draw slices (behind center)
     for (let i = 0; i < this.sliceCount; i++) {
       const startAngle = i * sliceAngle - Math.PI / 2;
       const endAngle = startAngle + sliceAngle;
@@ -137,23 +159,56 @@ export class RadialDial {
       graphics.lineTo(this.dialX, this.dialY);
       graphics.closePath();
       graphics.fillPath();
+      graphics.setDepth(0); // Behind center
 
       this.sliceGraphics.push(graphics);
 
-      // Draw text
+      // Draw sprite or text for each item
       const midAngle = startAngle + sliceAngle / 2;
       const textDistance = this.sliceRadius - 40;
       const textX = this.dialX + Math.cos(midAngle) * textDistance;
       const textY = this.dialY + Math.sin(midAngle) * textDistance;
       const item = displayItems[i];
-      const text = this.scene.add.text(textX, textY, item.name, {
-        fontSize: '12px',
-        color: '#ffffff',
-        align: 'center'
-      });
-      text.setOrigin(0.5, 0.5);
-      this.sliceTexts.push(text);
+
+      // Try to display sprite for sub-items; fall back to text
+      if (this.currentLevel === 1 && 'id' in item) {
+        const subItem = item as SubItem;
+        if (this.scene.textures.exists(subItem.id)) {
+          // Display sprite
+          const image = this.scene.add.image(textX, textY, subItem.id);
+          image.setScale(0.5);
+          image.setDepth(0);
+          this.sliceImages.push(image);
+        } else {
+          // Fallback to text
+          const text = this.scene.add.text(textX, textY, item.name, {
+            fontSize: '11px',
+            color: '#ffffff',
+            align: 'center',
+            wordWrap: { width: 80 }
+          });
+          text.setOrigin(0.5, 0.5);
+          text.setDepth(0);
+          this.sliceTexts.push(text);
+        }
+      } else {
+        // Display text for categories
+        const text = this.scene.add.text(textX, textY, item.name, {
+          fontSize: '12px',
+          color: '#ffffff',
+          align: 'center',
+          wordWrap: { width: 80 }
+        });
+        text.setOrigin(0.5, 0.5);
+        text.setDepth(0);
+        this.sliceTexts.push(text);
+      }
     }
+
+    // Draw center circle on top
+    this.centerGraphic.setDepth(10);
+    this.centerIcon.setDepth(10);
+    this.centerText.setDepth(10);
   }
 
   public reset(): void {
@@ -167,6 +222,7 @@ export class RadialDial {
   public destroy(): void {
     this.sliceGraphics.forEach(g => g.destroy());
     this.sliceTexts.forEach(t => t.destroy());
+    this.sliceImages.forEach(i => i.destroy());
     this.centerGraphic.destroy();
     this.centerText.destroy();
     this.centerIcon.destroy();

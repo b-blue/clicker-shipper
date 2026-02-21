@@ -1,0 +1,262 @@
+{
+  "items": [
+    {
+      "id": "item_1",
+      "name": "Crystalline Components",
+      "icon": "crystalline",
+      "subItems": [
+        {
+          "id": "item_1_1",
+          "name": "Resonance Crystal",
+          "icon": "resonance_crystal",
+          "cost": 12
+        },
+        {
+          "id": "item_1_2",
+          "name": "Prism Shard",
+          "icon": "prism_shard",
+          "cost": 18
+        },
+        {
+          "id": "item_1_3",
+          "name": "Lattice Fragment",
+          "icon": "lattice_fragment",
+          "cost": 15
+        },
+        {
+          "id": "item_1_4",
+          "name": "Quartz Nodule",
+          "icon": "quartz_nodule",
+          "cost": 10
+        },
+        {
+          "id": "item_1_5",
+          "name": "Refracted Core",
+          "icon": "refracted_core",
+          "cost": 22
+        },
+        {
+          "id": "item_1_6",
+          "name": "Harmonic Facet",
+          "icon": "harmonic_facet",
+          "cost": 14
+        }
+      ]
+    },
+    {
+      "id": "item_2",
+      "name": "Metallic Alloys",
+      "icon": "metallic",
+      "subItems": [
+        {
+          "id": "item_2_1",
+          "name": "Titanium Ingot",
+          "icon": "titanium_ingot",
+          "cost": 20
+        },
+        {
+          "id": "item_2_2",
+          "name": "Neutron Steel",
+          "icon": "neutron_steel",
+          "cost": 25
+        },
+        {
+          "id": "item_2_3",
+          "name": "Quantum Bronze",
+          "icon": "quantum_bronze",
+          "cost": 16
+        },
+        {
+          "id": "item_2_4",
+          "name": "Durasteel Plate",
+          "icon": "durasteel_plate",
+          "cost": 19
+        },
+        {
+          "id": "item_2_5",
+          "name": "Iridium Wire",
+          "icon": "iridium_wire",
+          "cost": 11
+        },
+        {
+          "id": "item_2_6",
+          "name": "Chromium Alloy",
+          "icon": "chromium_alloy",
+          "cost": 17
+        }
+      ]
+    },
+    {
+      "id": "item_3",
+      "name": "Synthetic Lubricants",
+      "icon": "synthetic",
+      "subItems": [
+        {
+          "id": "item_3_1",
+          "name": "Viscous Compound",
+          "icon": "viscous_compound",
+          "cost": 8
+        },
+        {
+          "id": "item_3_2",
+          "name": "Plasma Gel",
+          "icon": "plasma_gel",
+          "cost": 13
+        },
+        {
+          "id": "item_3_3",
+          "name": "Slipstream Oil",
+          "icon": "slipstream_oil",
+          "cost": 9
+        },
+        {
+          "id": "item_3_4",
+          "name": "Frictionless Fluid",
+          "icon": "frictionless_fluid",
+          "cost": 12
+        },
+        {
+          "id": "item_3_5",
+          "name": "Entropy Lubricant",
+          "icon": "entropy_lubricant",
+          "cost": 14
+        },
+        {
+          "id": "item_3_6",
+          "name": "Quantum Slick",
+          "icon": "quantum_slick",
+          "cost": 10
+        }
+      ]
+    },
+    {
+      "id": "item_4",
+      "name": "Electrical Components",
+      "icon": "electrical",
+      "subItems": [
+        {
+          "id": "item_4_1",
+          "name": "Capacitor Module",
+          "icon": "capacitor_module",
+          "cost": 15
+        },
+        {
+          "id": "item_4_2",
+          "name": "Positronic Relay",
+          "icon": "positronic_relay",
+          "cost": 21
+        },
+        {
+          "id": "item_4_3",
+          "name": "Conductor Strip",
+          "icon": "conductor_strip",
+          "cost": 11
+        },
+        {
+          "id": "item_4_4",
+          "name": "Diode Cell",
+          "icon": "diode_cell",
+          "cost": 9
+        },
+        {
+          "id": "item_4_5",
+          "name": "Transformer Coil",
+          "icon": "transformer_coil",
+          "cost": 18
+        },
+        {
+          "id": "item_4_6",
+          "name": "Pulse Circuit",
+          "icon": "pulse_circuit",
+          "cost": 13
+        }
+      ]
+    },
+    {
+      "id": "item_5",
+      "name": "Mechanical Parts",
+      "icon": "mechanical",
+      "subItems": [
+        {
+          "id": "item_5_1",
+          "name": "Servo Motor",
+          "icon": "servo_motor",
+          "cost": 19
+        },
+        {
+          "id": "item_5_2",
+          "name": "Piston Assembly",
+          "icon": "piston_assembly",
+          "cost": 16
+        },
+        {
+          "id": "item_5_3",
+          "name": "Gear Cluster",
+          "icon": "gear_cluster",
+          "cost": 12
+        },
+        {
+          "id": "item_5_4",
+          "name": "Bearing Ring",
+          "icon": "bearing_ring",
+          "cost": 10
+        },
+        {
+          "id": "item_5_5",
+          "name": "Valve Unit",
+          "icon": "valve_unit",
+          "cost": 14
+        },
+        {
+          "id": "item_5_6",
+          "name": "Rotor Blade",
+          "icon": "rotor_blade",
+          "cost": 17
+        }
+      ]
+    },
+    {
+      "id": "item_6",
+      "name": "Optical Systems",
+      "icon": "optical",
+      "subItems": [
+        {
+          "id": "item_6_1",
+          "name": "Laser Module",
+          "icon": "laser_module",
+          "cost": 24
+        },
+        {
+          "id": "item_6_2",
+          "name": "Photon Lens",
+          "icon": "photon_lens",
+          "cost": 20
+        },
+        {
+          "id": "item_6_3",
+          "name": "Spectrum Prism",
+          "icon": "spectrum_prism",
+          "cost": 18
+        },
+        {
+          "id": "item_6_4",
+          "name": "Sensor Array",
+          "icon": "sensor_array",
+          "cost": 16
+        },
+        {
+          "id": "item_6_5",
+          "name": "Mirror Unit",
+          "icon": "mirror_unit",
+          "cost": 11
+        },
+        {
+          "id": "item_6_6",
+          "name": "Diffraction Grating",
+          "icon": "diffraction_grating",
+          "cost": 13
+        }
+      ]
+    }
+  ]
+}

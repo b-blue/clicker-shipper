@@ -1,0 +1,65 @@
+import { RadialDial } from '../ui/RadialDial';
+import { GameManager } from '../managers/GameManager';
+
+export class Game extends Phaser.Scene {
+  private currentOrderIndex: number = 0;
+  private shiftTimer: Phaser.Time.TimerEvent | null = null;
+  private eventEmitter: Phaser.Events.EventEmitter;
+  private radialDial: RadialDial | null = null;
+
+  constructor() {
+    super('Game');
+    this.eventEmitter = new Phaser.Events.EventEmitter();
+  }
+
+  create() {
+    try {
+      const gameManager = GameManager.getInstance();
+      const items = gameManager.getItems();
+
+      // Create the dial at center of screen
+      this.radialDial = new RadialDial(this, 512, 384, items);
+
+      // Listen for item selection
+      this.events.on('dial:itemSelected', (data: { item: any }) => {
+        console.log('Item selected:', data.item.name, 'Cost:', data.item.cost);
+        // Add to order bucket, check budget, etc.
+      });
+
+      // Listen for level changes
+      this.events.on('dial:levelChanged', (data: { level: number; item: any }) => {
+        console.log('Entered submenu for:', data.item.name);
+      });
+
+      // Add temporary info text
+      this.add.text(50, 50, 'Game Scene - Dial Active', { fontSize: '20px', color: '#fff' });
+    } catch (error) {
+      console.error('Error creating Game scene:', error);
+      this.add.text(50, 50, 'Error loading game data', { fontSize: '20px', color: '#ff0000' });
+    }
+  }
+
+  update(time: number, delta: number) {
+    // Update shift timer display
+  }
+
+  onOrderComplete() {
+    // Validate order is within budget
+    // Load next order
+    // Reset dial to first level
+    if (this.radialDial) {
+      this.radialDial.reset();
+    }
+    // If no more orders, end shift
+  }
+
+  endShift() {
+    // this.scene.start('GameOver', { stats });
+  }
+
+  shutdown() {
+    if (this.radialDial) {
+      this.radialDial.destroy();
+    }
+  }
+}

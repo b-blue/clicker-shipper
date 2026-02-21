@@ -7,7 +7,9 @@ export class RadialDial {
   private currentLevel: number = 0; // 0 = top level, 1 = sub-items
   private currentParentItem: Item | null = null;
   private currentSubItems: SubItem[] = [];
-  private sliceCount: number = 6;
+  private sliceCount: number = 6; // Will be updated dynamically based on items
+  private readonly minSlices: number = 2;
+  private readonly maxSlices: number = 6;
   private sliceRadius: number = 150;
   private centerRadius: number = 50;
   private highlightedSliceIndex: number = -1;
@@ -26,6 +28,7 @@ export class RadialDial {
     this.items = items;
     this.dialX = x;
     this.dialY = y;
+    this.updateSliceCount();
     
     this.centerGraphic = scene.add.graphics();
     this.centerText = scene.add.text(x, y + 20, '', { fontSize: '14px', color: '#ffffff' }).setOrigin(0.5);
@@ -69,7 +72,7 @@ export class RadialDial {
       const sliceAngle = 360 / this.sliceCount;
       const sliceIndex = Math.floor(normalizedAngle / sliceAngle);
 
-      if (sliceIndex !== this.highlightedSliceIndex) {
+      if (sliceIndex < this.sliceCount && sliceIndex !== this.highlightedSliceIndex) {
         this.highlightedSliceIndex = sliceIndex;
         this.redrawDial();
       }
@@ -98,6 +101,7 @@ export class RadialDial {
       this.currentParentItem = this.items[this.highlightedSliceIndex];
       this.currentSubItems = this.currentParentItem.subItems;
       this.currentLevel = 1;
+      this.updateSliceCount();
       this.redrawDial();
       this.scene.events.emit('dial:levelChanged', { level: 1, item: this.currentParentItem });
     } else if (this.currentLevel === 1) {
@@ -216,7 +220,16 @@ export class RadialDial {
     this.currentParentItem = null;
     this.currentSubItems = [];
     this.highlightedSliceIndex = -1;
+    this.updateSliceCount();
     this.redrawDial();
+  }
+
+  private updateSliceCount(): void {
+    const displayItems = this.currentLevel === 0 ? this.items : this.currentSubItems;
+    const itemCount = displayItems.length;
+    
+    // Clamp between min and max slices
+    this.sliceCount = Math.max(this.minSlices, Math.min(this.maxSlices, itemCount));
   }
 
   public destroy(): void {

@@ -2,5 +2,5 @@
   "shiftDuration": 180000,
   "dialLevels": 2,
   "itemsPerLevel": 6,
-  "rootDialIcon": "item_1_1"
+  "rootDialIconPath": "assets/items/dial.png"
 }

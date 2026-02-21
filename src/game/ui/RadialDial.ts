@@ -1,10 +1,8 @@
 import Phaser from 'phaser';
-import { Item, SubItem, GameConfig } from '../types/GameTypes';
-import { GameManager } from '../managers/GameManager';
+import { Item, SubItem } from '../types/GameTypes';
 
 export class RadialDial {
   private scene: Phaser.Scene;
-  private config: GameConfig;
   private items: Item[];
   private currentLevel: number = 0; // 0 = top level, 1 = sub-items
   private currentParentItem: Item | null = null;
@@ -29,7 +27,6 @@ export class RadialDial {
     this.items = items;
     this.dialX = x;
     this.dialY = y;
-    this.config = GameManager.getInstance().getConfig();
     this.updateSliceCount();
     
     this.centerGraphic = scene.add.graphics();
@@ -140,14 +137,19 @@ export class RadialDial {
         this.centerImage.setTexture(itemId);
         this.centerImage.setPosition(this.dialX, this.dialY);
         this.centerImage.setVisible(true);
+      } else {
+        this.centerImage.setVisible(false);
       }
     } else {
-      // Display root dial icon sprite
-      const rootIconId = this.config.rootDialIcon || 'item_1_1';
-      if (this.scene.textures.exists(rootIconId)) {
-        this.centerImage.setTexture(rootIconId);
+      // Display root dial icon sprite (from rootDialIconPath in config)
+      if (this.scene.textures.exists('rootDialIcon')) {
+        console.log('rootDialIcon texture found, displaying');
+        this.centerImage.setTexture('rootDialIcon');
         this.centerImage.setPosition(this.dialX, this.dialY);
         this.centerImage.setVisible(true);
+      } else {
+        console.log('rootDialIcon texture NOT found. Available textures:', Object.keys(this.scene.textures.list).slice(0, 20));
+        this.centerImage.setVisible(false);
       }
     }
 

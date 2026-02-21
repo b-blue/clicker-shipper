@@ -10,14 +10,6 @@ export class Preloader extends Phaser.Scene {
     // Load config and items data
     this.load.json('config', 'data/config.json');
     this.load.json('items', 'data/items.json');
-
-    // Auto-load item sprite assets
-    this.load.once('complete', () => {
-      const itemsData = this.cache.json.get('items');
-      if (itemsData && itemsData.items) {
-        AssetLoader.preloadItemAssets(this, itemsData.items);
-      }
-    });
   }
 
   async create() {
@@ -25,6 +17,27 @@ export class Preloader extends Phaser.Scene {
       // Initialize GameManager with loaded data
       const gameManager = GameManager.getInstance();
       await gameManager.initialize(this, 'data/config.json', 'data/items.json');
+      
+      const config = gameManager.getConfig();
+      const items = gameManager.getItems();
+      
+      // Now load root dial icon (if path is specified)
+      if (config.rootDialIconPath) {
+        this.load.image('rootDialIcon', config.rootDialIconPath);
+      }
+      
+      // Load item sprite assets
+      AssetLoader.preloadItemAssets(this, items);
+      
+      // Start load and wait for completion
+      this.load.start();
+      
+      // Wait for all assets to load
+      await new Promise<void>((resolve) => {
+        this.load.once('complete', () => {
+          resolve();
+        });
+      });
       
       // Transition to MainMenu
       this.scene.start('MainMenu');

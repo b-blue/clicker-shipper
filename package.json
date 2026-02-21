@@ -1,10 +1,11 @@
 {
-    "name": "template-vite-ts",
-    "description": "A Phaser 3 TypeScript template using Vite.",
-    "version": "1.4.0",
+    "name": "clicker-shipper",
+    "description": "Intergalactic Shipper - Order Fulfillment Game",
+    "version": "1.0.0",
+    "homepage": "https://bblue.github.io/clicker-shipper",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/phaserjs/template-vite-ts.git"
+        "url": "https://github.com/bblue/clicker-shipper.git"
     },
     "author": "Phaser Studio <support@phaser.io> (https://phaser.io/)",
     "license": "MIT",

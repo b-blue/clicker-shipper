@@ -17,7 +17,7 @@ const phasermsg = () => {
 }   
 
 export default defineConfig({
-    base: './',
+    base: '/clicker-shipper/',
     logLevel: 'warning',
     build: {
         rollupOptions: {

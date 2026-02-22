@@ -97,7 +97,7 @@ export class RadialDial {
 
     if (this.dragStartSliceIndex >= 0 && dragDistance >= this.minDragDistance) {
       this.isDragging = true;
-      if (distance < this.centerRadius * this.centerDropRadiusMultiplier) {
+      if (distance < this.centerRadius) {
         this.showDropCue = true;
         if (this.highlightedSliceIndex !== -999) {
           this.highlightedSliceIndex = -999;
@@ -189,8 +189,8 @@ export class RadialDial {
         this.highlightedSliceIndex = -1;
         this.showDropCue = false;
         this.redrawDial();
-      } else if (endDistance < this.centerRadius * this.centerDropRadiusMultiplier) {
-        // Drag ended in center - confirm selection
+      } else if (this.showDropCue) {
+        // Drag ended in center (showDropCue is true) - confirm selection
         if (this.lastNonCenterSliceIndex >= 0) {
           this.highlightedSliceIndex = this.lastNonCenterSliceIndex;
           this.updateSelectedItem();

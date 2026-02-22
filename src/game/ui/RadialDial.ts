@@ -25,18 +25,21 @@ export class RadialDial {
   
   // Drag-to-confirm properties
   private dragStartSliceIndex: number = -1; // Index of slice where drag started
+  private isDragging: boolean = false;
   private dragStartX: number = 0;
   private dragStartY: number = 0;
   private lastPointerX: number = 0;
   private lastPointerY: number = 0;
   private readonly minDragDistance: number = 20;
-  private readonly centerDropRadiusMultiplier: number = 1.75;
+  private centerDropRadiusMultiplier: number = 1.75;
 
   constructor(scene: Phaser.Scene, x: number, y: number, items: Item[]) {
     this.scene = scene;
     this.items = items;
     this.dialX = x;
     this.dialY = y;
+    const viewportWidth = scene.cameras?.main?.width ?? 1024;
+    this.centerDropRadiusMultiplier = viewportWidth < 600 ? 2.2 : 1.75;
     this.updateSliceCount();
     
     this.centerGraphic = scene.add.graphics();
@@ -70,6 +73,24 @@ export class RadialDial {
     const dx = pointer.x - this.dialX;
     const dy = pointer.y - this.dialY;
     const distance = Math.sqrt(dx * dx + dy * dy);
+    const dragDx = pointer.x - this.dragStartX;
+    const dragDy = pointer.y - this.dragStartY;
+    const dragDistance = Math.sqrt(dragDx * dragDx + dragDy * dragDy);
+
+    if (this.dragStartSliceIndex >= 0 && dragDistance >= this.minDragDistance) {
+      this.isDragging = true;
+      if (distance < this.centerRadius) {
+        if (this.highlightedSliceIndex !== -999) {
+          this.highlightedSliceIndex = -999;
+          this.redrawDial();
+        }
+      } else if (this.highlightedSliceIndex !== this.dragStartSliceIndex) {
+        this.highlightedSliceIndex = this.dragStartSliceIndex;
+        this.updateSelectedItem();
+        this.redrawDial();
+      }
+      return;
+    }
 
     // Check if pointer is in center
     if (distance < this.centerRadius) {
@@ -112,6 +133,7 @@ export class RadialDial {
     this.dragStartX = pointer.x;
     this.dragStartY = pointer.y;
     this.dragStartSliceIndex = -1;
+    this.isDragging = false;
 
     // Check if started on a slice
     if (distance < this.sliceRadius + 50 && distance > this.centerRadius + 5) {
@@ -176,6 +198,7 @@ export class RadialDial {
 
     // Reset drag state
     this.dragStartSliceIndex = -1;
+    this.isDragging = false;
   }
 
   private updateSelectedItem(): void {

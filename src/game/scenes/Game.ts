@@ -1,5 +1,6 @@
 import { RadialDial } from '../ui/RadialDial';
 import { GameManager } from '../managers/GameManager';
+import { SettingsManager } from '../managers/SettingsManager';
 
 export class Game extends Phaser.Scene {
   private currentOrderIndex: number = 0;
@@ -20,16 +21,18 @@ export class Game extends Phaser.Scene {
       // Calculate dial position based on viewport (responsive)
       const gameWidth = this.cameras.main.width;
       const gameHeight = this.cameras.main.height;
+      
+      // Load dial position from settings
+      const settingsManager = SettingsManager.getInstance();
+      const dialSettings = settingsManager.getDialSettings();
+      const dialX = gameWidth + dialSettings.offsetX;
+      const dialY = gameHeight + dialSettings.offsetY;
 
       // Background
       this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, 0x0a1022);
 
       // HUD strip (holographic panel)
       this.add.rectangle(gameWidth / 2, 28, gameWidth - 24, 40, 0x0b1c3a, 0.75);
-      const dialX = gameWidth - 150;
-      const dialY = gameHeight - 100;
-
-      // Create the dial at bottom right of screen with margin
       this.radialDial = new RadialDial(this, dialX, dialY, items);
 
       // Listen for item confirmation (hold-to-confirm on center)

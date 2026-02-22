@@ -1,4 +1,5 @@
 import { GameManager } from '../managers/GameManager';
+import { SettingsManager } from '../managers/SettingsManager';
 import { AssetLoader } from '../managers/AssetLoader';
 
 export class Preloader extends Phaser.Scene {
@@ -17,6 +18,10 @@ export class Preloader extends Phaser.Scene {
       // Initialize GameManager with loaded data
       const gameManager = GameManager.getInstance();
       await gameManager.initialize(this, 'data/config.json', 'data/items.json');
+      
+      // Initialize SettingsManager
+      const settingsManager = SettingsManager.getInstance();
+      await settingsManager.loadSettings();
       
       const config = gameManager.getConfig();
       const items = gameManager.getItems();

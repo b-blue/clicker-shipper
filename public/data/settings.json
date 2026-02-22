@@ -1,0 +1,11 @@
+{
+  "dial": {
+    "offsetX": -200,
+    "offsetY": -150,
+    "description": "Dial position offset from bottom-right corner (negative = left/up)"
+  },
+  "ui": {
+    "hudStripY": 28,
+    "hudStripHeight": 40
+  }
+}

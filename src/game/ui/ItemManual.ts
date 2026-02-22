@@ -1,13 +1,11 @@
 import Phaser from 'phaser';
-import { Item, SubItem } from '../types/GameTypes';
+import { MenuItem } from '../types/GameTypes';
 import { GameManager } from '../managers/GameManager';
 import { Colors, toColorString } from '../constants/Colors';
+import { normalizeItems } from '../utils/ItemAdapter';
 
 export class ItemManual extends Phaser.Scene {
-  private items: Item[] = [];
-  private currentPage: number = 0;
-  private itemsPerPage: number = 6;
-  private selectedItemId: string | null = null;
+  private items: MenuItem[] = [];
 
   constructor() {
     super({ key: 'ItemManual' });
@@ -15,316 +13,138 @@ export class ItemManual extends Phaser.Scene {
 
   async create(): Promise<void> {
     const gameManager = GameManager.getInstance();
-    this.items = gameManager.getItems();
+    this.items = normalizeItems(gameManager.getItems() as any).slice(0, 6);
 
     this.setupUI();
-    this.displayPage(0);
   }
 
   private setupUI(): void {
-    // Get responsive viewport dimensions
     const gameWidth = this.cameras.main.width;
     const gameHeight = this.cameras.main.height;
     const panelWidth = Math.min(gameWidth * 0.9, 900);
     const panelHeight = Math.min(gameHeight * 0.9, 700);
+    const panelX = gameWidth / 2;
+    const panelY = gameHeight / 2;
 
-    // Background
-    this.add.rectangle(gameWidth / 2, gameHeight / 2, panelWidth, panelHeight, Colors.BACKGROUND_DARK);
+    // Background panel
+    this.add.rectangle(panelX, panelY, panelWidth, panelHeight, Colors.BACKGROUND_DARK);
 
     // Title
-    this.add.text(gameWidth / 2, gameHeight * 0.05, 'ITEM MANUAL', {
+    this.add.text(panelX, gameHeight * 0.06, 'ITEM CATALOG', {
       fontSize: '32px',
       color: toColorString(Colors.HIGHLIGHT_YELLOW),
       align: 'center',
       fontFamily: 'Arial',
     }).setOrigin(0.5);
 
-    // Instructions
-    this.add.text(gameWidth / 2, gameHeight * 0.1, 'Browse items and their descriptions', {
-      fontSize: '12px',
-      color: toColorString(Colors.LIGHT_BLUE),
-      align: 'center',
-    }).setOrigin(0.5);
-
     // Close button
-    const closeBtn = this.add.rectangle(gameWidth * 0.95, gameHeight * 0.05, 40, 40, Colors.BUTTON_DARK);
+    const closeBtn = this.add.rectangle(gameWidth * 0.95, gameHeight * 0.06, 40, 40, Colors.BUTTON_DARK);
     closeBtn.setInteractive();
     closeBtn.on('pointerdown', () => this.scene.stop());
-    this.add.text(gameWidth * 0.95, gameHeight * 0.05, 'X', {
+    this.add.text(gameWidth * 0.95, gameHeight * 0.06, 'X', {
       fontSize: '20px',
       color: toColorString(Colors.HIGHLIGHT_YELLOW),
     }).setOrigin(0.5);
 
-    // Setup grid area
-    this.createItemGrid();
+    // List layout
+    const listLeft = panelX - panelWidth / 2 + 30;
+    const listTop = gameHeight * 0.14;
+    const rowHeight = 70;
+    const rowWidth = panelWidth - 60;
+    const iconFrameSize = 54;
+    const iconScale = 1.5;
+    const indent = 24;
+    const listBottom = panelY + panelHeight / 2 - 30;
+    const listViewHeight = Math.max(140, listBottom - listTop);
 
-    // Setup details panel
-    this.createDetailsPanel();
+    const listContainer = this.add.container(listLeft, listTop);
+    const maskGraphic = this.add.graphics();
+    maskGraphic.fillStyle(0xffffff, 1);
+    maskGraphic.fillRect(listLeft, listTop, rowWidth, listViewHeight);
+    listContainer.setMask(maskGraphic.createGeometryMask());
+    maskGraphic.setVisible(false);
 
-    // Navigation buttons
-    this.createNavigationButtons();
-  }
-
-  private createItemGrid(): void {
-    const gridStartY = 100;
-    const gridStartX = 50;
-    const itemWidth = 110;
-    const itemHeight = 140;
-    const padding = 10;
-
-    // Create clickable zones for each item slot
-    for (let i = 0; i < this.itemsPerPage; i++) {
-      const row = Math.floor(i / 3);
-      const col = i % 3;
-
-      const x = gridStartX + col * (itemWidth + padding);
-      const y = gridStartY + row * (itemHeight + padding);
-
-      const itemZone = this.add.zone(x, y, itemWidth, itemHeight);
-      itemZone.setInteractive();
-      itemZone.setData('itemIndex', i);
-
-      itemZone.on('pointerdown', () => {
-        const index = this.currentPage * this.itemsPerPage + i;
-        if (index < this.flattenItems().length) {
-          const item = this.flattenItems()[index];
-          this.selectedItemId = this.getItemId(item);
-          this.displayDetails(item);
-        }
-      });
-    }
-  }
-
-  private createDetailsPanel(): void {
-    // Details panel background
-    const panelX = 420;
-    const panelY = 200;
-    const panelWidth = 350;
-    const panelHeight = 350;
-
-    this.add.rectangle(panelX, panelY, panelWidth, panelHeight, Colors.PANEL_MEDIUM, 0.65);
-    this.add.rectangle(panelX, panelY, panelWidth, panelHeight).setStrokeStyle(2, Colors.HIGHLIGHT_YELLOW);
-
-    // Placeholder text
-    this.add.text(panelX - panelWidth / 2 + 20, panelY - panelHeight / 2 + 20, 'SELECT AN ITEM', {
-      fontSize: '14px',
-      color: toColorString(Colors.HIGHLIGHT_YELLOW),
-      wordWrap: { width: panelWidth - 40 },
+    const rows: Array<{ item: MenuItem; isChild: boolean }> = [];
+    this.items.forEach((item) => {
+      rows.push({ item, isChild: false });
+      const leaves = this.getLeafItems(item).filter(leaf => leaf.cost !== undefined);
+      leaves.forEach(leaf => rows.push({ item: leaf, isChild: true }));
     });
-  }
 
-  private displayPage(pageNum: number): void {
-    this.currentPage = pageNum;
-    const gridStartY = 100;
-    const gridStartX = 50;
-    const itemWidth = 110;
-    const itemHeight = 140;
-    const padding = 10;
+    rows.forEach((row, index) => {
+      const rowY = index * rowHeight + rowHeight / 2;
+      const bgColor = index % 2 === 0 ? Colors.PANEL_DARK : Colors.PANEL_MEDIUM;
+      const offsetX = row.isChild ? indent : 0;
 
-    const allItems = this.flattenItems();
-    const startIndex = pageNum * this.itemsPerPage;
-    const endIndex = Math.min(startIndex + this.itemsPerPage, allItems.length);
+      const bg = this.add.rectangle(rowWidth / 2, rowY, rowWidth, rowHeight - 8, bgColor, 0.75);
+      listContainer.add(bg);
 
-    // Clear existing item displays
-    this.children.list.forEach(child => {
-      if (child instanceof Phaser.GameObjects.Text || child instanceof Phaser.GameObjects.Image) {
-        if ((child as any).getData?.('isItemDisplay')) {
-          child.destroy();
-        }
+      const iconX = iconFrameSize / 2 + 10 + offsetX;
+      const iconY = rowY;
+
+      if (!row.isChild && this.textures.exists('frame')) {
+        const frameImage = this.add.image(iconX, iconY, 'frame').setScale(iconScale).setDepth(1);
+        listContainer.add(frameImage);
       }
-    });
 
-    // Display items for current page
-    for (let i = startIndex; i < endIndex; i++) {
-      const item = allItems[i];
-      const slotIndex = i - startIndex;
-      const row = Math.floor(slotIndex / 3);
-      const col = slotIndex % 3;
-
-      const x = gridStartX + col * (itemWidth + padding) + itemWidth / 2;
-      const y = gridStartY + row * (itemHeight + padding) + itemHeight / 2;
-
-      // Item background
-      const bg = this.add.rectangle(x, y, itemWidth, itemHeight, Colors.SLICE_DARK, 0.75);
-      bg.setData('isItemDisplay', true);
-
-      // Item frame
-      this.add.rectangle(x, y, itemWidth, itemHeight)
-        .setStrokeStyle(1, this.selectedItemId === this.getItemId(item) ? Colors.HIGHLIGHT_YELLOW : Colors.BORDER_LIGHT_BLUE)
-        .setData('isItemDisplay', true);
-
-      // Item name (abbreviated)
-      const name = this.getItemName(item).substring(0, 15);
-      const nameText = this.add.text(x, y + itemHeight / 2 - 25, name, {
-        fontSize: '10px',
-        color: toColorString(Colors.PALE_BLUE),
-        align: 'center',
-        wordWrap: { width: itemWidth - 10 },
-      }).setOrigin(0.5);
-      nameText.setData('isItemDisplay', true);
-
-      // Item icon placeholder (would be sprite in real implementation)
-      this.add.text(x, y - 10, '📦', {
-        fontSize: '24px',
-      }).setOrigin(0.5).setData('isItemDisplay', true);
-
-      // Item cost (if subitem)
-      if (this.isSubItem(item)) {
-        const cost = (item as SubItem).cost;
-        this.add.text(x, y + itemHeight / 2 - 5, `$${cost}`, {
-          fontSize: '9px',
+      if (this.textures.exists(row.item.icon)) {
+        const iconImage = this.add.image(iconX, iconY, row.item.icon).setScale(iconScale).setDepth(2);
+        listContainer.add(iconImage);
+      } else {
+        const fallbackText = this.add.text(iconX, iconY, '?', {
+          fontSize: '18px',
           color: toColorString(Colors.HIGHLIGHT_YELLOW),
-          align: 'center',
-        }).setOrigin(0.5).setData('isItemDisplay', true);
+        }).setOrigin(0.5);
+        listContainer.add(fallbackText);
       }
-    }
 
-    // Update page indicator
-    const totalPages = Math.ceil(allItems.length / this.itemsPerPage);
-    this.children.list.forEach(child => {
-      if (child instanceof Phaser.GameObjects.Text && (child as any).getData?.('isPageText')) {
-        child.destroy();
-      }
-    });
-
-    const pageText = this.add.text(400, 560, `Page ${pageNum + 1} of ${totalPages}`, {
-      fontSize: '12px',
-      color: toColorString(Colors.MUTED_BLUE),
-      align: 'center',
-    }).setOrigin(0.5);
-    pageText.setData('isPageText', true);
-  }
-
-  private displayDetails(item: Item | SubItem): void {
-    const panelX = 420;
-    const panelY = 200;
-    const panelWidth = 350;
-    const panelHeight = 350;
-
-    // Clear previous details
-    this.children.list.forEach(child => {
-      if (child instanceof Phaser.GameObjects.Text && (child as any).getData?.('isDetailsText')) {
-        child.destroy();
-      }
-    });
-
-    const name = this.getItemName(item);
-    const description = this.getItemDescription(item);
-    const cost = this.isSubItem(item) ? (item as SubItem).cost : null;
-
-    // Name
-    const nameText = this.add.text(panelX - panelWidth / 2 + 20, panelY - panelHeight / 2 + 30, name, {
-      fontSize: '18px',
-      color: toColorString(Colors.HIGHLIGHT_YELLOW),
-      fontStyle: 'bold',
-    });
-    nameText.setData('isDetailsText', true);
-
-    // Cost (if exists)
-    if (cost !== null) {
-      const costText = this.add.text(panelX - panelWidth / 2 + 20, panelY - panelHeight / 2 + 60, `Cost: $${cost}`, {
-        fontSize: '14px',
-        color: toColorString(Colors.HIGHLIGHT_YELLOW),
-      });
-      costText.setData('isDetailsText', true);
-
-      // Description (adjusted Y for when cost is present)
-      const descText = this.add.text(
-        panelX - panelWidth / 2 + 20,
-        panelY - panelHeight / 2 + 90,
-        description,
-        {
+      if (row.isChild) {
+        const cost = row.item.cost ?? 0;
+        const childText = `| ${cost}Q | ${row.item.name}`;
+        const childLabel = this.add.text(iconX + iconFrameSize / 2 + 20, rowY, childText, {
           fontSize: '12px',
           color: toColorString(Colors.PALE_BLUE_2),
-          wordWrap: { width: panelWidth - 40 },
-        }
-      );
-      descText.setData('isDetailsText', true);
-    } else {
-      // Description (no cost)
-      const descText = this.add.text(
-        panelX - panelWidth / 2 + 20,
-        panelY - panelHeight / 2 + 60,
-        description,
-        {
+          wordWrap: { width: rowWidth - iconFrameSize - 80 },
+        }).setOrigin(0, 0.5);
+        listContainer.add(childLabel);
+      } else {
+        const description = row.item.description || 'No description available.';
+        const title = this.add.text(iconX + iconFrameSize / 2 + 20, rowY - 12, row.item.name, {
+          fontSize: '14px',
+          color: toColorString(Colors.HIGHLIGHT_YELLOW),
+          fontStyle: 'bold',
+        }).setOrigin(0, 0.5);
+        const desc = this.add.text(iconX + iconFrameSize / 2 + 20, rowY + 12, description, {
           fontSize: '12px',
           color: toColorString(Colors.PALE_BLUE_2),
-          wordWrap: { width: panelWidth - 40 },
-        }
-      );
-      descText.setData('isDetailsText', true);
-    }
-  }
-
-  private createNavigationButtons(): void {
-    const allItems = this.flattenItems();
-    const totalPages = Math.ceil(allItems.length / this.itemsPerPage);
-
-    // Previous button
-    const prevBtn = this.add.rectangle(100, 540, 60, 30, Colors.PANEL_DARK);
-    prevBtn.setStrokeStyle(2, Colors.HIGHLIGHT_YELLOW);
-    prevBtn.setInteractive();
-    prevBtn.on('pointerdown', () => {
-      if (this.currentPage > 0) {
-        this.displayPage(this.currentPage - 1);
+          wordWrap: { width: rowWidth - iconFrameSize - 80 },
+        }).setOrigin(0, 0.5);
+        listContainer.add([title, desc]);
       }
     });
-    this.add.text(100, 540, '< PREV', {
-      fontSize: '11px',
-      color: toColorString(Colors.HIGHLIGHT_YELLOW),
-    }).setOrigin(0.5);
 
-    // Next button
-    const nextBtn = this.add.rectangle(700, 540, 60, 30, Colors.PANEL_DARK);
-    nextBtn.setStrokeStyle(2, Colors.HIGHLIGHT_YELLOW);
-    nextBtn.setInteractive();
-    nextBtn.on('pointerdown', () => {
-      if (this.currentPage < totalPages - 1) {
-        this.displayPage(this.currentPage + 1);
+    const listContentHeight = rows.length * rowHeight;
+    let scrollOffset = 0;
+    const minOffset = Math.min(0, listViewHeight - listContentHeight);
+    const maxOffset = 0;
+
+    this.input.on('wheel', (_pointer: Phaser.Input.Pointer, _go: any, _dx: number, dy: number) => {
+      if (listContentHeight <= listViewHeight) {
+        return;
       }
+      scrollOffset = Math.max(minOffset, Math.min(maxOffset, scrollOffset - dy * 0.4));
+      listContainer.y = listTop + scrollOffset;
     });
-    this.add.text(700, 540, 'NEXT >', {
-      fontSize: '11px',
-      color: toColorString(Colors.HIGHLIGHT_YELLOW),
-    }).setOrigin(0.5);
 
-    // Close button (bottom)
-    const closeBtn2 = this.add.rectangle(400, 580, 100, 30, Colors.BUTTON_DARK);
-    closeBtn2.setInteractive();
-    closeBtn2.on('pointerdown', () => this.scene.stop());
-    this.add.text(400, 580, 'CLOSE (ESC)', {
-      fontSize: '11px',
-      color: toColorString(Colors.HIGHLIGHT_YELLOW),
-    }).setOrigin(0.5);
-
-    // ESC key
     this.input.keyboard?.on('keydown-ESC', () => {
       this.scene.stop();
     });
   }
 
-  private flattenItems(): (Item | SubItem)[] {
-    const flattened: (Item | SubItem)[] = [];
-    this.items.forEach(category => {
-      flattened.push(category);
-      flattened.push(...category.subItems);
-    });
-    return flattened;
-  }
-
-  private isSubItem(item: Item | SubItem): boolean {
-    return 'cost' in item;
-  }
-
-  private getItemId(item: Item | SubItem): string {
-    return item.id;
-  }
-
-  private getItemName(item: Item | SubItem): string {
-    return item.name;
-  }
-
-  private getItemDescription(item: Item | SubItem): string {
-    return item.description || 'No description available';
+  private getLeafItems(item: MenuItem): MenuItem[] {
+    if (!item.children || item.children.length == 0) {
+      return [item];
+    }
+    return item.children.flatMap(child => this.getLeafItems(child));
   }
 }

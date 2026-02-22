@@ -35,8 +35,8 @@ export class MainMenu extends Phaser.Scene {
     // Start Shift button
     this.createButton(gameWidth / 2, buttonY, 'START SHIFT', () => this.punchIn());
 
-    // Manual button
-    this.createButton(gameWidth / 2, buttonY + buttonSpacing, 'ITEM MANUAL', () => this.openManual());
+    // Catalog button
+    this.createButton(gameWidth / 2, buttonY + buttonSpacing, 'ITEM CATALOG', () => this.openManual());
 
     // Settings button
     this.createButton(gameWidth / 2, buttonY + buttonSpacing * 2, 'SETTINGS', () => this.openSettings());
@@ -45,7 +45,7 @@ export class MainMenu extends Phaser.Scene {
     this.createButton(gameWidth / 2, buttonY + buttonSpacing * 3, 'EXIT', () => this.exitGame());
 
     // Footer
-    this.add.text(gameWidth / 2, gameHeight * 0.9, 'Press SPACE to START SHIFT • Press M to view MANUAL', {
+    this.add.text(gameWidth / 2, gameHeight * 0.9, 'Press SPACE to START SHIFT • Press M to view CATALOG', {
       fontSize: '12px',
       color: toColorString(Colors.TEXT_MUTED_BLUE),
       align: 'center',

@@ -205,6 +205,11 @@ export class RadialDial {
           this.currentLevel = 1;
           this.selectedItem = null;
           this.highlightedSliceIndex = -1;
+          // Reset drag state before redrawing new level
+          this.dragStartSliceIndex = -1;
+          this.isDragging = false;
+          this.showDropCue = false;
+          this.lastNonCenterSliceIndex = -1;
           this.updateSliceCount();
           this.redrawDial();
           this.scene.events.emit('dial:levelChanged', { level: 1, item: this.currentParentItem });
@@ -437,6 +442,8 @@ export class RadialDial {
     this.selectedItem = null;
     this.dragStartSliceIndex = -1;
     this.isDragging = false;
+    this.showDropCue = false;
+    this.lastNonCenterSliceIndex = -1;
     this.updateSliceCount();
     this.redrawDial();
   }

@@ -29,6 +29,8 @@ export class RadialDial {
   private dragStartY: number = 0;
   private lastPointerX: number = 0;
   private lastPointerY: number = 0;
+  private readonly minDragDistance: number = 20;
+  private readonly centerDropRadiusMultiplier: number = 1.75;
 
   constructor(scene: Phaser.Scene, x: number, y: number, items: Item[]) {
     this.scene = scene;
@@ -133,10 +135,17 @@ export class RadialDial {
     const endDx = endX - this.dialX;
     const endDy = endY - this.dialY;
     const endDistance = Math.sqrt(endDx * endDx + endDy * endDy);
+    const dragDx = endX - this.dragStartX;
+    const dragDy = endY - this.dragStartY;
+    const dragDistance = Math.sqrt(dragDx * dragDx + dragDy * dragDy);
 
     // Check if this was a drag from slice to center
     if (this.dragStartSliceIndex >= 0 && this.selectedItem) {
-      if (endDistance < this.centerRadius * 1.75) {
+      if (dragDistance < this.minDragDistance) {
+        this.selectedItem = null;
+        this.highlightedSliceIndex = -1;
+        this.redrawDial();
+      } else if (endDistance < this.centerRadius * this.centerDropRadiusMultiplier) {
         // Drag ended in center - confirm selection
         if (this.currentLevel === 1) {
           this.scene.events.emit('dial:itemConfirmed', { item: this.selectedItem });

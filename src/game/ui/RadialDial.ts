@@ -293,9 +293,9 @@ export class RadialDial {
     this.centerGraphic.fillCircle(this.dialX, this.dialY, this.centerRadius - 2);
 
     const ringColor = this.showDropCue
-      ? 0x4aa3ff
+      ? 0xffd54a
       : this.highlightedSliceIndex === -999 && this.currentLevel === 1
-        ? 0x4aa3ff
+        ? 0xffd54a
         : 0x8fd4ff;
     const ringAlpha = this.showDropCue ? 1 : 0.7;
     this.centerGraphic.lineStyle(3, ringColor, ringAlpha);
@@ -309,7 +309,7 @@ export class RadialDial {
     this.centerGraphic.strokePath();
 
     if (this.showDropCue) {
-      this.centerGraphic.lineStyle(2, 0x4aa3ff, 0.6);
+      this.centerGraphic.lineStyle(2, 0xffd54a, 0.6);
       this.centerGraphic.strokeCircle(this.dialX, this.dialY, this.centerRadius + 6);
     }
 

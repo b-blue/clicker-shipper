@@ -30,14 +30,14 @@ export class AssetLoader {
    */
   private static preloadMenuItemsRecursive(scene: Phaser.Scene, items: MenuItem[]): void {
     items.forEach((item) => {
-      // Load item's main texture
-      const texturePath = `assets/items/${item.id}.png`;
-      scene.load.image(item.id, texturePath);
+      // Load item's icon texture from appropriate folder
+      const texturePath = this.getAssetPath(item.icon, item.type);
+      scene.load.image(item.icon, texturePath);
       
       // Load item's layer textures if defined
       if (item.layers) {
         item.layers.forEach((layer) => {
-          const layerTexturePath = `assets/items/${layer.texture}.png`;
+          const layerTexturePath = this.getAssetPath(layer.texture);
           scene.load.image(layer.texture, layerTexturePath);
         });
       }
@@ -50,31 +50,64 @@ export class AssetLoader {
   }
 
   /**
+   * Determine the correct asset path based on icon name and type
+   */
+  private static getAssetPath(iconName: string, type?: string): string {
+    // Skill icons (Skillicon14_XX) and Frame go in nav-items
+    if (iconName.startsWith('Skillicon14_') || iconName === 'Frame_14') {
+      return `assets/nav-items/${iconName}.png`;
+    }
+    
+    // Route new-format item icons to their folders
+    if (iconName.startsWith('arm') || type === 'armaments') {
+      return `assets/armaments/${iconName}.png`;
+    }
+    if (iconName.startsWith('melee') || type === 'melee') {
+      return `assets/melee/${iconName}.png`;
+    }
+    if (iconName.startsWith('mining') || type === 'mining') {
+      return `assets/mining/${iconName}.png`;
+    }
+    if (iconName.startsWith('radioactive') || type === 'radioactive') {
+      return `assets/radioactive/${iconName}.png`;
+    }
+    if (iconName.startsWith('streetwear') || type === 'streetwear') {
+      return `assets/streetwear/${iconName}.png`;
+    }
+    if (iconName.startsWith('resource')) {
+      return `assets/resources/${iconName}.png`;
+    }
+    
+    // Fallback to generic items folder
+    return `assets/items/${iconName}.png`;
+  }
+
+  /**
    * Load legacy Item format (2-level hierarchy)
    */
   private static preloadLegacyItems(scene: Phaser.Scene, items: Item[]): void {
     items.forEach((category) => {
-      // Load category/top-level item image
-      const categoryTexturePath = `assets/items/${category.id}.png`;
-      scene.load.image(category.id, categoryTexturePath);
+      // Load category/top-level item image using correct folder
+      const categoryTexturePath = this.getAssetPath(category.icon, category.type);
+      scene.load.image(category.icon, categoryTexturePath);
       
       // Load category layer images if defined
       if (category.layers) {
         category.layers.forEach((layer) => {
-          const layerTexturePath = `assets/items/${layer.texture}.png`;
+          const layerTexturePath = this.getAssetPath(layer.texture);
           scene.load.image(layer.texture, layerTexturePath);
         });
       }
       
       // Load sub-item images
       category.subItems.forEach((subItem) => {
-        const texturePath = `assets/items/${subItem.id}.png`;
-        scene.load.image(subItem.id, texturePath);
+        const texturePath = this.getAssetPath(subItem.icon, subItem.type);
+        scene.load.image(subItem.icon, texturePath);
         
         // Load sub-item layer images if defined
         if (subItem.layers) {
           subItem.layers.forEach((layer) => {
-            const layerTexturePath = `assets/items/${layer.texture}.png`;
+            const layerTexturePath = this.getAssetPath(layer.texture);
             scene.load.image(layer.texture, layerTexturePath);
           });
         }

@@ -1,288 +1,460 @@
 {
   "items": [
     {
-      "id": "item_1",
-      "name": "Power Modules",
-      "icon": "item_1",
-      "description": "Compact energy systems providing reliable power for various applications",
-      "subItems": [
+      "id": "nav_combat_1",
+      "name": "Combat Skill 01",
+      "icon": "Skillicon14_01",
+      "description": "Master combat techniques and weapons",
+      "layers": [
         {
-          "id": "item_1_1",
-          "name": "Plasma Cell",
-          "icon": "item_1_1",
-          "cost": 12,
-          "description": "Self-contained fusion reaction chamber generating steady plasma output"
+          "texture": "Skillicon14_01",
+          "depth": 3
         },
         {
-          "id": "item_1_2",
-          "name": "Antimatter Battery",
-          "icon": "item_1_2",
-          "cost": 18,
-          "description": "Magnetic containment unit storing matter-antimatter annihilation energy"
+          "texture": "Frame_14",
+          "depth": 2
+        }
+      ],
+      "children": [
+        {
+          "id": "nav_combat_sub_1",
+          "name": "Melee Combat",
+          "icon": "Skillicon14_07",
+          "description": "Close-quarters combat skills",
+          "layers": [
+            {
+              "texture": "Skillicon14_07",
+              "depth": 3
+            },
+            {
+              "texture": "Frame_14",
+              "depth": 2
+            }
+          ],
+          "children": [
+            {
+              "id": "item_melee_001",
+              "name": "melee1",
+              "icon": "melee1",
+              "type": "melee",
+              "cost": 18
+            },
+            {
+              "id": "item_melee_002",
+              "name": "melee2",
+              "icon": "melee2",
+              "type": "melee",
+              "cost": 22
+            },
+            {
+              "id": "item_melee_003",
+              "name": "melee3",
+              "icon": "melee3",
+              "type": "melee",
+              "cost": 25
+            },
+            {
+              "id": "item_melee_004",
+              "name": "melee4",
+              "icon": "melee4",
+              "type": "melee",
+              "cost": 20
+            },
+            {
+              "id": "item_melee_005",
+              "name": "melee5",
+              "icon": "melee5",
+              "type": "melee",
+              "cost": 19
+            }
+          ]
         },
         {
-          "id": "item_1_3",
-          "name": "Quantum Core",
-          "icon": "item_1_3",
-          "cost": 15,
-          "description": "Exotic matter reactor exploiting zero-point energy fluctuations"
-        },
-        {
-          "id": "item_1_4",
-          "name": "Neural Capacitor",
-          "icon": "item_1_4",
-          "cost": 10,
-          "description": "Bio-synthetic power storage unit interfacing with organic systems"
+          "id": "nav_combat_sub_2",
+          "name": "Ranged Combat",
+          "icon": "Skillicon14_13",
+          "description": "Long-distance weapon mastery",
+          "layers": [
+            {
+              "texture": "Skillicon14_13",
+              "depth": 3
+            },
+            {
+              "texture": "Frame_14",
+              "depth": 2
+            }
+          ],
+          "children": [
+            {
+              "id": "item_armaments_001",
+              "name": "arm1",
+              "icon": "arm1",
+              "type": "armaments",
+              "cost": 24
+            },
+            {
+              "id": "item_armaments_002",
+              "name": "arm2",
+              "icon": "arm2",
+              "type": "armaments",
+              "cost": 28
+            },
+            {
+              "id": "item_armaments_003",
+              "name": "arm3",
+              "icon": "arm3",
+              "type": "armaments",
+              "cost": 30
+            },
+            {
+              "id": "item_armaments_004",
+              "name": "arm4",
+              "icon": "arm4",
+              "type": "armaments",
+              "cost": 26
+            }
+          ]
         }
       ]
     },
     {
-      "id": "item_2",
-      "name": "Metallic Alloys",
-      "icon": "item_2",
-      "description": "Advanced metal compounds for structural and industrial applications",
-      "subItems": [
+      "id": "nav_survival_2",
+      "name": "Survival  Skill 08",
+      "icon": "Skillicon14_08",
+      "description": "Wilderness and survival expertise",
+      "layers": [
         {
-          "id": "item_2_1",
-          "name": "Titanium Ingot",
-          "icon": "item_2_1",
-          "cost": 20,
-          "description": "Incredibly strong yet lightweight, prized for aerospace components"
+          "texture": "Skillicon14_08",
+          "depth": 3
         },
         {
-          "id": "item_2_2",
-          "name": "Neutron Steel",
-          "icon": "item_2_2",
-          "cost": 25,
-          "description": "Treated in a particle accelerator, exhibits quantum-mechanical properties"
-        },
+          "texture": "Frame_14",
+          "depth": 2
+        }
+      ],
+      "children": [
         {
-          "id": "item_2_3",
-          "name": "Quantum Bronze",
-          "icon": "item_2_3",
-          "cost": 16,
-          "description": "Bronze infused with probability-warping crystalline matrices"
-        },
-        {
-          "id": "item_2_4",
-          "name": "Durasteel Plate",
-          "icon": "item_2_4",
-          "cost": 19,
-          "description": "Time-tempered alloy known for extreme durability and resilience"
-        },
-        {
-          "id": "item_2_5",
-          "name": "Iridium Wire",
-          "icon": "item_2_5",
-          "cost": 11,
-          "description": "Thin conductors with surprising tensile strength and corrosion resistance"
-        },
-        {
-          "id": "item_2_6",
-          "name": "Chromium Alloy",
-          "icon": "item_2_6",
-          "cost": 17,
-          "description": "Mirror-finish metal perfect for reflective and aesthetic applications"
+          "id": "nav_survival_sub_1",
+          "name": "Mining & Resources",
+          "icon": "Skillicon14_14",
+          "description": "Extract valuable resources",
+          "layers": [
+            {
+              "texture": "Skillicon14_14",
+              "depth": 3
+            },
+            {
+              "texture": "Frame_14",
+              "depth": 2
+            }
+          ],
+          "children": [
+            {
+              "id": "item_mining_001",
+              "name": "mining1",
+              "icon": "mining1",
+              "type": "mining",
+              "cost": 15
+            },
+            {
+              "id": "item_mining_002",
+              "name": "mining2",
+              "icon": "mining2",
+              "type": "mining",
+              "cost": 18
+            },
+            {
+              "id": "item_mining_003",
+              "name": "mining3",
+              "icon": "mining3",
+              "type": "mining",
+              "cost": 22
+            },
+            {
+              "id": "item_radioactive_001",
+              "name": "radioactive1",
+              "icon": "radioactive1",
+              "type": "radioactive",
+              "cost": 32
+            },
+            {
+              "id": "item_radioactive_002",
+              "name": "radioactive2",
+              "icon": "radioactive2",
+              "type": "radioactive",
+              "cost": 35
+            }
+          ]
         }
       ]
     },
     {
-      "id": "item_3",
-      "name": "Synthetic Lubricants",
-      "icon": "item_3",
-      "description": "Engineered fluids designed to reduce friction in extreme conditions",
-      "subItems": [
+      "id": "nav_crafting_3",
+      "name": "Crafting Skill 15",
+      "icon": "Skillicon14_15",
+      "description": "Create and forge powerful items",
+      "layers": [
         {
-          "id": "item_3_1",
-          "name": "Viscous Compound",
-          "icon": "item_3_1",
-          "cost": 8,
-          "description": "Thick, protective gel for slow-moving machinery and bearings"
+          "texture": "Skillicon14_15",
+          "depth": 3
         },
         {
-          "id": "item_3_2",
-          "name": "Plasma Gel",
-          "icon": "item_3_2",
-          "cost": 13,
-          "description": "Ionized lubricant that adapts to temperature changes dynamically"
+          "texture": "Frame_14",
+          "depth": 2
+        }
+      ],
+      "children": [
+        {
+          "id": "item_mining_010",
+          "name": "mining4",
+          "icon": "mining4",
+          "type": "mining",
+          "cost": 16
         },
         {
-          "id": "item_3_3",
-          "name": "Slipstream Oil",
-          "icon": "item_3_3",
-          "cost": 9,
-          "description": "Low-viscosity fluid optimized for high-speed engines and turbines"
+          "id": "item_mining_011",
+          "name": "mining5",
+          "icon": "mining5",
+          "type": "mining",
+          "cost": 14
         },
         {
-          "id": "item_3_4",
-          "name": "Frictionless Fluid",
-          "icon": "item_3_4",
-          "cost": 12,
-          "description": "Theoretical maximum efficiency: nearly zero coefficient of friction"
+          "id": "item_mining_012",
+          "name": "mining6",
+          "icon": "mining6",
+          "type": "mining",
+          "cost": 17
         },
         {
-          "id": "item_3_5",
-          "name": "Entropy Lubricant",
-          "icon": "item_3_5",
-          "cost": 14,
-          "description": "Paradoxical fluid that remains slippery while increasing system stability"
+          "id": "item_melee_010",
+          "name": "melee6",
+          "icon": "melee6",
+          "type": "melee",
+          "cost": 11
         },
         {
-          "id": "item_3_6",
-          "name": "Quantum Slick",
-          "icon": "item_3_6",
-          "cost": 10,
-          "description": "Exists in superposition, lubricating multiple components simultaneously"
+          "id": "item_melee_011",
+          "name": "melee7",
+          "icon": "melee7",
+          "type": "melee",
+          "cost": 8
+        },
+        {
+          "id": "item_melee_012",
+          "name": "melee8",
+          "icon": "melee8",
+          "type": "melee",
+          "cost": 13
         }
       ]
     },
     {
-      "id": "item_4",
-      "name": "Electrical Components",
-      "icon": "item_4",
-      "description": "Fundamental building blocks for power systems and circuitry",
-      "subItems": [
+      "id": "nav_exploration_4",
+      "name": "Exploration Skill 22",
+      "icon": "Skillicon14_22",
+      "description": "Discover hidden realms and treasures",
+      "layers": [
         {
-          "id": "item_4_1",
-          "name": "Capacitor Module",
-          "icon": "item_4_1",
-          "cost": 15,
-          "description": "Stores and releases electrical energy with precision timing"
+          "texture": "Skillicon14_22",
+          "depth": 3
         },
         {
-          "id": "item_4_2",
-          "name": "Positronic Relay",
-          "icon": "item_4_2",
-          "cost": 21,
-          "description": "Antimatter-grade switch for high-voltage circuit control"
+          "texture": "Frame_14",
+          "depth": 2
+        }
+      ],
+      "children": [
+        {
+          "id": "nav_exploration_sub_1",
+          "name": "Gear & Equipment",
+          "icon": "Skillicon14_28",
+          "description": "Equip yourself for adventure",
+          "layers": [
+            {
+              "texture": "Skillicon14_28",
+              "depth": 3
+            },
+            {
+              "texture": "Frame_14",
+              "depth": 2
+            }
+          ],
+          "children": [
+            {
+              "id": "item_radioactive_010",
+              "icon": "radioactive3",
+              "type": "radioactive",
+              "cost": 11
+            },
+            {
+              "id": "item_radioactive_011",
+              "icon": "radioactive4",
+              "type": "radioactive",
+              "cost": 8
+            },
+            {
+              "id": "item_radioactive_012",
+              "icon": "radioactive5",
+              "type": "radioactive",
+              "cost": 16
+            }
+          ]
         },
         {
-          "id": "item_4_3",
-          "name": "Conductor Strip",
-          "icon": "item_4_3",
-          "cost": 11,
-          "description": "Pure copper pathway for electrical transmission with minimal loss"
+          "id": "item_armaments_010",
+          "icon": "arm5",
+          "type": "armaments",
+          "cost": 20
         },
         {
-          "id": "item_4_4",
-          "name": "Diode Cell",
-          "icon": "item_4_4",
-          "cost": 9,
-          "description": "One-way valve for electricity, essential for power regulation"
+          "id": "item_armaments_011",
+          "icon": "arm6",
+          "type": "armaments",
+          "cost": 28
         },
         {
-          "id": "item_4_5",
-          "name": "Transformer Coil",
-          "icon": "item_4_5",
-          "cost": 18,
-          "description": "Converts voltage levels through electromagnetic induction"
-        },
-        {
-          "id": "item_4_6",
-          "name": "Pulse Circuit",
-          "icon": "item_4_6",
-          "cost": 13,
-          "description": "Generates timed electrical bursts for synchronized system activation"
+          "id": "item_armaments_012",
+          "icon": "arm7",
+          "type": "armaments",
+          "cost": 25
         }
       ]
     },
     {
-      "id": "item_5",
-      "name": "Mechanical Parts",
-      "icon": "item_5",
-      "description": "Precision-engineered components for movement and force transduction",
-      "subItems": [
+      "id": "nav_technology_5",
+      "name": "Technology Skill 32",
+      "icon": "Skillicon14_32",
+      "description": "Master advanced technology",
+      "layers": [
         {
-          "id": "item_5_1",
-          "name": "Servo Motor",
-          "icon": "item_5_1",
-          "cost": 19,
-          "description": "Intelligent actuator that positions itself with remarkable accuracy"
+          "texture": "Skillicon14_32",
+          "depth": 3
         },
         {
-          "id": "item_5_2",
-          "name": "Piston Assembly",
-          "icon": "item_5_2",
-          "cost": 16,
-          "description": "Converts pressure into linear motion with steady, reliable force"
+          "texture": "Frame_14",
+          "depth": 2
+        }
+      ],
+      "children": [
+        {
+          "id": "item_radioactive_020",
+          "icon": "radioactive6",
+          "type": "radioactive",
+          "cost": 28
         },
         {
-          "id": "item_5_3",
-          "name": "Gear Cluster",
-          "icon": "item_5_3",
-          "cost": 12,
-          "description": "Interlocking teeth transmit rotational force with mechanical advantage"
+          "id": "item_radioactive_021",
+          "icon": "radioactive7",
+          "type": "radioactive",
+          "cost": 31
         },
         {
-          "id": "item_5_4",
-          "name": "Bearing Ring",
-          "icon": "item_5_4",
-          "cost": 10,
-          "description": "Distributes load across a circular race, enabling smooth rotation"
+          "id": "item_mining_020",
+          "icon": "mining7",
+          "type": "mining",
+          "cost": 17
         },
         {
-          "id": "item_5_5",
-          "name": "Valve Unit",
-          "icon": "item_5_5",
-          "cost": 14,
-          "description": "Controls flow direction and pressure with mechanical or electrical actuation"
+          "id": "item_mining_021",
+          "icon": "mining8",
+          "type": "mining",
+          "cost": 19
         },
         {
-          "id": "item_5_6",
-          "name": "Rotor Blade",
-          "icon": "item_5_6",
-          "cost": 17,
-          "description": "Captures or transfers energy through rotational aerodynamic action"
+          "id": "item_radioactive_022",
+          "icon": "radioactive8",
+          "type": "radioactive",
+          "cost": 33
+        },
+        {
+          "id": "item_radioactive_023",
+          "icon": "radioactive9",
+          "type": "radioactive",
+          "cost": 30
         }
       ]
     },
     {
-      "id": "item_6",
-      "name": "Optical Systems",
-      "icon": "item_6",
-      "description": "Light manipulation and detection devices for sensing and communication",
-      "subItems": [
+      "id": "nav_trading_6",
+      "name": "Trading Skill 39",
+      "icon": "Skillicon14_39",
+      "description": "Become a master trader",
+      "layers": [
         {
-          "id": "item_6_1",
-          "name": "Laser Module",
-          "icon": "item_6_1",
-          "cost": 24,
-          "description": "Coherent light beam generator for cutting, welding, or measurement"
+          "texture": "Skillicon14_39",
+          "depth": 3
         },
         {
-          "id": "item_6_2",
-          "name": "Photon Lens",
-          "icon": "item_6_2",
-          "cost": 20,
-          "description": "Focuses or disperses light with quantum-precision optics"
+          "texture": "Frame_14",
+          "depth": 2
+        }
+      ],
+      "children": [
+        {
+          "id": "nav_trading_sub_1",
+          "name": "Fashion & Style",
+          "icon": "Skillicon14_40",
+          "description": "Collect stylish apparel",
+          "layers": [
+            {
+              "texture": "Skillicon14_40",
+              "depth": 3
+            },
+            {
+              "texture": "Frame_14",
+              "depth": 2
+            }
+          ],
+          "children": [
+            {
+              "id": "item_streetwear_001",
+              "icon": "streetwear1",
+              "type": "streetwear",
+              "cost": 16
+            },
+            {
+              "id": "item_streetwear_002",
+              "icon": "streetwear2",
+              "type": "streetwear",
+              "cost": 18
+            },
+            {
+              "id": "item_streetwear_003",
+              "icon": "streetwear3",
+              "type": "streetwear",
+              "cost": 22
+            },
+            {
+              "id": "item_streetwear_004",
+              "icon": "streetwear4",
+              "type": "streetwear",
+              "cost": 17
+            },
+            {
+              "id": "item_streetwear_005",
+              "icon": "streetwear5",
+              "type": "streetwear",
+              "cost": 14
+            }
+          ]
         },
         {
-          "id": "item_6_3",
-          "name": "Spectrum Prism",
-          "icon": "item_6_3",
-          "cost": 18,
-          "description": "Separates light into component wavelengths for analysis or art"
+          "id": "item_streetwear_008",
+          "icon": "streetwear6",
+          "type": "streetwear",
+          "cost": 15
         },
         {
-          "id": "item_6_4",
-          "name": "Sensor Array",
-          "icon": "item_6_4",
-          "cost": 16,
-          "description": "Detects light across multiple spectra for imaging and reconnaissance"
+          "id": "item_streetwear_009",
+          "icon": "streetwear7",
+          "type": "streetwear",
+          "cost": 19
         },
         {
-          "id": "item_6_5",
-          "name": "Mirror Unit",
-          "icon": "item_6_5",
-          "cost": 11,
-          "description": "Perfect reflection surface for redirecting or magnifying light paths"
-        },
-        {
-          "id": "item_6_6",
-          "name": "Diffraction Grating",
-          "icon": "item_6_6",
-          "cost": 13,
-          "description": "Splits light into spectral components for analysis or display effects"
+          "id": "item_streetwear_010",
+          "icon": "streetwear8",
+          "type": "streetwear",
+          "cost": 20
         }
       ]
     }

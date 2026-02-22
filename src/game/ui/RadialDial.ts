@@ -14,7 +14,7 @@ export class RadialDial {
   private sliceRadius: number = 150;
   private centerRadius: number = 50;
   private highlightedSliceIndex: number = -1;
-  private selectedItem: Item | SubItem | null = null; // Item shown in center
+  private selectedItem: MenuItem | null = null; // Item shown in center
   private dialX: number;
   private dialY: number;
   private sliceGraphics: Phaser.GameObjects.Graphics[] = [];
@@ -316,9 +316,10 @@ export class RadialDial {
 
     // Update center display with selected item
     if (this.selectedItem) {
-      const itemId = (this.selectedItem as any).id;
-      if (this.scene.textures.exists(itemId)) {
-        this.centerImage.setTexture(itemId);
+      const item = this.selectedItem as any;
+      const textureKey = item.icon || item.id;
+      if (this.scene.textures.exists(textureKey)) {
+        this.centerImage.setTexture(textureKey);
         this.centerImage.setPosition(this.dialX, this.dialY);
         this.centerImage.setVisible(true);
       } else {
@@ -442,8 +443,28 @@ export class RadialDial {
               this.sliceImages.push(layerImage);
             }
           });
+        } else if ('icon' in item && item.icon) {
+          // Use item.icon as texture key (MenuItem format)
+          const textureKey = item.icon;
+          if (this.scene.textures.exists(textureKey)) {
+            const image = this.scene.add.image(textX, textY, textureKey);
+            image.setScale(this.navigationController.getScaleForDepth());
+            image.setDepth(2);
+            this.sliceImages.push(image);
+          } else {
+            // Icon texture not loaded, fall back to text
+            const text = this.scene.add.text(textX, textY, item.name, {
+              fontSize: this.navigationController.getDepth() === 0 ? '12px' : '11px',
+              color: toColorString(Colors.WHITE),
+              align: 'center',
+              wordWrap: { width: 80 }
+            });
+            text.setOrigin(0.5, 0.5);
+            text.setDepth(0);
+            this.sliceTexts.push(text);
+          }
         } else if (this.scene.textures.exists(itemId)) {
-          // Create single image (legacy behavior)
+          // Create single image using itemId (legacy behavior)
           const image = this.scene.add.image(textX, textY, itemId);
           image.setScale(this.navigationController.getScaleForDepth());
           image.setDepth(2);

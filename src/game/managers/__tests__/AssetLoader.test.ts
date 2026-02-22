@@ -38,11 +38,11 @@ describe('AssetLoader', () => {
 
       // Should call load.image 5 times (2 categories + 3 sub-items)
       expect(mockScene.load.image).toHaveBeenCalledTimes(5);
-      expect(mockScene.load.image).toHaveBeenCalledWith('item_1', 'assets/items/item_1.png');
-      expect(mockScene.load.image).toHaveBeenCalledWith('item_1_1', 'assets/items/item_1_1.png');
-      expect(mockScene.load.image).toHaveBeenCalledWith('item_1_2', 'assets/items/item_1_2.png');
-      expect(mockScene.load.image).toHaveBeenCalledWith('item_2', 'assets/items/item_2.png');
-      expect(mockScene.load.image).toHaveBeenCalledWith('item_2_1', 'assets/items/item_2_1.png');
+      expect(mockScene.load.image).toHaveBeenCalledWith('icon1', 'assets/items/icon1.png');
+      expect(mockScene.load.image).toHaveBeenCalledWith('icon1', 'assets/items/icon1.png');
+      expect(mockScene.load.image).toHaveBeenCalledWith('icon2', 'assets/items/icon2.png');
+      expect(mockScene.load.image).toHaveBeenCalledWith('icon3', 'assets/items/icon3.png');
+      expect(mockScene.load.image).toHaveBeenCalledWith('icon4', 'assets/items/icon4.png');
     });
 
     it('should handle empty items', () => {
@@ -63,7 +63,7 @@ describe('AssetLoader', () => {
       AssetLoader.preloadItemAssets(mockScene, items);
       // Category image should still be loaded even with no sub-items
       expect(mockScene.load.image).toHaveBeenCalledTimes(1);
-      expect(mockScene.load.image).toHaveBeenCalledWith('item_1', 'assets/items/item_1.png');
+      expect(mockScene.load.image).toHaveBeenCalledWith('icon', 'assets/items/icon.png');
     });
 
     it('should construct correct asset paths', () => {
@@ -81,10 +81,10 @@ describe('AssetLoader', () => {
       AssetLoader.preloadItemAssets(mockScene, items);
       // Should call load.image 2 times (1 category + 1 sub-item)
       expect(mockScene.load.image).toHaveBeenCalledTimes(2);
-      expect(mockScene.load.image).toHaveBeenCalledWith('item_5', 'assets/items/item_5.png');
+      expect(mockScene.load.image).toHaveBeenCalledWith('icon', 'assets/items/icon.png');
       expect(mockScene.load.image).toHaveBeenCalledWith(
-        'item_5_3',
-        'assets/items/item_5_3.png'
+        'icon',
+        'assets/items/icon.png'
       );
     });
 

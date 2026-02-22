@@ -97,7 +97,7 @@ export class RadialDial {
 
     if (this.dragStartSliceIndex >= 0 && dragDistance >= this.minDragDistance) {
       this.isDragging = true;
-      if (distance < this.centerRadius) {
+      if (distance < this.centerRadius * this.centerDropRadiusMultiplier) {
         this.showDropCue = true;
         if (this.highlightedSliceIndex !== -999) {
           this.highlightedSliceIndex = -999;

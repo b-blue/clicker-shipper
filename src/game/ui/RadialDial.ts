@@ -21,14 +21,13 @@ export class RadialDial {
   private sliceImages: Phaser.GameObjects.Image[] = [];
   private centerGraphic: Phaser.GameObjects.Graphics;
   private centerImage: Phaser.GameObjects.Image;
-  private progressRing: Phaser.GameObjects.Graphics;
   private inputZone: Phaser.GameObjects.Zone;
   
-  // Hold-to-confirm properties
-  private isHoldingCenter: boolean = false;
-  private holdStartTime: number = 0;
-  private holdDuration: number = 1000; // 1 second to confirm
-  private holdUpdateTimer: Phaser.Time.TimerEvent | null = null;
+  // Drag-to-confirm properties
+  private dragStartSliceIndex: number = -1; // Index of slice where drag started
+  private isDragging: boolean = false;
+  private dragStartX: number = 0;
+  private dragStartY: number = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, items: Item[]) {
     this.scene = scene;
@@ -38,7 +37,6 @@ export class RadialDial {
     this.updateSliceCount();
     
     this.centerGraphic = scene.add.graphics();
-    this.progressRing = scene.add.graphics();
     this.centerImage = scene.add.image(x, y, '').setScale(0.6).setOrigin(0.5);
     this.centerImage.setDepth(10);
     
@@ -67,11 +65,6 @@ export class RadialDial {
     const dx = pointer.x - this.dialX;
     const dy = pointer.y - this.dialY;
     const distance = Math.sqrt(dx * dx + dy * dy);
-
-    // If holding center, don't highlight slices
-    if (this.isHoldingCenter) {
-      return;
-    }
 
     // Check if pointer is in center
     if (distance < this.centerRadius) {
@@ -108,70 +101,65 @@ export class RadialDial {
     const dy = pointer.y - this.dialY;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // Check if center was pressed
-    if (distance < this.centerRadius) {
-      this.isHoldingCenter = true;
-      this.holdStartTime = this.scene.time.now;
-      
-      // Start update loop to show progress
-      this.holdUpdateTimer = this.scene.time.addTimer({
-        delay: 50,
-        callback: () => this.updateHoldProgress(),
-        loop: true
-      });
-      
-      this.redrawDial();
+    // Record drag start position and slice
+    this.dragStartX = pointer.x;
+    this.dragStartY = pointer.y;
+    this.isDragging = false;
+
+    // Check if started on a slice
+    if (distance < this.sliceRadius + 50 && distance > this.centerRadius + 5) {
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+      const normalizedAngle = (angle + 360) % 360;
+      const sliceAngle = 360 / this.sliceCount;
+      const sliceIndex = Math.floor(normalizedAngle / sliceAngle);
+
+      if (sliceIndex < this.sliceCount) {
+        this.dragStartSliceIndex = sliceIndex;
+      }
     }
   }
 
   private handlePointerUp(): void {
-    if (this.isHoldingCenter) {
-      const holdDuration = this.scene.time.now - this.holdStartTime;
+    const dx = this.dragStartX - this.dialX;
+    const dy = this.dragStartY - this.dialY;
+    const dragStartDistance = Math.sqrt(dx * dx + dy * dy);
 
-      if (holdDuration >= this.holdDuration) {
-        // Hold was long enough - confirm selection
-        if (this.selectedItem && this.currentLevel === 1) {
-          // Only confirm at level 1 (sub-items)
+    // Check if this was a drag from slice to center
+    if (this.dragStartSliceIndex >= 0 && this.selectedItem) {
+      // Check if ended in center area
+      const currentDx = this.dragStartX - this.dialX;
+      const currentDy = this.dragStartY - this.dialY;
+      const currentDistance = Math.sqrt(currentDx * currentDx + currentDy * currentDy);
+      
+      if (currentDistance < this.centerRadius * 1.5) {
+        // Drag ended in center - confirm selection
+        if (this.currentLevel === 1) {
+          // At level 1, confirm the item
           this.scene.events.emit('dial:itemConfirmed', { item: this.selectedItem });
+          this.selectedItem = null;
+        } else if (this.currentLevel === 0) {
+          // At level 0, navigate to sub-items
+          this.currentParentItem = this.items[this.dragStartSliceIndex];
+          this.currentSubItems = this.currentParentItem.subItems;
+          this.currentLevel = 1;
+          this.selectedItem = null;
+          this.highlightedSliceIndex = -1;
+          this.updateSliceCount();
+          this.redrawDial();
+          this.scene.events.emit('dial:levelChanged', { level: 1, item: this.currentParentItem });
         }
       }
-      // If hold was too short, nothing happens (player can try again)
-
-      // Clean up
-      this.isHoldingCenter = false;
-      if (this.holdUpdateTimer) {
-        this.holdUpdateTimer.remove();
-        this.holdUpdateTimer = null;
-      }
-      this.redrawDial();
     } else if (this.highlightedSliceIndex === -999) {
-      // Tap on center (not hold) = go back
+      // Single tap on center (not drag) = go back
       if (this.currentLevel === 1) {
         this.reset();
         this.scene.events.emit('dial:goBack');
       }
-    } else if (this.highlightedSliceIndex >= 0 && !this.isHoldingCenter) {
-      // Tap on a slice (not hold)
-      if (this.currentLevel === 0) {
-        // Navigate to sub-items of this category
-        this.currentParentItem = this.items[this.highlightedSliceIndex];
-        this.currentSubItems = this.currentParentItem.subItems;
-        this.currentLevel = 1;
-        this.selectedItem = null;
-        this.highlightedSliceIndex = -1;
-        this.updateSliceCount();
-        this.redrawDial();
-        this.scene.events.emit('dial:levelChanged', { level: 1, item: this.currentParentItem });
-      }
-      // At level 1, taps just select the item (shown in center via pointermove)
-      // Player then holds center to confirm
     }
-  }
 
-  private updateHoldProgress(): void {
-    if (this.isHoldingCenter) {
-      this.redrawDial();
-    }
+    // Reset drag state
+    this.dragStartSliceIndex = -1;
+    this.isDragging = false;
   }
 
   private updateSelectedItem(): void {
@@ -194,21 +182,10 @@ export class RadialDial {
     const displayItems = this.currentLevel === 0 ? this.items : this.currentSubItems;
     const sliceAngle = (Math.PI * 2) / this.sliceCount;
 
-    // Draw center circle with hold indicator
+    // Draw center circle
     this.centerGraphic.clear();
     
-    if (this.isHoldingCenter) {
-      // During hold: show progress with animated color
-      const progress = Math.min(1, (this.scene.time.now - this.holdStartTime) / this.holdDuration);
-      const color = Phaser.Display.Color.Interpolate.ColorWithColor(
-        new Phaser.Display.Color(51, 51, 51),      // Dark gray (0x333333)
-        new Phaser.Display.Color(0, 255, 0),       // Green (0x00ff00)
-        1,
-        progress
-      );
-      const hexColor = Phaser.Display.Color.RGBToString(color.r, color.g, color.b);
-      this.centerGraphic.fillStyle(parseInt(hexColor.replace('#', '0x')), 1);
-    } else if (this.highlightedSliceIndex === -999 && this.currentLevel === 1) {
+    if (this.highlightedSliceIndex === -999 && this.currentLevel === 1) {
       // Center is highlighted (back button) - show orange
       this.centerGraphic.fillStyle(0xff6600, 1);
     } else {
@@ -217,20 +194,6 @@ export class RadialDial {
     }
     
     this.centerGraphic.fillCircle(this.dialX, this.dialY, this.centerRadius);
-
-    // Draw hold progress ring if holding
-    if (this.isHoldingCenter) {
-      const progress = Math.min(1, (this.scene.time.now - this.holdStartTime) / this.holdDuration);
-      const ringRadius = this.centerRadius + 10;
-      this.progressRing.clear();
-      this.progressRing.lineStyle(3, 0x00ff00, 1);
-      this.progressRing.beginPath();
-      const startAngle = -Math.PI / 2;
-      const endAngle = startAngle + (Math.PI * 2 * progress);
-      this.progressRing.arc(this.dialX, this.dialY, ringRadius, startAngle, endAngle);
-      this.progressRing.strokePath();
-      this.progressRing.setDepth(11);
-    }
 
     // Update center display with selected item
     if (this.selectedItem) {
@@ -267,7 +230,7 @@ export class RadialDial {
     for (let i = 0; i < this.sliceCount; i++) {
       const startAngle = i * sliceAngle - Math.PI / 2;
       const endAngle = startAngle + sliceAngle;
-      const isHighlighted = i === this.highlightedSliceIndex && !this.isHoldingCenter;
+      const isHighlighted = i === this.highlightedSliceIndex;
       const color = isHighlighted ? 0xff6600 : 0x0066ff;
 
       // Draw slice
@@ -352,11 +315,8 @@ export class RadialDial {
     this.currentSubItems = [];
     this.highlightedSliceIndex = -1;
     this.selectedItem = null;
-    this.isHoldingCenter = false;
-    if (this.holdUpdateTimer) {
-      this.holdUpdateTimer.remove();
-      this.holdUpdateTimer = null;
-    }
+    this.dragStartSliceIndex = -1;
+    this.isDragging = false;
     this.updateSliceCount();
     this.redrawDial();
   }
@@ -373,11 +333,7 @@ export class RadialDial {
     this.sliceTexts.forEach(t => t.destroy());
     this.sliceImages.forEach(i => i.destroy());
     this.centerGraphic.destroy();
-    this.progressRing.destroy();
     this.centerImage.destroy();
     this.inputZone.destroy();
-    if (this.holdUpdateTimer) {
-      this.holdUpdateTimer.remove();
-    }
   }
 }

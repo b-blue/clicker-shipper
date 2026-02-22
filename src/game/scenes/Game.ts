@@ -43,7 +43,7 @@ export class Game extends Phaser.Scene {
       });
 
       // Add temporary info text
-      this.add.text(50, 50, 'Game Scene - Tap slice to navigate, Hold center to confirm', { fontSize: '16px', color: '#fff' });
+      this.add.text(50, 50, 'Drag slice → center to select item, Tap center to go back', { fontSize: '16px', color: '#fff' });
     } catch (error) {
       console.error('Error creating Game scene:', error);
       this.add.text(50, 50, 'Error loading game data', { fontSize: '20px', color: '#ff0000' });

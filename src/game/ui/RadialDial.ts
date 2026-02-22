@@ -19,6 +19,7 @@ export class RadialDial {
   private sliceGraphics: Phaser.GameObjects.Graphics[] = [];
   private sliceTexts: Phaser.GameObjects.Text[] = [];
   private sliceImages: Phaser.GameObjects.Image[] = [];
+  private dialFrameGraphic: Phaser.GameObjects.Graphics;
   private centerGraphic: Phaser.GameObjects.Graphics;
   private centerImage: Phaser.GameObjects.Image;
   private inputZone: Phaser.GameObjects.Zone;
@@ -34,6 +35,8 @@ export class RadialDial {
   private readonly minDragDistance: number = 20;
   private centerDropRadiusMultiplier: number = 1.75;
   private showDropCue: boolean = false;
+  private glowAngle: number = 0;
+  private glowTimer: Phaser.Time.TimerEvent | null = null;
 
   constructor(scene: Phaser.Scene, x: number, y: number, items: Item[]) {
     this.scene = scene;
@@ -44,6 +47,8 @@ export class RadialDial {
     this.centerDropRadiusMultiplier = viewportWidth < 600 ? 2.2 : 1.75;
     this.updateSliceCount();
     
+    this.dialFrameGraphic = scene.add.graphics();
+    this.dialFrameGraphic.setDepth(-2);
     this.centerGraphic = scene.add.graphics();
     this.centerImage = scene.add.image(x, y, '').setScale(0.6).setOrigin(0.5);
     this.centerImage.setDepth(10);
@@ -51,6 +56,17 @@ export class RadialDial {
     // Create invisible zone for input detection
     this.inputZone = scene.add.zone(x, y, 400, 400);
     
+    if (this.scene.time?.addEvent) {
+      this.glowTimer = this.scene.time.addEvent({
+        delay: 60,
+        loop: true,
+        callback: () => {
+          this.glowAngle = (this.glowAngle + 0.15) % (Math.PI * 2);
+          this.redrawDial();
+        }
+      });
+    }
+
     this.setUpInputHandlers();
     this.reset();
   }
@@ -231,26 +247,59 @@ export class RadialDial {
     this.sliceTexts = [];
     this.sliceImages = [];
 
+    this.dialFrameGraphic.clear();
+
     const displayItems = this.currentLevel === 0 ? this.items : this.currentSubItems;
     const sliceAngle = (Math.PI * 2) / this.sliceCount;
 
-    // Draw center circle
-    this.centerGraphic.clear();
-    
-    if (this.showDropCue) {
-      // Drop cue when dragging into center
-      this.centerGraphic.fillStyle(0x00cc88, 1);
-    } else if (this.highlightedSliceIndex === -999 && this.currentLevel === 1) {
-      // Center is highlighted (back button) - show orange
-      this.centerGraphic.fillStyle(0xff6600, 1);
-    } else {
-      // Normal center
-      this.centerGraphic.fillStyle(0x333333, 1);
+    // Draw glassy HUD frame
+    const frameRadius = this.sliceRadius + 10;
+    this.dialFrameGraphic.fillStyle(0x0b1c3a, 0.35);
+    this.dialFrameGraphic.fillCircle(this.dialX, this.dialY, frameRadius);
+    this.dialFrameGraphic.lineStyle(2, 0x1c3e6b, 0.8);
+    this.dialFrameGraphic.strokeCircle(this.dialX, this.dialY, frameRadius);
+    this.dialFrameGraphic.lineStyle(1, 0x1c3e6b, 0.45);
+    this.dialFrameGraphic.strokeCircle(this.dialX, this.dialY, this.sliceRadius * 0.6);
+    this.dialFrameGraphic.beginPath();
+    for (let i = 0; i < this.sliceCount; i++) {
+      const angle = i * sliceAngle - Math.PI / 2;
+      const inner = this.centerRadius + 6;
+      const outer = this.sliceRadius + 8;
+      this.dialFrameGraphic.moveTo(
+        this.dialX + Math.cos(angle) * inner,
+        this.dialY + Math.sin(angle) * inner
+      );
+      this.dialFrameGraphic.lineTo(
+        this.dialX + Math.cos(angle) * outer,
+        this.dialY + Math.sin(angle) * outer
+      );
     }
-    
-    this.centerGraphic.fillCircle(this.dialX, this.dialY, this.centerRadius);
+    this.dialFrameGraphic.strokePath();
+
+    // Draw center ring
+    this.centerGraphic.clear();
+
+    this.centerGraphic.fillStyle(0x0b1c3a, 0.35);
+    this.centerGraphic.fillCircle(this.dialX, this.dialY, this.centerRadius - 2);
+
+    const ringColor = this.showDropCue
+      ? 0xffd54a
+      : this.highlightedSliceIndex === -999 && this.currentLevel === 1
+        ? 0xffd54a
+        : 0x8fd4ff;
+    const ringAlpha = this.showDropCue ? 1 : 0.7;
+    this.centerGraphic.lineStyle(3, ringColor, ringAlpha);
+    this.centerGraphic.strokeCircle(this.dialX, this.dialY, this.centerRadius);
+
+    const glowStart = this.glowAngle;
+    const glowEnd = glowStart + Math.PI / 3;
+    this.centerGraphic.lineStyle(4, 0xfff2a8, this.showDropCue ? 1 : 0.6);
+    this.centerGraphic.beginPath();
+    this.centerGraphic.arc(this.dialX, this.dialY, this.centerRadius + 2, glowStart, glowEnd);
+    this.centerGraphic.strokePath();
+
     if (this.showDropCue) {
-      this.centerGraphic.lineStyle(3, 0x00ff99, 1);
+      this.centerGraphic.lineStyle(2, 0xffd54a, 0.6);
       this.centerGraphic.strokeCircle(this.dialX, this.dialY, this.centerRadius + 6);
     }
 
@@ -290,11 +339,12 @@ export class RadialDial {
       const startAngle = i * sliceAngle - Math.PI / 2;
       const endAngle = startAngle + sliceAngle;
       const isHighlighted = i === this.highlightedSliceIndex;
-      const color = isHighlighted ? 0xff6600 : 0x0066ff;
+      const color = isHighlighted ? 0x1b4b7a : 0x0f274d;
+      const alpha = isHighlighted ? 0.85 : 0.6;
 
       // Draw slice
       const graphics = this.scene.add.graphics();
-      graphics.fillStyle(color, 0.7);
+      graphics.fillStyle(color, alpha);
       graphics.beginPath();
       graphics.moveTo(this.dialX, this.dialY);
       graphics.lineTo(
@@ -305,6 +355,17 @@ export class RadialDial {
       graphics.lineTo(this.dialX, this.dialY);
       graphics.closePath();
       graphics.fillPath();
+      graphics.lineStyle(1, 0x4aa3ff, 0.35);
+      graphics.beginPath();
+      graphics.moveTo(this.dialX, this.dialY);
+      graphics.lineTo(
+        this.dialX + Math.cos(startAngle) * this.sliceRadius,
+        this.dialY + Math.sin(startAngle) * this.sliceRadius
+      );
+      graphics.arc(this.dialX, this.dialY, this.sliceRadius, startAngle, endAngle);
+      graphics.lineTo(this.dialX, this.dialY);
+      graphics.closePath();
+      graphics.strokePath();
       graphics.setDepth(0);
 
       this.sliceGraphics.push(graphics);
@@ -391,8 +452,12 @@ export class RadialDial {
     this.sliceGraphics.forEach(g => g.destroy());
     this.sliceTexts.forEach(t => t.destroy());
     this.sliceImages.forEach(i => i.destroy());
+    this.dialFrameGraphic.destroy();
     this.centerGraphic.destroy();
     this.centerImage.destroy();
     this.inputZone.destroy();
+    if (this.glowTimer) {
+      this.glowTimer.remove();
+    }
   }
 }

@@ -53,6 +53,7 @@ const createMockScene = (): MockScene => ({
       closePath: jest.fn(),
       fillPath: jest.fn(),
       fillCircle: jest.fn(),
+      strokePath: jest.fn(),
       setDepth: jest.fn(),
       lineStyle: jest.fn(),
       strokeCircle: jest.fn(),
@@ -84,6 +85,11 @@ const createMockScene = (): MockScene => ({
   },
   textures: {
     exists: jest.fn(() => false),
+  },
+  time: {
+    addEvent: jest.fn(() => ({
+      remove: jest.fn(),
+    })),
   },
   cameras: {
     main: {

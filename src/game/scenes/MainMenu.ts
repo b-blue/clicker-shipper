@@ -9,12 +9,12 @@ export class MainMenu extends Phaser.Scene {
     const gameHeight = this.cameras.main.height;
 
     // Background
-    this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, 0x1a1a2e);
+    this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, 0x0a1022);
 
     // Title
     const titleText = this.add.text(gameWidth / 2, gameHeight * 0.15, 'INTERGALACTIC SHIPPER', {
       fontSize: '48px',
-      color: '#00ff00',
+      color: '#ffd54a',
       fontStyle: 'bold',
       fontFamily: 'monospace'
     }).setOrigin(0.5);
@@ -22,7 +22,7 @@ export class MainMenu extends Phaser.Scene {
     // Subtitle
     this.add.text(gameWidth / 2, gameHeight * 0.25, 'Order Fulfillment Terminal', {
       fontSize: '20px',
-      color: '#00ccff',
+      color: '#8fd4ff',
       fontFamily: 'monospace'
     }).setOrigin(0.5);
 
@@ -31,18 +31,18 @@ export class MainMenu extends Phaser.Scene {
     const buttonSpacing = 80;
 
     // Start Shift button
-    this.createButton(gameWidth / 2, buttonY, 'START SHIFT', () => this.punchIn(), '#00ff00');
+    this.createButton(gameWidth / 2, buttonY, 'START SHIFT', () => this.punchIn(), '#ffd54a');
 
     // Item Manual button
-    this.createButton(gameWidth / 2, buttonY + buttonSpacing, 'ITEM MANUAL', () => this.openManual(), '#00ccff');
+    this.createButton(gameWidth / 2, buttonY + buttonSpacing, 'ITEM MANUAL', () => this.openManual(), '#ffd54a');
 
     // Exit button
-    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 2, 'EXIT', () => this.exitGame(), '#ff6600');
+    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 2, 'EXIT', () => this.exitGame(), '#ffd54a');
 
     // Footer
     this.add.text(gameWidth / 2, gameHeight * 0.9, 'Press SPACE to START SHIFT • Press M to view MANUAL', {
       fontSize: '12px',
-      color: '#666666',
+      color: '#6e90b8',
       align: 'center',
       fontFamily: 'monospace'
     }).setOrigin(0.5);
@@ -52,19 +52,19 @@ export class MainMenu extends Phaser.Scene {
     this.input.keyboard?.on('keydown-M', () => this.openManual());
   }
 
-  private createButton(x: number, y: number, text: string, callback: () => void, color: string = '#00ff00'): void {
+  private createButton(x: number, y: number, text: string, callback: () => void, color: string = '#ffd54a'): void {
     const buttonWidth = 200;
     const buttonHeight = 50;
 
     // Button background
-    const buttonBg = this.add.rectangle(x, y, buttonWidth, buttonHeight, 0x003300, 0.7);
+    const buttonBg = this.add.rectangle(x, y, buttonWidth, buttonHeight, 0x0b1c3a, 0.75);
     buttonBg.setInteractive();
     buttonBg.on('pointerdown', callback);
     buttonBg.on('pointerover', () => {
-      buttonBg.setFillStyle(0x004400, 0.9);
+      buttonBg.setFillStyle(0x122a52, 0.9);
     });
     buttonBg.on('pointerout', () => {
-      buttonBg.setFillStyle(0x003300, 0.7);
+      buttonBg.setFillStyle(0x0b1c3a, 0.75);
     });
 
     // Button border

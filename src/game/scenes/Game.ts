@@ -20,6 +20,12 @@ export class Game extends Phaser.Scene {
       // Calculate dial position based on viewport (responsive)
       const gameWidth = this.cameras.main.width;
       const gameHeight = this.cameras.main.height;
+
+      // Background
+      this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, 0x0a1022);
+
+      // HUD strip (holographic panel)
+      this.add.rectangle(gameWidth / 2, 28, gameWidth - 24, 40, 0x0b1c3a, 0.75);
       const dialX = gameWidth - 200;
       const dialY = gameHeight - 150;
 
@@ -43,13 +49,13 @@ export class Game extends Phaser.Scene {
       });
 
       const buildHash = '84bee6b';
-      this.add.text(12, 12, `Build: ${buildHash}`, { fontSize: '12px', color: '#9bdcff' });
+      this.add.text(24, 16, `Build: ${buildHash}`, { fontSize: '12px', color: '#ffd54a' });
 
       // Add temporary info text
-      this.add.text(50, 50, 'Drag slice → center to select item, Tap center to go back', { fontSize: '16px', color: '#fff' });
+      this.add.text(24, 42, 'Drag slice → center to select item, Tap center to go back', { fontSize: '14px', color: '#8fd4ff' });
     } catch (error) {
       console.error('Error creating Game scene:', error);
-      this.add.text(50, 50, 'Error loading game data', { fontSize: '20px', color: '#ff0000' });
+      this.add.text(50, 50, 'Error loading game data', { fontSize: '20px', color: '#ffd54a' });
     }
   }
 

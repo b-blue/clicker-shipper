@@ -19,10 +19,16 @@ describe('MainMenu scene', () => {
     const text = jest.fn(() => ({
       setOrigin: jest.fn().mockReturnThis(),
     }));
+    const bitmapText = jest.fn(() => ({
+      setOrigin: jest.fn().mockReturnThis(),
+      setTint: jest.fn().mockReturnThis(),
+      setMaxWidth: jest.fn().mockReturnThis(),
+    }));
 
     (scene as any).add = {
       rectangle,
       text,
+      bitmapText,
     };
 
     const keyboardOn = jest.fn();
@@ -44,21 +50,16 @@ describe('MainMenu scene', () => {
       launch: jest.fn(),
     };
 
-    return { scene, rectangle, text, keyboardOn };
+    return { scene, rectangle, text, bitmapText, keyboardOn };
   };
 
   it('renders the background and title', async () => {
-    const { scene, rectangle, text } = await createScene();
+    const { scene, rectangle, bitmapText } = await createScene();
 
     scene.create();
 
     expect(rectangle).toHaveBeenCalledWith(400, 300, 800, 600, Colors.BACKGROUND_DARK);
-    expect(text).toHaveBeenCalledWith(
-      400,
-      90,
-      'INTERGALACTIC SHIPPER',
-      expect.objectContaining({ fontSize: '48px' })
-    );
+    expect(bitmapText).toHaveBeenCalledWith(400, 90, 'clicker', 'INTERGALACTIC SHIPPER', 32);
   });
 
   it('wires keyboard shortcuts', async () => {

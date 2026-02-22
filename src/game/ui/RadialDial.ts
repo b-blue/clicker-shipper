@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { MenuItem, Item } from '../types/GameTypes';
-import { Colors, toColorString } from '../constants/Colors';
+import { Colors } from '../constants/Colors';
 import { NavigationController } from '../controllers/NavigationController';
 import { normalizeItems } from '../utils/ItemAdapter';
 
@@ -449,14 +449,10 @@ export class RadialDial {
             this.sliceImages.push(image);
           } else {
             // Icon texture not loaded, fall back to text
-            const text = this.scene.add.text(textX, textY, item.name, {
-              fontSize: this.navigationController.getDepth() === 0 ? '12px' : '11px',
-              color: toColorString(Colors.WHITE),
-              align: 'center',
-              wordWrap: { width: 80 }
-            });
-            text.setOrigin(0.5, 0.5);
-            text.setDepth(0);
+            const text = this.scene.add.bitmapText(textX, textY, 'clicker', item.name.toUpperCase(), this.navigationController.getDepth() === 0 ? 12 : 11)
+              .setOrigin(0.5, 0.5)
+              .setMaxWidth(80)
+              .setDepth(0);
             this.sliceTexts.push(text);
           }
         } else if (this.scene.textures.exists(itemId)) {
@@ -467,37 +463,25 @@ export class RadialDial {
           this.sliceImages.push(image);
         } else {
           // Texture doesn't exist, fall back to text
-          const text = this.scene.add.text(textX, textY, item.name, {
-            fontSize: this.navigationController.getDepth() === 0 ? '12px' : '11px',
-            color: toColorString(Colors.WHITE),
-            align: 'center',
-            wordWrap: { width: 80 }
-          });
-          text.setOrigin(0.5, 0.5);
-          text.setDepth(0);
+          const text = this.scene.add.bitmapText(textX, textY, 'clicker', item.name.toUpperCase(), this.navigationController.getDepth() === 0 ? 12 : 11)
+            .setOrigin(0.5, 0.5)
+            .setMaxWidth(80)
+            .setDepth(0);
           this.sliceTexts.push(text);
         }
       } else {
         // No id property, fall back to text
-        const text = this.scene.add.text(textX, textY, (item as any).name, {
-          fontSize: '12px',
-          color: toColorString(Colors.WHITE),
-          align: 'center',
-          wordWrap: { width: 80 }
-        });
-        text.setOrigin(0.5, 0.5);
-        text.setDepth(0);
+        const text = this.scene.add.bitmapText(textX, textY, 'clicker', (item as any).name.toUpperCase(), 12)
+          .setOrigin(0.5, 0.5)
+          .setMaxWidth(80)
+          .setDepth(0);
         this.sliceTexts.push(text);
 
         // Add corner badge indicator for navigable items
         if (this.navigationController.isNavigable(item)) {
           const badgeX = textX + 20;
           const badgeY = textY - 20;
-          const badgeText = this.scene.add.text(badgeX, badgeY, '▶', {
-            fontSize: '16px',
-            color: toColorString(Colors.HIGHLIGHT_YELLOW),
-            fontStyle: 'bold'
-          });
+          const badgeText = this.scene.add.bitmapText(badgeX, badgeY, 'clicker', '>', 16);
           badgeText.setOrigin(0.5, 0.5);
           badgeText.setDepth(5);
           this.sliceTexts.push(badgeText);

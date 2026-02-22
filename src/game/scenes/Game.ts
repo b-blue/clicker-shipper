@@ -1,7 +1,7 @@
 import { RadialDial } from '../ui/RadialDial';
 import { GameManager } from '../managers/GameManager';
 import { SettingsManager } from '../managers/SettingsManager';
-import { Colors, toColorString } from '../constants/Colors';
+import { Colors } from '../constants/Colors';
 
 export class Game extends Phaser.Scene {
   private radialDial: RadialDial | null = null;
@@ -42,13 +42,8 @@ export class Game extends Phaser.Scene {
       manualBg.on('pointerdown', () => this.scene.launch('ItemManual'));
       manualBg.on('pointerover', () => manualBg.setFillStyle(Colors.BUTTON_HOVER, 0.95));
       manualBg.on('pointerout', () => manualBg.setFillStyle(Colors.PANEL_DARK, 0.9));
-      this.add.text(manualX, manualY, 'CATALOG', {
-        fontSize: '13px',
-        color: toColorString(Colors.HIGHLIGHT_YELLOW),
-        fontStyle: 'bold',
-        fontFamily: 'monospace',
-        align: 'center'
-      }).setOrigin(0.5);
+      this.add.bitmapText(manualX, manualY, 'clicker', 'CATALOG', 13)
+        .setOrigin(0.5);
       this.radialDial = new RadialDial(this, dialX, dialY, items);
 
       // Listen for item confirmation (hold-to-confirm on center)
@@ -67,16 +62,18 @@ export class Game extends Phaser.Scene {
         console.log('Returned to main menu');
       });
 
-      const buildHash = '84bee6b';
-      this.add.text(24, 16, `Build: ${buildHash}`, { fontSize: '12px', color: toColorString(Colors.HIGHLIGHT_YELLOW) });
+      const buildHash = '84BEE6B';
+      this.add.rectangle(100, 16, 160, 20, Colors.PANEL_MEDIUM, 0.85);
+      this.add.bitmapText(24, 16, 'clicker', `BUILD ${buildHash}`, 12);
 
       // Add temporary info text
-      this.add.text(24, 42, 'Drag slice → center to select item, Tap center to go back', { fontSize: '14px', color: toColorString(Colors.LIGHT_BLUE) });
+      this.add.rectangle(200, 42, 360, 20, Colors.PANEL_MEDIUM, 0.85);
+      this.add.bitmapText(24, 42, 'clicker', 'DRAG SLICE TO CENTER TO SELECT ITEM', 12);
 
       this.input.keyboard?.on('keydown-M', () => this.scene.launch('ItemManual'));
     } catch (error) {
       console.error('Error creating Game scene:', error);
-      this.add.text(50, 50, 'Error loading game data', { fontSize: '20px', color: toColorString(Colors.HIGHLIGHT_YELLOW) });
+      this.add.bitmapText(50, 50, 'clicker', 'ERROR LOADING GAME DATA', 20);
     }
   }
 

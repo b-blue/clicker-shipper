@@ -7,6 +7,7 @@ type MockScene = {
     graphics: jest.Mock;
     image: jest.Mock;
     text: jest.Mock;
+    bitmapText: jest.Mock;
     zone: jest.Mock;
   };
   input: {
@@ -87,6 +88,13 @@ const createMockScene = (): MockScene => {
       text: jest.fn(() => ({
         setOrigin: jest.fn(function () { return this; }),
         setDepth: jest.fn(function () { return this; }),
+        destroy: jest.fn(),
+      })),
+      bitmapText: jest.fn(() => ({
+        setOrigin: jest.fn(function () { return this; }),
+        setDepth: jest.fn(function () { return this; }),
+        setTint: jest.fn(function () { return this; }),
+        setMaxWidth: jest.fn(function () { return this; }),
         destroy: jest.fn(),
       })),
       zone: jest.fn(() => ({

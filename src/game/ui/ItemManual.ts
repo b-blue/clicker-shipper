@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { MenuItem } from '../types/GameTypes';
 import { GameManager } from '../managers/GameManager';
-import { Colors, toColorString } from '../constants/Colors';
+import { Colors } from '../constants/Colors';
 import { normalizeItems } from '../utils/ItemAdapter';
 
 export class ItemManual extends Phaser.Scene {
@@ -29,22 +29,17 @@ export class ItemManual extends Phaser.Scene {
     // Background panel
     this.add.rectangle(panelX, panelY, panelWidth, panelHeight, Colors.BACKGROUND_DARK);
 
-    // Title
-    this.add.text(panelX, gameHeight * 0.06, 'ITEM CATALOG', {
-      fontSize: '32px',
-      color: toColorString(Colors.HIGHLIGHT_YELLOW),
-      align: 'center',
-      fontFamily: 'Arial',
-    }).setOrigin(0.5);
+    // Title with background
+    this.add.rectangle(panelX, gameHeight * 0.06, 400, 48, Colors.PANEL_MEDIUM, 0.9);
+    this.add.bitmapText(panelX, gameHeight * 0.06, 'clicker', 'ITEM CATALOG', 32)
+      .setOrigin(0.5);
 
     // Close button
     const closeBtn = this.add.rectangle(gameWidth * 0.95, gameHeight * 0.06, 40, 40, Colors.BUTTON_DARK);
     closeBtn.setInteractive();
     closeBtn.on('pointerdown', () => this.scene.stop());
-    this.add.text(gameWidth * 0.95, gameHeight * 0.06, 'X', {
-      fontSize: '20px',
-      color: toColorString(Colors.HIGHLIGHT_YELLOW),
-    }).setOrigin(0.5);
+    this.add.bitmapText(gameWidth * 0.95, gameHeight * 0.06, 'clicker', 'X', 20)
+      .setOrigin(0.5);
 
     // List layout
     const listLeft = panelX - panelWidth / 2 + 30;
@@ -91,34 +86,25 @@ export class ItemManual extends Phaser.Scene {
         const iconImage = this.add.image(iconX, iconY, row.item.icon).setScale(iconScale).setDepth(2);
         listContainer.add(iconImage);
       } else {
-        const fallbackText = this.add.text(iconX, iconY, '?', {
-          fontSize: '18px',
-          color: toColorString(Colors.HIGHLIGHT_YELLOW),
-        }).setOrigin(0.5);
+        const fallbackText = this.add.bitmapText(iconX, iconY, 'clicker', '?', 18)
+          .setOrigin(0.5);
         listContainer.add(fallbackText);
       }
 
       if (row.isChild) {
         const cost = row.item.cost ?? 0;
-        const childText = `| ${cost}Q | ${row.item.name}`;
-        const childLabel = this.add.text(iconX + iconFrameSize / 2 + 20, rowY, childText, {
-          fontSize: '12px',
-          color: toColorString(Colors.PALE_BLUE_2),
-          wordWrap: { width: rowWidth - iconFrameSize - 80 },
-        }).setOrigin(0, 0.5);
+        const childText = `| ${cost}Q | ${row.item.name.toUpperCase()}`;
+        const childLabel = this.add.bitmapText(iconX + iconFrameSize / 2 + 20, rowY, 'clicker', childText, 12)
+          .setOrigin(0, 0.5)
+          .setMaxWidth(rowWidth - iconFrameSize - 80);
         listContainer.add(childLabel);
       } else {
-        const description = row.item.description || 'No description available.';
-        const title = this.add.text(iconX + iconFrameSize / 2 + 20, rowY - 12, row.item.name, {
-          fontSize: '14px',
-          color: toColorString(Colors.HIGHLIGHT_YELLOW),
-          fontStyle: 'bold',
-        }).setOrigin(0, 0.5);
-        const desc = this.add.text(iconX + iconFrameSize / 2 + 20, rowY + 12, description, {
-          fontSize: '12px',
-          color: toColorString(Colors.PALE_BLUE_2),
-          wordWrap: { width: rowWidth - iconFrameSize - 80 },
-        }).setOrigin(0, 0.5);
+        const description = row.item.description || 'NO DESCRIPTION AVAILABLE';
+        const title = this.add.bitmapText(iconX + iconFrameSize / 2 + 20, rowY - 12, 'clicker', row.item.name.toUpperCase(), 14)
+          .setOrigin(0, 0.5);
+        const desc = this.add.bitmapText(iconX + iconFrameSize / 2 + 20, rowY + 12, 'clicker', description.toUpperCase(), 12)
+          .setOrigin(0, 0.5)
+          .setMaxWidth(rowWidth - iconFrameSize - 80);
         listContainer.add([title, desc]);
       }
     });

@@ -11,6 +11,9 @@ export class Preloader extends Phaser.Scene {
     // Load config and items data
     this.load.json('config', 'data/config.json');
     this.load.json('items', 'data/items.json');
+    
+    // Load bitmap font
+    this.load.bitmapFont('clicker', 'assets/fonts/clicker.png', 'assets/fonts/clicker.fnt');
   }
 
   async create() {

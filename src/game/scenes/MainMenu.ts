@@ -13,20 +13,15 @@ export class MainMenu extends Phaser.Scene {
     // Background
     this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, Colors.BACKGROUND_DARK);
 
-    // Title
-    this.add.text(gameWidth / 2, gameHeight * 0.15, 'INTERGALACTIC SHIPPER', {
-      fontSize: '48px',
-      color: toColorString(Colors.HIGHLIGHT_YELLOW),
-      fontStyle: 'bold',
-      fontFamily: 'monospace'
-    }).setOrigin(0.5);
+    // Title with background
+    this.add.rectangle(gameWidth / 2, gameHeight * 0.15, 700, 50, Colors.PANEL_MEDIUM, 0.9);
+    this.add.bitmapText(gameWidth / 2, gameHeight * 0.15, 'clicker', 'INTERGALACTIC SHIPPER', 32)
+      .setOrigin(0.5);
 
-    // Subtitle
-    this.add.text(gameWidth / 2, gameHeight * 0.25, 'Order Fulfillment Terminal', {
-      fontSize: '20px',
-      color: toColorString(Colors.LIGHT_BLUE),
-      fontFamily: 'monospace'
-    }).setOrigin(0.5);
+    // Subtitle with background
+    this.add.rectangle(gameWidth / 2, gameHeight * 0.25, 500, 30, Colors.PANEL_MEDIUM, 0.85);
+    this.add.bitmapText(gameWidth / 2, gameHeight * 0.25, 'clicker', 'ORDER FULFILLMENT TERMINAL', 16)
+      .setOrigin(0.5);
 
     // Menu buttons
     const buttonY = gameHeight * 0.45;
@@ -44,13 +39,10 @@ export class MainMenu extends Phaser.Scene {
     // Exit button
     this.createButton(gameWidth / 2, buttonY + buttonSpacing * 3, 'EXIT', () => this.exitGame());
 
-    // Footer
-    this.add.text(gameWidth / 2, gameHeight * 0.9, 'Press SPACE to START SHIFT • Press M to view CATALOG', {
-      fontSize: '12px',
-      color: toColorString(Colors.TEXT_MUTED_BLUE),
-      align: 'center',
-      fontFamily: 'monospace'
-    }).setOrigin(0.5);
+    // Footer with background
+    this.add.rectangle(gameWidth / 2, gameHeight * 0.9, 400, 24, Colors.PANEL_MEDIUM, 0.85);
+    this.add.bitmapText(gameWidth / 2, gameHeight * 0.9, 'clicker', 'PRESS SPACE TO START SHIFT', 12)
+      .setOrigin(0.5);
 
     // Keyboard shortcuts
     this.input.keyboard?.on('keydown-SPACE', () => this.punchIn());
@@ -76,14 +68,11 @@ export class MainMenu extends Phaser.Scene {
     const color = parseInt(colorHex.replace('#', ''), 16);
     this.add.rectangle(x, y, buttonWidth, buttonHeight).setStrokeStyle(2, color);
 
+    // Button text background
+    this.add.rectangle(x, y, buttonWidth - 10, 28, Colors.PANEL_MEDIUM, 0.8);
     // Button text
-    this.add.text(x, y, text, {
-      fontSize: '18px',
-      color: colorHex,
-      fontStyle: 'bold',
-      fontFamily: 'monospace',
-      align: 'center'
-    }).setOrigin(0.5);
+    this.add.bitmapText(x, y, 'clicker', text, 18)
+      .setOrigin(0.5);
   }
 
   punchIn() {

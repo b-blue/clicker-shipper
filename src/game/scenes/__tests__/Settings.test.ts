@@ -67,6 +67,12 @@ describe('Settings scene', () => {
       setOrigin: jest.fn().mockReturnThis(),
       setText: jest.fn().mockReturnThis(),
     }));
+    
+    const mockBitmapText = jest.fn(() => ({
+      setOrigin: jest.fn().mockReturnThis(),
+      setText: jest.fn().mockReturnThis(),
+      setTint: jest.fn().mockReturnThis(),
+    }));
 
     const mockGraphics = jest.fn(() => ({
       lineStyle: jest.fn().mockReturnThis(),
@@ -79,6 +85,7 @@ describe('Settings scene', () => {
     (scene as any).add = {
       rectangle: mockRectangle,
       text: mockText,
+      bitmapText: mockBitmapText,
       graphics: mockGraphics,
     };
 
@@ -104,7 +111,7 @@ describe('Settings scene', () => {
       })),
     };
 
-    return { scene, mockRectangle, mockText, mockGraphics };
+    return { scene, mockRectangle, mockText, mockBitmapText, mockGraphics };
   };
 
   it('renders the background and panel', async () => {
@@ -120,56 +127,26 @@ describe('Settings scene', () => {
   });
 
   it('renders the title', async () => {
-    const { scene, mockText } = await createScene();
+    const { scene, mockBitmapText } = await createScene();
 
     scene.create();
 
-    expect(mockText).toHaveBeenCalledWith(
-      400,
-      60,
-      'SETTINGS',
-      expect.objectContaining({
-        fontSize: '32px',
-        color: toColorString(Colors.HIGHLIGHT_YELLOW),
-      })
-    );
+    expect(mockBitmapText).toHaveBeenCalledWith(400, 60, 'clicker', 'SETTINGS', 32);
   });
 
   it('renders section header and controls', async () => {
-    const { scene, mockText } = await createScene();
+    const { scene, mockBitmapText } = await createScene();
 
     scene.create();
 
     // Section header
-    expect(mockText).toHaveBeenCalledWith(
-      400,
-      108,
-      'DIAL POSITION',
-      expect.objectContaining({
-        fontSize: '16px',
-        color: toColorString(Colors.LIGHT_BLUE),
-      })
-    );
+    expect(mockBitmapText).toHaveBeenCalledWith(400, 108, 'clicker', 'DIAL POSITION', 16);
 
     // Horizontal label
-    expect(mockText).toHaveBeenCalledWith(
-      expect.any(Number),
-      174,
-      'Horizontal:',
-      expect.objectContaining({
-        fontSize: '14px',
-      })
-    );
+    expect(mockBitmapText).toHaveBeenCalledWith(expect.any(Number), 174, 'clicker', 'HORIZONTAL', 14);
 
     // Vertical label
-    expect(mockText).toHaveBeenCalledWith(
-      expect.any(Number),
-      216,
-      'Vertical:',
-      expect.objectContaining({
-        fontSize: '14px',
-      })
-    );
+    expect(mockBitmapText).toHaveBeenCalledWith(expect.any(Number), 216, 'clicker', 'VERTICAL', 14);
   });
 
   it('loads current settings from SettingsManager', async () => {
@@ -179,23 +156,13 @@ describe('Settings scene', () => {
       showOutline: true,
     });
 
-    const { scene, mockText } = await createScene();
+    const { scene, mockBitmapText } = await createScene();
 
     scene.create();
 
     expect(mockSettingsManager.getDialSettings).toHaveBeenCalled();
-    expect(mockText).toHaveBeenCalledWith(
-      400,
-      174,
-      '-250px',
-      expect.any(Object)
-    );
-    expect(mockText).toHaveBeenCalledWith(
-      400,
-      216,
-      '-180px',
-      expect.any(Object)
-    );
+    expect(mockBitmapText).toHaveBeenCalledWith(400, 174, 'clicker', '-250', 14);
+    expect(mockBitmapText).toHaveBeenCalledWith(400, 216, 'clicker', '-180', 14);
   });
 
   it('renders three buttons in a single row', async () => {
@@ -275,8 +242,8 @@ describe('Settings scene', () => {
 
     expect((scene as any).dialX).toBe(-200);
     expect((scene as any).dialY).toBe(-150);
-    expect(mockTextObj.setText).toHaveBeenCalledWith('-200px');
-    expect(mockTextObj.setText).toHaveBeenCalledWith('-150px');
+    expect(mockTextObj.setText).toHaveBeenCalledWith('-200');
+    expect(mockTextObj.setText).toHaveBeenCalledWith('-150');
   });
 
   it('saves settings and returns to main menu', async () => {
@@ -375,28 +342,14 @@ describe('Settings scene', () => {
   });
 
   it('renders outline toggle with correct initial state', async () => {
-    const { scene, mockText } = await createScene();
+    const { scene, mockBitmapText } = await createScene();
 
     scene.create();
 
-    // Check for "Show Outline:" label
-    expect(mockText).toHaveBeenCalledWith(
-      expect.any(Number),
-      258,
-      'Show Outline:',
-      expect.objectContaining({
-        fontSize: '14px',
-      })
-    );
+    // Check for "SHOW OUTLINE" label
+    expect(mockBitmapText).toHaveBeenCalledWith(expect.any(Number), 258, 'clicker', 'SHOW OUTLINE', 14);
 
     // Check for toggle button with OFF state
-    expect(mockText).toHaveBeenCalledWith(
-      400,
-      258,
-      'OFF',
-      expect.objectContaining({
-        fontSize: '14px',
-      })
-    );
+    expect(mockBitmapText).toHaveBeenCalledWith(400, 258, 'clicker', 'OFF', 14);
   });
 });

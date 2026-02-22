@@ -1,5 +1,5 @@
 import { Scene } from 'phaser';
-import { Colors, toColorString } from '../constants/Colors';
+import { Colors } from '../constants/Colors';
 import { SettingsManager } from '../managers/SettingsManager';
 
 export class Settings extends Scene {
@@ -32,11 +32,8 @@ export class Settings extends Scene {
       .setStrokeStyle(2, Colors.BORDER_BLUE);
 
     // Title
-    this.add.text(gameWidth / 2, gameHeight * 0.10, 'SETTINGS', {
-      fontSize: '32px',
-      color: toColorString(Colors.HIGHLIGHT_YELLOW),
-      fontStyle: 'bold',
-    }).setOrigin(0.5);
+    this.add.bitmapText(gameWidth / 2, gameHeight * 0.10, 'clicker', 'SETTINGS', 32)
+      .setOrigin(0.5);
 
     // Load current settings
     const currentSettings = this.settingsManager.getDialSettings();
@@ -45,23 +42,16 @@ export class Settings extends Scene {
     this.showOutline = currentSettings.showOutline ?? false;
 
     // Dial Position Section
-    this.add.text(gameWidth / 2, gameHeight * 0.18, 'DIAL POSITION', {
-      fontSize: '16px',
-      color: toColorString(Colors.LIGHT_BLUE),
-      fontStyle: 'bold',
-    }).setOrigin(0.5);
+    this.add.bitmapText(gameWidth / 2, gameHeight * 0.18, 'clicker', 'DIAL POSITION', 16)
+      .setOrigin(0.5);
 
-    this.add.text(gameWidth / 2, gameHeight * 0.22, 'Adjust the radial dial position from bottom-right corner', {
-      fontSize: '11px',
-      color: toColorString(Colors.LIGHT_BLUE),
-    }).setOrigin(0.5);
+    this.add.bitmapText(gameWidth / 2, gameHeight * 0.22, 'clicker', 'ADJUST THE DIAL POSITION', 11)
+      .setOrigin(0.5);
 
     // Horizontal position controls
     const xLabelY = gameHeight * 0.29;
-    this.add.text(gameWidth / 2 - panelWidth / 2 + 40, xLabelY, 'Horizontal:', {
-      fontSize: '14px',
-      color: toColorString(Colors.HIGHLIGHT_YELLOW),
-    }).setOrigin(0, 0.5);
+    this.add.bitmapText(gameWidth / 2 - panelWidth / 2 + 40, xLabelY, 'clicker', 'HORIZONTAL', 14)
+      .setOrigin(0, 0.5);
 
     this.createAdjustButton(
       gameWidth / 2 - 80,
@@ -70,10 +60,8 @@ export class Settings extends Scene {
       () => this.adjustDialPosition(-10, 0)
     );
 
-    const xValueText = this.add.text(gameWidth / 2, xLabelY, `${this.dialX}px`, {
-      fontSize: '14px',
-      color: toColorString(Colors.WHITE),
-    }).setOrigin(0.5, 0.5);
+    const xValueText = this.add.bitmapText(gameWidth / 2, xLabelY, 'clicker', `${this.dialX}`, 14)
+      .setOrigin(0.5, 0.5);
 
     this.createAdjustButton(
       gameWidth / 2 + 80,
@@ -84,10 +72,8 @@ export class Settings extends Scene {
 
     // Vertical position controls
     const yLabelY = gameHeight * 0.36;
-    this.add.text(gameWidth / 2 - panelWidth / 2 + 40, yLabelY, 'Vertical:', {
-      fontSize: '14px',
-      color: toColorString(Colors.HIGHLIGHT_YELLOW),
-    }).setOrigin(0, 0.5);
+    this.add.bitmapText(gameWidth / 2 - panelWidth / 2 + 40, yLabelY, 'clicker', 'VERTICAL', 14)
+      .setOrigin(0, 0.5);
 
     this.createAdjustButton(
       gameWidth / 2 - 80,
@@ -96,10 +82,8 @@ export class Settings extends Scene {
       () => this.adjustDialPosition(0, -10)
     );
 
-    const yValueText = this.add.text(gameWidth / 2, yLabelY, `${this.dialY}px`, {
-      fontSize: '14px',
-      color: toColorString(Colors.WHITE),
-    }).setOrigin(0.5, 0.5);
+    const yValueText = this.add.bitmapText(gameWidth / 2, yLabelY, 'clicker', `${this.dialY}`, 14)
+      .setOrigin(0.5, 0.5);
 
     this.createAdjustButton(
       gameWidth / 2 + 80,
@@ -114,21 +98,16 @@ export class Settings extends Scene {
 
     // Dial Outline Toggle
     const toggleY = gameHeight * 0.43;
-    this.add.text(gameWidth / 2 - panelWidth / 2 + 40, toggleY, 'Show Outline:', {
-      fontSize: '14px',
-      color: toColorString(Colors.HIGHLIGHT_YELLOW),
-    }).setOrigin(0, 0.5);
+    this.add.bitmapText(gameWidth / 2 - panelWidth / 2 + 40, toggleY, 'clicker', 'SHOW OUTLINE', 14)
+      .setOrigin(0, 0.5);
 
     const toggleButton = this.add.rectangle(gameWidth / 2, toggleY, 60, 30, 
       this.showOutline ? Colors.SLICE_HIGHLIGHTED : Colors.PANEL_DARK, 0.8);
     toggleButton.setStrokeStyle(2, Colors.BORDER_BLUE);
     toggleButton.setInteractive();
 
-    const toggleText = this.add.text(gameWidth / 2, toggleY, this.showOutline ? 'ON' : 'OFF', {
-      fontSize: '14px',
-      color: toColorString(Colors.WHITE),
-      fontStyle: 'bold',
-    }).setOrigin(0.5);
+    const toggleText = this.add.bitmapText(gameWidth / 2, toggleY, 'clicker', this.showOutline ? 'ON' : 'OFF', 14)
+      .setOrigin(0.5);
 
     toggleButton.on('pointerdown', () => {
       this.showOutline = !this.showOutline;
@@ -186,11 +165,11 @@ export class Settings extends Scene {
     this.dialY = Math.max(-400, Math.min(-50, this.dialY));
 
     // Update text displays
-    const xValueText = this.data.get('xValueText') as Phaser.GameObjects.Text;
-    const yValueText = this.data.get('yValueText') as Phaser.GameObjects.Text;
+    const xValueText = this.data.get('xValueText') as Phaser.GameObjects.BitmapText;
+    const yValueText = this.data.get('yValueText') as Phaser.GameObjects.BitmapText;
     
-    if (xValueText) xValueText.setText(`${this.dialX}px`);
-    if (yValueText) yValueText.setText(`${this.dialY}px`);
+    if (xValueText) xValueText.setText(`${this.dialX}`);
+    if (yValueText) yValueText.setText(`${this.dialY}`);
 
     // Update preview
     this.drawPreviewDial();
@@ -228,11 +207,11 @@ export class Settings extends Scene {
     this.dialX = -200;
     this.dialY = -150;
 
-    const xValueText = this.data.get('xValueText') as Phaser.GameObjects.Text;
-    const yValueText = this.data.get('yValueText') as Phaser.GameObjects.Text;
+    const xValueText = this.data.get('xValueText') as Phaser.GameObjects.BitmapText;
+    const yValueText = this.data.get('yValueText') as Phaser.GameObjects.BitmapText;
     
-    if (xValueText) xValueText.setText(`${this.dialX}px`);
-    if (yValueText) yValueText.setText(`${this.dialY}px`);
+    if (xValueText) xValueText.setText(`${this.dialX}`);
+    if (yValueText) yValueText.setText(`${this.dialY}`);
 
     this.drawPreviewDial();
   }
@@ -296,11 +275,8 @@ export class Settings extends Scene {
       }
     });
 
-    this.add.text(x, y, text, {
-      fontSize: '20px',
-      color: toColorString(Colors.HIGHLIGHT_YELLOW),
-      fontStyle: 'bold',
-    }).setOrigin(0.5);
+    this.add.bitmapText(x, y, 'clicker', text, 20)
+      .setOrigin(0.5);
   }
 
   private createButton(x: number, y: number, text: string, callback: () => void, width: number = 200): void {
@@ -318,10 +294,7 @@ export class Settings extends Scene {
 
     this.add.rectangle(x, y, width, buttonHeight).setStrokeStyle(2, Colors.HIGHLIGHT_YELLOW);
 
-    this.add.text(x, y, text, {
-      fontSize: '18px',
-      color: toColorString(Colors.HIGHLIGHT_YELLOW),
-      fontStyle: 'bold',
-    }).setOrigin(0.5);
+    this.add.bitmapText(x, y, 'clicker', text, 18)
+      .setOrigin(0.5);
   }
 }

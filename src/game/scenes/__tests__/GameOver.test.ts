@@ -9,18 +9,14 @@ describe('GameOver scene', () => {
     const { GameOver } = await import('../GameOver');
     const scene = new GameOver();
     const setOrigin = jest.fn().mockReturnThis();
-    const text = jest.fn(() => ({ setOrigin }));
+    const setTint = jest.fn().mockReturnThis();
+    const bitmapText = jest.fn(() => ({ setOrigin, setTint }));
 
-    (scene as any).add = { text };
+    (scene as any).add = { bitmapText };
 
     scene.create({});
 
-    expect(text).toHaveBeenCalledWith(
-      400,
-      300,
-      'Game Over - Stats will appear here',
-      { fontSize: '24px', color: '#ffd54a' }
-    );
+    expect(bitmapText).toHaveBeenCalledWith(400, 300, 'clicker', 'GAME OVER', 24);
     expect(setOrigin).toHaveBeenCalledWith(0.5);
   });
 });

@@ -26,8 +26,8 @@ export class Game extends Phaser.Scene {
 
       // HUD strip (holographic panel)
       this.add.rectangle(gameWidth / 2, 28, gameWidth - 24, 40, 0x0b1c3a, 0.75);
-      const dialX = gameWidth - 200;
-      const dialY = gameHeight - 150;
+      const dialX = gameWidth - 150;
+      const dialY = gameHeight - 100;
 
       // Create the dial at bottom right of screen with margin
       this.radialDial = new RadialDial(this, dialX, dialY, items);

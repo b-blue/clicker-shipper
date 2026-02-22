@@ -19,6 +19,7 @@ export class RadialDial {
   private sliceGraphics: Phaser.GameObjects.Graphics[] = [];
   private sliceTexts: Phaser.GameObjects.Text[] = [];
   private sliceImages: Phaser.GameObjects.Image[] = [];
+  private sliceGlows: Phaser.GameObjects.Graphics[] = [];
   private dialFrameGraphic: Phaser.GameObjects.Graphics;
   private centerGraphic: Phaser.GameObjects.Graphics;
   private centerImage: Phaser.GameObjects.Image;
@@ -50,7 +51,7 @@ export class RadialDial {
     this.dialFrameGraphic = scene.add.graphics();
     this.dialFrameGraphic.setDepth(-2);
     this.centerGraphic = scene.add.graphics();
-    this.centerImage = scene.add.image(x, y, '').setScale(0.6).setOrigin(0.5);
+    this.centerImage = scene.add.image(x, y, '').setScale(1.2).setOrigin(0.5);
     this.centerImage.setDepth(10);
     
     // Create invisible zone for input detection
@@ -250,9 +251,11 @@ export class RadialDial {
     this.sliceGraphics.forEach(g => g.destroy());
     this.sliceTexts.forEach(t => t.destroy());
     this.sliceImages.forEach(i => i.destroy());
+    this.sliceGlows.forEach(g => g.destroy());
     this.sliceGraphics = [];
     this.sliceTexts = [];
     this.sliceImages = [];
+    this.sliceGlows = [];
 
     this.dialFrameGraphic.clear();
 
@@ -261,11 +264,11 @@ export class RadialDial {
 
     // Draw glassy HUD frame
     const frameRadius = this.sliceRadius + 10;
-    this.dialFrameGraphic.fillStyle(0x0b1c3a, 0.35);
+    this.dialFrameGraphic.fillStyle(0x0b1c3a, 0.65);
     this.dialFrameGraphic.fillCircle(this.dialX, this.dialY, frameRadius);
-    this.dialFrameGraphic.lineStyle(2, 0x1c3e6b, 0.8);
+    this.dialFrameGraphic.lineStyle(2, 0x1c3e6b, 1.0);
     this.dialFrameGraphic.strokeCircle(this.dialX, this.dialY, frameRadius);
-    this.dialFrameGraphic.lineStyle(1, 0x1c3e6b, 0.45);
+    this.dialFrameGraphic.lineStyle(1, 0x1c3e6b, 0.7);
     this.dialFrameGraphic.strokeCircle(this.dialX, this.dialY, this.sliceRadius * 0.6);
     this.dialFrameGraphic.beginPath();
     for (let i = 0; i < this.sliceCount; i++) {
@@ -290,9 +293,9 @@ export class RadialDial {
     this.centerGraphic.fillCircle(this.dialX, this.dialY, this.centerRadius - 2);
 
     const ringColor = this.showDropCue
-      ? 0xffd54a
+      ? 0x4aa3ff
       : this.highlightedSliceIndex === -999 && this.currentLevel === 1
-        ? 0xffd54a
+        ? 0x4aa3ff
         : 0x8fd4ff;
     const ringAlpha = this.showDropCue ? 1 : 0.7;
     this.centerGraphic.lineStyle(3, ringColor, ringAlpha);
@@ -306,7 +309,7 @@ export class RadialDial {
     this.centerGraphic.strokePath();
 
     if (this.showDropCue) {
-      this.centerGraphic.lineStyle(2, 0xffd54a, 0.6);
+      this.centerGraphic.lineStyle(2, 0x4aa3ff, 0.6);
       this.centerGraphic.strokeCircle(this.dialX, this.dialY, this.centerRadius + 6);
     }
 
@@ -346,8 +349,32 @@ export class RadialDial {
       const startAngle = i * sliceAngle - Math.PI / 2;
       const endAngle = startAngle + sliceAngle;
       const isHighlighted = i === this.highlightedSliceIndex;
-      const color = isHighlighted ? 0x1b4b7a : 0x0f274d;
-      const alpha = isHighlighted ? 0.85 : 0.6;
+      const color = isHighlighted ? 0x3a7bc8 : 0x1a4d7c;
+      const alpha = isHighlighted ? 0.9 : 0.8;
+
+      // Draw glow for highlighted slice with exponential falloff
+      if (isHighlighted) {
+        const glowGraphics = this.scene.add.graphics();
+        // Create neon glow at slice edges that fades rapidly inward
+        // Multiple layers with exponential opacity to create hot edge effect
+        for (let i = 0; i < 8; i++) {
+          const radius = this.sliceRadius + 8 + (i * 3);
+          const opacity = Math.pow(1 - (i / 8), 3) * 0.15; // Rapid exponential falloff
+          glowGraphics.fillStyle(0x4aa3ff, opacity);
+          glowGraphics.beginPath();
+          glowGraphics.moveTo(this.dialX, this.dialY);
+          glowGraphics.lineTo(
+            this.dialX + Math.cos(startAngle) * radius,
+            this.dialY + Math.sin(startAngle) * radius
+          );
+          glowGraphics.arc(this.dialX, this.dialY, radius, startAngle, endAngle);
+          glowGraphics.lineTo(this.dialX, this.dialY);
+          glowGraphics.closePath();
+          glowGraphics.fillPath();
+        }
+        glowGraphics.setDepth(0.25);
+        this.sliceGlows.push(glowGraphics);
+      }
 
       // Draw slice
       const graphics = this.scene.add.graphics();
@@ -388,18 +415,10 @@ export class RadialDial {
       if ('id' in item) {
         const itemId = item.id;
         if (this.scene.textures.exists(itemId)) {
-          // Create drop shadow for better contrast
-          const shadowImage = this.scene.add.image(textX + 2, textY + 2, itemId);
-          shadowImage.setScale(this.currentLevel === 0 ? 0.7 : 0.6);
-          shadowImage.setTint(0x000000);
-          shadowImage.setAlpha(0.5);
-          shadowImage.setDepth(0);
-          this.sliceImages.push(shadowImage);
-          
           // Create main image
           const image = this.scene.add.image(textX, textY, itemId);
-          image.setScale(this.currentLevel === 0 ? 0.7 : 0.6);
-          image.setDepth(1);
+          image.setScale(this.currentLevel === 0 ? 1.4 : 1.2);
+          image.setDepth(2);
           this.sliceImages.push(image);
         } else {
           const text = this.scene.add.text(textX, textY, item.name, {
@@ -455,6 +474,9 @@ export class RadialDial {
     this.isDragging = false;
     this.showDropCue = false;
     this.lastNonCenterSliceIndex = -1;
+    // Clean up glow graphics
+    this.sliceGlows.forEach(g => g.destroy());
+    this.sliceGlows = [];
     this.updateSliceCount();
     this.redrawDial();
   }
@@ -470,6 +492,7 @@ export class RadialDial {
     this.sliceGraphics.forEach(g => g.destroy());
     this.sliceTexts.forEach(t => t.destroy());
     this.sliceImages.forEach(i => i.destroy());
+    this.sliceGlows.forEach(g => g.destroy());
     this.dialFrameGraphic.destroy();
     this.centerGraphic.destroy();
     this.centerImage.destroy();

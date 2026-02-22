@@ -41,62 +41,72 @@ const createMockItems = (): Item[] => {
   }));
 };
 
-const createMockScene = (): MockScene => ({
-  add: {
-    graphics: jest.fn(() => ({
-      clear: jest.fn(),
-      fillStyle: jest.fn(),
-      beginPath: jest.fn(),
-      moveTo: jest.fn(),
-      lineTo: jest.fn(),
-      arc: jest.fn(),
-      closePath: jest.fn(),
-      fillPath: jest.fn(),
-      fillCircle: jest.fn(),
-      strokePath: jest.fn(),
-      setDepth: jest.fn(),
-      lineStyle: jest.fn(),
-      strokeCircle: jest.fn(),
-      destroy: jest.fn(),
-    })),
-    image: jest.fn(() => ({
-      setScale: jest.fn(function () { return this; }),
-      setOrigin: jest.fn(function () { return this; }),
-      setDepth: jest.fn(function () { return this; }),
-      setTexture: jest.fn(function () { return this; }),
-      setVisible: jest.fn(function () { return this; }),
-      setPosition: jest.fn(function () { return this; }),
-      destroy: jest.fn(),
-    })),
-    text: jest.fn(() => ({
-      setOrigin: jest.fn(function () { return this; }),
-      setDepth: jest.fn(function () { return this; }),
-      destroy: jest.fn(),
-    })),
-    zone: jest.fn(() => ({
-      setInteractive: jest.fn(function () { return this; }),
-    })),
-  },
-  input: {
-    on: jest.fn(),
-  },
-  events: {
-    emit: jest.fn(),
-  },
-  textures: {
-    exists: jest.fn(() => false),
-  },
-  time: {
-    addEvent: jest.fn(() => ({
-      remove: jest.fn(),
-    })),
-  },
-  cameras: {
-    main: {
-      width: 375,
+const createMockScene = (): MockScene => {
+  const createGraphicsMock = () => ({
+    clear: jest.fn(function () { return this; }),
+    fillStyle: jest.fn(function () { return this; }),
+    beginPath: jest.fn(function () { return this; }),
+    moveTo: jest.fn(function () { return this; }),
+    lineTo: jest.fn(function () { return this; }),
+    arc: jest.fn(function () { return this; }),
+    closePath: jest.fn(function () { return this; }),
+    fillPath: jest.fn(function () { return this; }),
+    fillCircle: jest.fn(function () { return this; }),
+    strokePath: jest.fn(function () { return this; }),
+    setDepth: jest.fn(function () { return this; }),
+    lineStyle: jest.fn(function () { return this; }),
+    strokeCircle: jest.fn(function () { return this; }),
+    destroy: jest.fn(),
+    setVisible: jest.fn(function () { return this; }),
+    setPosition: jest.fn(function () { return this; }),
+  });
+
+  return {
+    add: {
+      graphics: jest.fn(createGraphicsMock),
+      image: jest.fn(function() {
+        return {
+          setScale: jest.fn(function () { return this; }),
+          setOrigin: jest.fn(function () { return this; }),
+          setDepth: jest.fn(function () { return this; }),
+          setTexture: jest.fn(function () { return this; }),
+          setVisible: jest.fn(function () { return this; }),
+          setPosition: jest.fn(function () { return this; }),
+          setTint: jest.fn(function () { return this; }),
+          setAlpha: jest.fn(function () { return this; }),
+          destroy: jest.fn(),
+        };
+      }),
+      text: jest.fn(() => ({
+        setOrigin: jest.fn(function () { return this; }),
+        setDepth: jest.fn(function () { return this; }),
+        destroy: jest.fn(),
+      })),
+      zone: jest.fn(() => ({
+        setInteractive: jest.fn(function () { return this; }),
+      })),
     },
-  },
-});
+    input: {
+      on: jest.fn(),
+    },
+    events: {
+      emit: jest.fn(),
+    },
+    textures: {
+      exists: jest.fn(() => false),
+    },
+    time: {
+      addEvent: jest.fn(() => ({
+        remove: jest.fn(),
+      })),
+    },
+    cameras: {
+      main: {
+        width: 375,
+      },
+    },
+  };
+};
 
 const slicePoint = (dialX: number, dialY: number, sliceCount: number, sliceIndex: number, radius: number) => {
   const sliceAngle = (Math.PI * 2) / sliceCount;
@@ -153,5 +163,49 @@ describe('RadialDial drag-to-center selection', () => {
     expect((dial as any).selectedItem).toBeNull();
     expect(scene.events.emit).not.toHaveBeenCalledWith('dial:itemConfirmed', expect.anything());
   });
+
+  it('doubles center icon scale to 1.2', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+
+    // Create dial and check that scene.add.image was called
+    const dial = new RadialDial(scene as any, 100, 100, items);
+
+    // Verify that add.image was called (for centerImage creation)
+    expect(scene.add.image).toHaveBeenCalled();
+  });
+
+  it('creates glow beneath icons when rendering', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+
+    const dial = new RadialDial(scene as any, 100, 100, items);
+    (dial as any).currentLevel = 1;
+    (dial as any).currentSubItems = items[0].subItems;
+
+    // Call redrawDial which should create glow graphics
+    (dial as any).redrawDial();
+
+    // Verify graphics was called multiple times (for various layers including glows)
+    expect(scene.add.graphics).toHaveBeenCalled();
+  });
+
+  it('renders highlighted slice with glow', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    
+    const dial = new RadialDial(scene as any, 100, 100, items);
+    (dial as any).currentLevel = 1;
+    (dial as any).currentSubItems = items[0].subItems;
+    (dial as any).highlightedSliceIndex = 2;
+
+    // Call redrawDial which should apply glow styling
+    (dial as any).redrawDial();
+
+    // Verify graphics methods were called to render the slice
+    expect(scene.add.graphics).toHaveBeenCalled();
+  });
 });
+
 

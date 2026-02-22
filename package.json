@@ -18,7 +18,8 @@
         "build": "node log.js build & vite build --config vite/config.prod.mjs",
         "dev-nolog": "vite --config vite/config.dev.mjs",
         "build-nolog": "vite build --config vite/config.prod.mjs",
-        "lint": "eslint \"src/**/*.ts\"",
+        "lint": "eslint src",
+        "lint:fix": "eslint src --fix",
         "test": "jest",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage"

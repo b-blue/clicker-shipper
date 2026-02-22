@@ -189,8 +189,10 @@ export class RadialDial {
         this.highlightedSliceIndex = -1;
         this.showDropCue = false;
         this.redrawDial();
-      } else if (this.showDropCue) {
-        // Drag ended in center (showDropCue is true) - confirm selection
+      } else if (endDistance < this.centerRadius) {
+        // Drag ended in center - confirm selection
+        // Use actual end position instead of relying on showDropCue
+        // (pointermove may not fire consistently on mobile)
         if (this.lastNonCenterSliceIndex >= 0) {
           this.highlightedSliceIndex = this.lastNonCenterSliceIndex;
           this.updateSelectedItem();
@@ -382,17 +384,26 @@ export class RadialDial {
       const textY = this.dialY + Math.sin(midAngle) * textDistance;
       const item = displayItems[i];
 
-      // Try to display sprite for sub-items; fall back to text
-      if (this.currentLevel === 1 && 'id' in item) {
-        const subItem = item as SubItem;
-        if (this.scene.textures.exists(subItem.id)) {
-          const image = this.scene.add.image(textX, textY, subItem.id);
-          image.setScale(0.5);
-          image.setDepth(0);
+      // Try to display sprite for items; fall back to text
+      if ('id' in item) {
+        const itemId = item.id;
+        if (this.scene.textures.exists(itemId)) {
+          // Create drop shadow for better contrast
+          const shadowImage = this.scene.add.image(textX + 2, textY + 2, itemId);
+          shadowImage.setScale(this.currentLevel === 0 ? 0.7 : 0.6);
+          shadowImage.setTint(0x000000);
+          shadowImage.setAlpha(0.5);
+          shadowImage.setDepth(0);
+          this.sliceImages.push(shadowImage);
+          
+          // Create main image
+          const image = this.scene.add.image(textX, textY, itemId);
+          image.setScale(this.currentLevel === 0 ? 0.7 : 0.6);
+          image.setDepth(1);
           this.sliceImages.push(image);
         } else {
           const text = this.scene.add.text(textX, textY, item.name, {
-            fontSize: '11px',
+            fontSize: this.currentLevel === 0 ? '12px' : '11px',
             color: '#ffffff',
             align: 'center',
             wordWrap: { width: 80 }
@@ -402,7 +413,7 @@ export class RadialDial {
           this.sliceTexts.push(text);
         }
       } else {
-        // Display text for categories
+        // Fallback to text if no id
         const text = this.scene.add.text(textX, textY, item.name, {
           fontSize: '12px',
           color: '#ffffff',

@@ -3,7 +3,7 @@ import { Item } from '../types/GameTypes';
 export class AssetLoader {
   /**
    * Auto-loads all item sprites from items.json.
-   * Each item sprite is named using its id (e.g., item_1_1, item_2_3).
+   * Each item sprite is named using its id (e.g., item_1, item_1_1, item_2_3).
    * Assumes sprites are stored at public/assets/items/{id}.png
    * 
    * To disable this during development, comment out the call in Boot.ts preload().
@@ -11,6 +11,11 @@ export class AssetLoader {
    */
   static preloadItemAssets(scene: Phaser.Scene, items: Item[]): void {
     items.forEach((category) => {
+      // Load category/top-level item image
+      const categoryTexturePath = `assets/items/${category.id}.png`;
+      scene.load.image(category.id, categoryTexturePath);
+      
+      // Load sub-item images
       category.subItems.forEach((subItem) => {
         const texturePath = `assets/items/${subItem.id}.png`;
         scene.load.image(subItem.id, texturePath);

@@ -42,6 +42,9 @@ export class Game extends Phaser.Scene {
         console.log('Returned to main menu');
       });
 
+      const buildHash = '84bee6b';
+      this.add.text(12, 12, `Build: ${buildHash}`, { fontSize: '12px', color: '#9bdcff' });
+
       // Add temporary info text
       this.add.text(50, 50, 'Drag slice → center to select item, Tap center to go back', { fontSize: '16px', color: '#fff' });
     } catch (error) {

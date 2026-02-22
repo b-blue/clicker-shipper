@@ -25,9 +25,10 @@ export class RadialDial {
   
   // Drag-to-confirm properties
   private dragStartSliceIndex: number = -1; // Index of slice where drag started
-  private isDragging: boolean = false;
   private dragStartX: number = 0;
   private dragStartY: number = 0;
+  private lastPointerX: number = 0;
+  private lastPointerY: number = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, items: Item[]) {
     this.scene = scene;
@@ -56,12 +57,14 @@ export class RadialDial {
       this.handlePointerDown(pointer);
     });
 
-    this.scene.input.on('pointerup', () => {
-      this.handlePointerUp();
+    this.scene.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      this.handlePointerUp(pointer);
     });
   }
 
   private handleMouseMove(pointer: Phaser.Input.Pointer): void {
+    this.lastPointerX = pointer.x;
+    this.lastPointerY = pointer.y;
     const dx = pointer.x - this.dialX;
     const dy = pointer.y - this.dialY;
     const distance = Math.sqrt(dx * dx + dy * dy);
@@ -97,6 +100,8 @@ export class RadialDial {
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
+    this.lastPointerX = pointer.x;
+    this.lastPointerY = pointer.y;
     const dx = pointer.x - this.dialX;
     const dy = pointer.y - this.dialY;
     const distance = Math.sqrt(dx * dx + dy * dy);
@@ -104,7 +109,7 @@ export class RadialDial {
     // Record drag start position and slice
     this.dragStartX = pointer.x;
     this.dragStartY = pointer.y;
-    this.isDragging = false;
+    this.dragStartSliceIndex = -1;
 
     // Check if started on a slice
     if (distance < this.sliceRadius + 50 && distance > this.centerRadius + 5) {
@@ -115,30 +120,28 @@ export class RadialDial {
 
       if (sliceIndex < this.sliceCount) {
         this.dragStartSliceIndex = sliceIndex;
+        this.highlightedSliceIndex = sliceIndex;
+        this.updateSelectedItem();
+        this.redrawDial();
       }
     }
   }
 
-  private handlePointerUp(): void {
-    const dx = this.dragStartX - this.dialX;
-    const dy = this.dragStartY - this.dialY;
-    const dragStartDistance = Math.sqrt(dx * dx + dy * dy);
+  private handlePointerUp(pointer: Phaser.Input.Pointer): void {
+    const endX = pointer?.x ?? this.lastPointerX;
+    const endY = pointer?.y ?? this.lastPointerY;
+    const endDx = endX - this.dialX;
+    const endDy = endY - this.dialY;
+    const endDistance = Math.sqrt(endDx * endDx + endDy * endDy);
 
     // Check if this was a drag from slice to center
     if (this.dragStartSliceIndex >= 0 && this.selectedItem) {
-      // Check if ended in center area
-      const currentDx = this.dragStartX - this.dialX;
-      const currentDy = this.dragStartY - this.dialY;
-      const currentDistance = Math.sqrt(currentDx * currentDx + currentDy * currentDy);
-      
-      if (currentDistance < this.centerRadius * 1.5) {
+      if (endDistance < this.centerRadius * 1.75) {
         // Drag ended in center - confirm selection
         if (this.currentLevel === 1) {
-          // At level 1, confirm the item
           this.scene.events.emit('dial:itemConfirmed', { item: this.selectedItem });
           this.selectedItem = null;
         } else if (this.currentLevel === 0) {
-          // At level 0, navigate to sub-items
           this.currentParentItem = this.items[this.dragStartSliceIndex];
           this.currentSubItems = this.currentParentItem.subItems;
           this.currentLevel = 1;
@@ -148,8 +151,13 @@ export class RadialDial {
           this.redrawDial();
           this.scene.events.emit('dial:levelChanged', { level: 1, item: this.currentParentItem });
         }
+      } else {
+        // Drag ended away from center - revert center image
+        this.selectedItem = null;
+        this.highlightedSliceIndex = -1;
+        this.redrawDial();
       }
-    } else if (this.highlightedSliceIndex === -999) {
+    } else if (endDistance < this.centerRadius) {
       // Single tap on center (not drag) = go back
       if (this.currentLevel === 1) {
         this.reset();
@@ -159,7 +167,6 @@ export class RadialDial {
 
     // Reset drag state
     this.dragStartSliceIndex = -1;
-    this.isDragging = false;
   }
 
   private updateSelectedItem(): void {

@@ -30,8 +30,10 @@ export class RadialDial {
   private dragStartY: number = 0;
   private lastPointerX: number = 0;
   private lastPointerY: number = 0;
+  private lastNonCenterSliceIndex: number = -1;
   private readonly minDragDistance: number = 20;
   private centerDropRadiusMultiplier: number = 1.75;
+  private showDropCue: boolean = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number, items: Item[]) {
     this.scene = scene;
@@ -80,16 +82,14 @@ export class RadialDial {
     if (this.dragStartSliceIndex >= 0 && dragDistance >= this.minDragDistance) {
       this.isDragging = true;
       if (distance < this.centerRadius) {
+        this.showDropCue = true;
         if (this.highlightedSliceIndex !== -999) {
           this.highlightedSliceIndex = -999;
           this.redrawDial();
         }
-      } else if (this.highlightedSliceIndex !== this.dragStartSliceIndex) {
-        this.highlightedSliceIndex = this.dragStartSliceIndex;
-        this.updateSelectedItem();
-        this.redrawDial();
+        return;
       }
-      return;
+      this.showDropCue = false;
     }
 
     // Check if pointer is in center
@@ -110,6 +110,7 @@ export class RadialDial {
 
       if (sliceIndex < this.sliceCount && sliceIndex !== this.highlightedSliceIndex) {
         this.highlightedSliceIndex = sliceIndex;
+        this.lastNonCenterSliceIndex = sliceIndex;
         this.updateSelectedItem();
         this.redrawDial();
       }
@@ -117,6 +118,7 @@ export class RadialDial {
       if (this.highlightedSliceIndex !== -1 && this.highlightedSliceIndex !== -999) {
         this.highlightedSliceIndex = -1;
         this.selectedItem = null;
+        this.showDropCue = false;
         this.redrawDial();
       }
     }
@@ -134,6 +136,8 @@ export class RadialDial {
     this.dragStartY = pointer.y;
     this.dragStartSliceIndex = -1;
     this.isDragging = false;
+    this.lastNonCenterSliceIndex = -1;
+    this.showDropCue = false;
 
     // Check if started on a slice
     if (distance < this.sliceRadius + 50 && distance > this.centerRadius + 5) {
@@ -145,6 +149,7 @@ export class RadialDial {
       if (sliceIndex < this.sliceCount) {
         this.dragStartSliceIndex = sliceIndex;
         this.highlightedSliceIndex = sliceIndex;
+        this.lastNonCenterSliceIndex = sliceIndex;
         this.updateSelectedItem();
         this.redrawDial();
       }
@@ -166,14 +171,20 @@ export class RadialDial {
       if (dragDistance < this.minDragDistance) {
         this.selectedItem = null;
         this.highlightedSliceIndex = -1;
+        this.showDropCue = false;
         this.redrawDial();
       } else if (endDistance < this.centerRadius * this.centerDropRadiusMultiplier) {
         // Drag ended in center - confirm selection
+        if (this.lastNonCenterSliceIndex >= 0) {
+          this.highlightedSliceIndex = this.lastNonCenterSliceIndex;
+          this.updateSelectedItem();
+        }
         if (this.currentLevel === 1) {
           this.scene.events.emit('dial:itemConfirmed', { item: this.selectedItem });
           this.selectedItem = null;
+          this.showDropCue = false;
         } else if (this.currentLevel === 0) {
-          this.currentParentItem = this.items[this.dragStartSliceIndex];
+          this.currentParentItem = this.items[this.highlightedSliceIndex];
           this.currentSubItems = this.currentParentItem.subItems;
           this.currentLevel = 1;
           this.selectedItem = null;
@@ -186,6 +197,7 @@ export class RadialDial {
         // Drag ended away from center - revert center image
         this.selectedItem = null;
         this.highlightedSliceIndex = -1;
+        this.showDropCue = false;
         this.redrawDial();
       }
     } else if (endDistance < this.centerRadius) {
@@ -199,6 +211,7 @@ export class RadialDial {
     // Reset drag state
     this.dragStartSliceIndex = -1;
     this.isDragging = false;
+    this.showDropCue = false;
   }
 
   private updateSelectedItem(): void {
@@ -224,7 +237,10 @@ export class RadialDial {
     // Draw center circle
     this.centerGraphic.clear();
     
-    if (this.highlightedSliceIndex === -999 && this.currentLevel === 1) {
+    if (this.showDropCue) {
+      // Drop cue when dragging into center
+      this.centerGraphic.fillStyle(0x00cc88, 1);
+    } else if (this.highlightedSliceIndex === -999 && this.currentLevel === 1) {
       // Center is highlighted (back button) - show orange
       this.centerGraphic.fillStyle(0xff6600, 1);
     } else {
@@ -233,6 +249,10 @@ export class RadialDial {
     }
     
     this.centerGraphic.fillCircle(this.dialX, this.dialY, this.centerRadius);
+    if (this.showDropCue) {
+      this.centerGraphic.lineStyle(3, 0x00ff99, 1);
+      this.centerGraphic.strokeCircle(this.dialX, this.dialY, this.centerRadius + 6);
+    }
 
     // Update center display with selected item
     if (this.selectedItem) {

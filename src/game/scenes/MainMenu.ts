@@ -1,3 +1,5 @@
+import { Colors } from '../constants/Colors';
+
 export class MainMenu extends Phaser.Scene {
   constructor() {
     super('MainMenu');
@@ -9,7 +11,7 @@ export class MainMenu extends Phaser.Scene {
     const gameHeight = this.cameras.main.height;
 
     // Background
-    this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, 0x0a1022);
+    this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, Colors.BACKGROUND_DARK);
 
     // Title
     const titleText = this.add.text(gameWidth / 2, gameHeight * 0.15, 'INTERGALACTIC SHIPPER', {
@@ -57,14 +59,14 @@ export class MainMenu extends Phaser.Scene {
     const buttonHeight = 50;
 
     // Button background
-    const buttonBg = this.add.rectangle(x, y, buttonWidth, buttonHeight, 0x0b1c3a, 0.75);
+    const buttonBg = this.add.rectangle(x, y, buttonWidth, buttonHeight, Colors.PANEL_DARK, 0.75);
     buttonBg.setInteractive();
     buttonBg.on('pointerdown', callback);
     buttonBg.on('pointerover', () => {
       buttonBg.setFillStyle(0x122a52, 0.9);
     });
     buttonBg.on('pointerout', () => {
-      buttonBg.setFillStyle(0x0b1c3a, 0.75);
+      buttonBg.setFillStyle(Colors.PANEL_DARK, 0.75);
     });
 
     // Button border

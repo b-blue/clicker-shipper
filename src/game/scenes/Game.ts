@@ -1,6 +1,7 @@
 import { RadialDial } from '../ui/RadialDial';
 import { GameManager } from '../managers/GameManager';
 import { SettingsManager } from '../managers/SettingsManager';
+import { Colors } from '../constants/Colors';
 
 export class Game extends Phaser.Scene {
   private currentOrderIndex: number = 0;
@@ -29,10 +30,10 @@ export class Game extends Phaser.Scene {
       const dialY = gameHeight + dialSettings.offsetY;
 
       // Background
-      this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, 0x0a1022);
+      this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, Colors.BACKGROUND_DARK);
 
       // HUD strip (holographic panel)
-      this.add.rectangle(gameWidth / 2, 28, gameWidth - 24, 40, 0x0b1c3a, 0.75);
+      this.add.rectangle(gameWidth / 2, 28, gameWidth - 24, 40, Colors.PANEL_DARK, 0.75);
       this.radialDial = new RadialDial(this, dialX, dialY, items);
 
       // Listen for item confirmation (hold-to-confirm on center)

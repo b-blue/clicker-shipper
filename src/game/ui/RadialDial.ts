@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { Item, SubItem } from '../types/GameTypes';
+import { Colors } from '../constants/Colors';
 
 export class RadialDial {
   private scene: Phaser.Scene;
@@ -264,11 +265,11 @@ export class RadialDial {
 
     // Draw glassy HUD frame
     const frameRadius = this.sliceRadius + 10;
-    this.dialFrameGraphic.fillStyle(0x0b1c3a, 0.65);
+    this.dialFrameGraphic.fillStyle(Colors.PANEL_DARK, 0.65);
     this.dialFrameGraphic.fillCircle(this.dialX, this.dialY, frameRadius);
-    this.dialFrameGraphic.lineStyle(2, 0x1c3e6b, 1.0);
+    this.dialFrameGraphic.lineStyle(2, Colors.BORDER_BLUE, 1.0);
     this.dialFrameGraphic.strokeCircle(this.dialX, this.dialY, frameRadius);
-    this.dialFrameGraphic.lineStyle(1, 0x1c3e6b, 0.7);
+    this.dialFrameGraphic.lineStyle(1, Colors.BORDER_BLUE, 0.7);
     this.dialFrameGraphic.strokeCircle(this.dialX, this.dialY, this.sliceRadius * 0.6);
     this.dialFrameGraphic.beginPath();
     for (let i = 0; i < this.sliceCount; i++) {
@@ -289,27 +290,27 @@ export class RadialDial {
     // Draw center ring
     this.centerGraphic.clear();
 
-    this.centerGraphic.fillStyle(0x0b1c3a, 0.35);
+    this.centerGraphic.fillStyle(Colors.PANEL_DARK, 0.35);
     this.centerGraphic.fillCircle(this.dialX, this.dialY, this.centerRadius - 2);
 
     const ringColor = this.showDropCue
-      ? 0xffd54a
+      ? Colors.HIGHLIGHT_YELLOW
       : this.highlightedSliceIndex === -999 && this.currentLevel === 1
-        ? 0xffd54a
-        : 0x8fd4ff;
+        ? Colors.HIGHLIGHT_YELLOW
+        : Colors.LIGHT_BLUE;
     const ringAlpha = this.showDropCue ? 1 : 0.7;
     this.centerGraphic.lineStyle(3, ringColor, ringAlpha);
     this.centerGraphic.strokeCircle(this.dialX, this.dialY, this.centerRadius);
 
     const glowStart = this.glowAngle;
     const glowEnd = glowStart + Math.PI / 3;
-    this.centerGraphic.lineStyle(4, 0xfff2a8, this.showDropCue ? 1 : 0.6);
+    this.centerGraphic.lineStyle(4, Colors.HIGHLIGHT_YELLOW_BRIGHT, this.showDropCue ? 1 : 0.6);
     this.centerGraphic.beginPath();
     this.centerGraphic.arc(this.dialX, this.dialY, this.centerRadius + 2, glowStart, glowEnd);
     this.centerGraphic.strokePath();
 
     if (this.showDropCue) {
-      this.centerGraphic.lineStyle(2, 0xffd54a, 0.6);
+      this.centerGraphic.lineStyle(2, Colors.HIGHLIGHT_YELLOW, 0.6);
       this.centerGraphic.strokeCircle(this.dialX, this.dialY, this.centerRadius + 6);
     }
 
@@ -349,7 +350,7 @@ export class RadialDial {
       const startAngle = i * sliceAngle - Math.PI / 2;
       const endAngle = startAngle + sliceAngle;
       const isHighlighted = i === this.highlightedSliceIndex;
-      const color = isHighlighted ? 0x3a7bc8 : 0x1a4d7c;
+      const color = isHighlighted ? Colors.SLICE_HIGHLIGHTED : Colors.SLICE_NORMAL;
       const alpha = isHighlighted ? 0.9 : 0.8;
 
       // Draw glow for highlighted slice with exponential falloff
@@ -360,7 +361,7 @@ export class RadialDial {
         for (let i = 0; i < 8; i++) {
           const radius = this.sliceRadius + 8 + (i * 3);
           const opacity = Math.pow(1 - (i / 8), 3) * 0.15; // Rapid exponential falloff
-          glowGraphics.fillStyle(0x4aa3ff, opacity);
+          glowGraphics.fillStyle(Colors.NEON_BLUE, opacity);
           glowGraphics.beginPath();
           glowGraphics.moveTo(this.dialX, this.dialY);
           glowGraphics.lineTo(
@@ -389,7 +390,7 @@ export class RadialDial {
       graphics.lineTo(this.dialX, this.dialY);
       graphics.closePath();
       graphics.fillPath();
-      graphics.lineStyle(1, 0x4aa3ff, 0.35);
+      graphics.lineStyle(1, Colors.NEON_BLUE, 0.35);
       graphics.beginPath();
       graphics.moveTo(this.dialX, this.dialY);
       graphics.lineTo(

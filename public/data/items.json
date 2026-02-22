@@ -1,458 +1,2477 @@
 {
   "items": [
     {
-      "id": "nav_combat_1",
-      "name": "Combat Skill 01",
-      "icon": "Skillicon14_01",
-      "description": "Master combat techniques and weapons",
+      "id": "nav_resources_root",
+      "name": "Resource Systems",
+      "icon": "skill-chip",
+      "description": "Core materials and components",
       "layers": [
         {
-          "texture": "Skillicon14_01",
+          "texture": "skill-chip",
           "depth": 3
         },
         {
-          "texture": "Frame_14",
+          "texture": "frame",
           "depth": 2
         }
       ],
       "children": [
         {
-          "id": "nav_combat_sub_1",
-          "name": "Melee Combat",
-          "icon": "Skillicon14_07",
-          "description": "Close-quarters combat skills",
+          "id": "item_resources_001",
+          "name": "resource1",
+          "icon": "resource1",
+          "type": "resources",
+          "cost": 10
+        },
+        {
+          "id": "nav_resources_down_1",
+          "name": "More Resources",
+          "icon": "skill-down",
+          "description": "More resources items",
           "layers": [
             {
-              "texture": "Skillicon14_07",
+              "texture": "skill-down",
               "depth": 3
             },
             {
-              "texture": "Frame_14",
+              "texture": "frame",
               "depth": 2
             }
           ],
           "children": [
             {
-              "id": "item_melee_001",
-              "name": "melee1",
-              "icon": "melee1",
+              "id": "item_resources_006",
+              "name": "resource6",
+              "icon": "resource6",
+              "type": "resources",
+              "cost": 15
+            },
+            {
+              "id": "nav_resources_down_2",
+              "name": "More Resources",
+              "icon": "skill-down",
+              "description": "More resources items",
+              "layers": [
+                {
+                  "texture": "skill-down",
+                  "depth": 3
+                },
+                {
+                  "texture": "frame",
+                  "depth": 2
+                }
+              ],
+              "children": [
+                {
+                  "id": "item_resources_011",
+                  "name": "resource11",
+                  "icon": "resource11",
+                  "type": "resources",
+                  "cost": 14
+                },
+                {
+                  "id": "nav_resources_down_3",
+                  "name": "More Resources",
+                  "icon": "skill-down",
+                  "description": "More resources items",
+                  "layers": [
+                    {
+                      "texture": "skill-down",
+                      "depth": 3
+                    },
+                    {
+                      "texture": "frame",
+                      "depth": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "id": "item_resources_016",
+                      "name": "resource16",
+                      "icon": "resource16",
+                      "type": "resources",
+                      "cost": 13
+                    },
+                    {
+                      "id": "nav_resources_down_4",
+                      "name": "More Resources",
+                      "icon": "skill-down",
+                      "description": "More resources items",
+                      "layers": [
+                        {
+                          "texture": "skill-down",
+                          "depth": 3
+                        },
+                        {
+                          "texture": "frame",
+                          "depth": 2
+                        }
+                      ],
+                      "children": [
+                        {
+                          "id": "item_resources_021",
+                          "name": "resource21",
+                          "icon": "resource21",
+                          "type": "resources",
+                          "cost": 12
+                        },
+                        {
+                          "id": "nav_resources_down_5",
+                          "name": "More Resources",
+                          "icon": "skill-down",
+                          "description": "More resources items",
+                          "layers": [
+                            {
+                              "texture": "skill-down",
+                              "depth": 3
+                            },
+                            {
+                              "texture": "frame",
+                              "depth": 2
+                            }
+                          ],
+                          "children": [
+                            {
+                              "id": "item_resources_026",
+                              "name": "resource26",
+                              "icon": "resource26",
+                              "type": "resources",
+                              "cost": 11
+                            },
+                            {
+                              "id": "nav_resources_down_6",
+                              "name": "More Resources",
+                              "icon": "skill-down",
+                              "description": "More resources items",
+                              "layers": [
+                                {
+                                  "texture": "skill-down",
+                                  "depth": 3
+                                },
+                                {
+                                  "texture": "frame",
+                                  "depth": 2
+                                }
+                              ],
+                              "children": [
+                                {
+                                  "id": "item_resources_031",
+                                  "name": "resource31",
+                                  "icon": "resource31",
+                                  "type": "resources",
+                                  "cost": 10
+                                },
+                                {
+                                  "id": "nav_resources_down_7",
+                                  "name": "More Resources",
+                                  "icon": "skill-down",
+                                  "description": "More resources items",
+                                  "layers": [
+                                    {
+                                      "texture": "skill-down",
+                                      "depth": 3
+                                    },
+                                    {
+                                      "texture": "frame",
+                                      "depth": 2
+                                    }
+                                  ],
+                                  "children": [
+                                    {
+                                      "id": "item_resources_036",
+                                      "name": "resource36",
+                                      "icon": "resource36",
+                                      "type": "resources",
+                                      "cost": 15
+                                    },
+                                    {
+                                      "id": "item_resources_037",
+                                      "name": "resource37",
+                                      "icon": "resource37",
+                                      "type": "resources",
+                                      "cost": 10
+                                    },
+                                    {
+                                      "id": "item_resources_038",
+                                      "name": "resource38",
+                                      "icon": "resource38",
+                                      "type": "resources",
+                                      "cost": 11
+                                    },
+                                    {
+                                      "id": "item_resources_039",
+                                      "name": "resource39",
+                                      "icon": "resource39",
+                                      "type": "resources",
+                                      "cost": 12
+                                    },
+                                    {
+                                      "id": "item_resources_040",
+                                      "name": "resource40",
+                                      "icon": "resource40",
+                                      "type": "resources",
+                                      "cost": 13
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "item_resources_032",
+                                  "name": "resource32",
+                                  "icon": "resource32",
+                                  "type": "resources",
+                                  "cost": 11
+                                },
+                                {
+                                  "id": "item_resources_033",
+                                  "name": "resource33",
+                                  "icon": "resource33",
+                                  "type": "resources",
+                                  "cost": 12
+                                },
+                                {
+                                  "id": "item_resources_034",
+                                  "name": "resource34",
+                                  "icon": "resource34",
+                                  "type": "resources",
+                                  "cost": 13
+                                },
+                                {
+                                  "id": "item_resources_035",
+                                  "name": "resource35",
+                                  "icon": "resource35",
+                                  "type": "resources",
+                                  "cost": 14
+                                }
+                              ]
+                            },
+                            {
+                              "id": "item_resources_027",
+                              "name": "resource27",
+                              "icon": "resource27",
+                              "type": "resources",
+                              "cost": 12
+                            },
+                            {
+                              "id": "item_resources_028",
+                              "name": "resource28",
+                              "icon": "resource28",
+                              "type": "resources",
+                              "cost": 13
+                            },
+                            {
+                              "id": "item_resources_029",
+                              "name": "resource29",
+                              "icon": "resource29",
+                              "type": "resources",
+                              "cost": 14
+                            },
+                            {
+                              "id": "item_resources_030",
+                              "name": "resource30",
+                              "icon": "resource30",
+                              "type": "resources",
+                              "cost": 15
+                            }
+                          ]
+                        },
+                        {
+                          "id": "item_resources_022",
+                          "name": "resource22",
+                          "icon": "resource22",
+                          "type": "resources",
+                          "cost": 13
+                        },
+                        {
+                          "id": "item_resources_023",
+                          "name": "resource23",
+                          "icon": "resource23",
+                          "type": "resources",
+                          "cost": 14
+                        },
+                        {
+                          "id": "item_resources_024",
+                          "name": "resource24",
+                          "icon": "resource24",
+                          "type": "resources",
+                          "cost": 15
+                        },
+                        {
+                          "id": "item_resources_025",
+                          "name": "resource25",
+                          "icon": "resource25",
+                          "type": "resources",
+                          "cost": 10
+                        }
+                      ]
+                    },
+                    {
+                      "id": "item_resources_017",
+                      "name": "resource17",
+                      "icon": "resource17",
+                      "type": "resources",
+                      "cost": 14
+                    },
+                    {
+                      "id": "item_resources_018",
+                      "name": "resource18",
+                      "icon": "resource18",
+                      "type": "resources",
+                      "cost": 15
+                    },
+                    {
+                      "id": "item_resources_019",
+                      "name": "resource19",
+                      "icon": "resource19",
+                      "type": "resources",
+                      "cost": 10
+                    },
+                    {
+                      "id": "item_resources_020",
+                      "name": "resource20",
+                      "icon": "resource20",
+                      "type": "resources",
+                      "cost": 11
+                    }
+                  ]
+                },
+                {
+                  "id": "item_resources_012",
+                  "name": "resource12",
+                  "icon": "resource12",
+                  "type": "resources",
+                  "cost": 15
+                },
+                {
+                  "id": "item_resources_013",
+                  "name": "resource13",
+                  "icon": "resource13",
+                  "type": "resources",
+                  "cost": 10
+                },
+                {
+                  "id": "item_resources_014",
+                  "name": "resource14",
+                  "icon": "resource14",
+                  "type": "resources",
+                  "cost": 11
+                },
+                {
+                  "id": "item_resources_015",
+                  "name": "resource15",
+                  "icon": "resource15",
+                  "type": "resources",
+                  "cost": 12
+                }
+              ]
+            },
+            {
+              "id": "item_resources_007",
+              "name": "resource7",
+              "icon": "resource7",
+              "type": "resources",
+              "cost": 10
+            },
+            {
+              "id": "item_resources_008",
+              "name": "resource8",
+              "icon": "resource8",
+              "type": "resources",
+              "cost": 11
+            },
+            {
+              "id": "item_resources_009",
+              "name": "resource9",
+              "icon": "resource9",
+              "type": "resources",
+              "cost": 12
+            },
+            {
+              "id": "item_resources_010",
+              "name": "resource10",
+              "icon": "resource10",
+              "type": "resources",
+              "cost": 13
+            }
+          ]
+        },
+        {
+          "id": "item_resources_002",
+          "name": "resource2",
+          "icon": "resource2",
+          "type": "resources",
+          "cost": 11
+        },
+        {
+          "id": "item_resources_003",
+          "name": "resource3",
+          "icon": "resource3",
+          "type": "resources",
+          "cost": 12
+        },
+        {
+          "id": "item_resources_004",
+          "name": "resource4",
+          "icon": "resource4",
+          "type": "resources",
+          "cost": 13
+        },
+        {
+          "id": "item_resources_005",
+          "name": "resource5",
+          "icon": "resource5",
+          "type": "resources",
+          "cost": 14
+        }
+      ]
+    },
+    {
+      "id": "nav_armaments_root",
+      "name": "Ranged Systems",
+      "icon": "skill-ranged",
+      "description": "Advanced armaments and ranged tech",
+      "layers": [
+        {
+          "texture": "skill-ranged",
+          "depth": 3
+        },
+        {
+          "texture": "frame",
+          "depth": 2
+        }
+      ],
+      "children": [
+        {
+          "id": "item_armaments_001",
+          "name": "arm1",
+          "icon": "arm1",
+          "type": "armaments",
+          "cost": 24
+        },
+        {
+          "id": "nav_armaments_down_1",
+          "name": "More Armaments",
+          "icon": "skill-down",
+          "description": "More armaments items",
+          "layers": [
+            {
+              "texture": "skill-down",
+              "depth": 3
+            },
+            {
+              "texture": "frame",
+              "depth": 2
+            }
+          ],
+          "children": [
+            {
+              "id": "item_armaments_006",
+              "name": "arm6",
+              "icon": "arm6",
+              "type": "armaments",
+              "cost": 29
+            },
+            {
+              "id": "nav_armaments_down_2",
+              "name": "More Armaments",
+              "icon": "skill-down",
+              "description": "More armaments items",
+              "layers": [
+                {
+                  "texture": "skill-down",
+                  "depth": 3
+                },
+                {
+                  "texture": "frame",
+                  "depth": 2
+                }
+              ],
+              "children": [
+                {
+                  "id": "item_armaments_011",
+                  "name": "arm11",
+                  "icon": "arm11",
+                  "type": "armaments",
+                  "cost": 28
+                },
+                {
+                  "id": "nav_armaments_down_3",
+                  "name": "More Armaments",
+                  "icon": "skill-down",
+                  "description": "More armaments items",
+                  "layers": [
+                    {
+                      "texture": "skill-down",
+                      "depth": 3
+                    },
+                    {
+                      "texture": "frame",
+                      "depth": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "id": "item_armaments_016",
+                      "name": "arm16",
+                      "icon": "arm16",
+                      "type": "armaments",
+                      "cost": 27
+                    },
+                    {
+                      "id": "nav_armaments_down_4",
+                      "name": "More Armaments",
+                      "icon": "skill-down",
+                      "description": "More armaments items",
+                      "layers": [
+                        {
+                          "texture": "skill-down",
+                          "depth": 3
+                        },
+                        {
+                          "texture": "frame",
+                          "depth": 2
+                        }
+                      ],
+                      "children": [
+                        {
+                          "id": "item_armaments_021",
+                          "name": "arm21",
+                          "icon": "arm21",
+                          "type": "armaments",
+                          "cost": 26
+                        },
+                        {
+                          "id": "nav_armaments_down_5",
+                          "name": "More Armaments",
+                          "icon": "skill-down",
+                          "description": "More armaments items",
+                          "layers": [
+                            {
+                              "texture": "skill-down",
+                              "depth": 3
+                            },
+                            {
+                              "texture": "frame",
+                              "depth": 2
+                            }
+                          ],
+                          "children": [
+                            {
+                              "id": "item_armaments_026",
+                              "name": "arm26",
+                              "icon": "arm26",
+                              "type": "armaments",
+                              "cost": 25
+                            },
+                            {
+                              "id": "nav_armaments_down_6",
+                              "name": "More Armaments",
+                              "icon": "skill-down",
+                              "description": "More armaments items",
+                              "layers": [
+                                {
+                                  "texture": "skill-down",
+                                  "depth": 3
+                                },
+                                {
+                                  "texture": "frame",
+                                  "depth": 2
+                                }
+                              ],
+                              "children": [
+                                {
+                                  "id": "item_armaments_031",
+                                  "name": "arm31",
+                                  "icon": "arm31",
+                                  "type": "armaments",
+                                  "cost": 24
+                                },
+                                {
+                                  "id": "nav_armaments_down_7",
+                                  "name": "More Armaments",
+                                  "icon": "skill-down",
+                                  "description": "More armaments items",
+                                  "layers": [
+                                    {
+                                      "texture": "skill-down",
+                                      "depth": 3
+                                    },
+                                    {
+                                      "texture": "frame",
+                                      "depth": 2
+                                    }
+                                  ],
+                                  "children": [
+                                    {
+                                      "id": "item_armaments_036",
+                                      "name": "arm36",
+                                      "icon": "arm36",
+                                      "type": "armaments",
+                                      "cost": 29
+                                    },
+                                    {
+                                      "id": "item_armaments_037",
+                                      "name": "arm37",
+                                      "icon": "arm37",
+                                      "type": "armaments",
+                                      "cost": 24
+                                    },
+                                    {
+                                      "id": "item_armaments_038",
+                                      "name": "arm38",
+                                      "icon": "arm38",
+                                      "type": "armaments",
+                                      "cost": 25
+                                    },
+                                    {
+                                      "id": "item_armaments_039",
+                                      "name": "arm39",
+                                      "icon": "arm39",
+                                      "type": "armaments",
+                                      "cost": 26
+                                    },
+                                    {
+                                      "id": "item_armaments_040",
+                                      "name": "arm40",
+                                      "icon": "arm40",
+                                      "type": "armaments",
+                                      "cost": 27
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "item_armaments_032",
+                                  "name": "arm32",
+                                  "icon": "arm32",
+                                  "type": "armaments",
+                                  "cost": 25
+                                },
+                                {
+                                  "id": "item_armaments_033",
+                                  "name": "arm33",
+                                  "icon": "arm33",
+                                  "type": "armaments",
+                                  "cost": 26
+                                },
+                                {
+                                  "id": "item_armaments_034",
+                                  "name": "arm34",
+                                  "icon": "arm34",
+                                  "type": "armaments",
+                                  "cost": 27
+                                },
+                                {
+                                  "id": "item_armaments_035",
+                                  "name": "arm35",
+                                  "icon": "arm35",
+                                  "type": "armaments",
+                                  "cost": 28
+                                }
+                              ]
+                            },
+                            {
+                              "id": "item_armaments_027",
+                              "name": "arm27",
+                              "icon": "arm27",
+                              "type": "armaments",
+                              "cost": 26
+                            },
+                            {
+                              "id": "item_armaments_028",
+                              "name": "arm28",
+                              "icon": "arm28",
+                              "type": "armaments",
+                              "cost": 27
+                            },
+                            {
+                              "id": "item_armaments_029",
+                              "name": "arm29",
+                              "icon": "arm29",
+                              "type": "armaments",
+                              "cost": 28
+                            },
+                            {
+                              "id": "item_armaments_030",
+                              "name": "arm30",
+                              "icon": "arm30",
+                              "type": "armaments",
+                              "cost": 29
+                            }
+                          ]
+                        },
+                        {
+                          "id": "item_armaments_022",
+                          "name": "arm22",
+                          "icon": "arm22",
+                          "type": "armaments",
+                          "cost": 27
+                        },
+                        {
+                          "id": "item_armaments_023",
+                          "name": "arm23",
+                          "icon": "arm23",
+                          "type": "armaments",
+                          "cost": 28
+                        },
+                        {
+                          "id": "item_armaments_024",
+                          "name": "arm24",
+                          "icon": "arm24",
+                          "type": "armaments",
+                          "cost": 29
+                        },
+                        {
+                          "id": "item_armaments_025",
+                          "name": "arm25",
+                          "icon": "arm25",
+                          "type": "armaments",
+                          "cost": 24
+                        }
+                      ]
+                    },
+                    {
+                      "id": "item_armaments_017",
+                      "name": "arm17",
+                      "icon": "arm17",
+                      "type": "armaments",
+                      "cost": 28
+                    },
+                    {
+                      "id": "item_armaments_018",
+                      "name": "arm18",
+                      "icon": "arm18",
+                      "type": "armaments",
+                      "cost": 29
+                    },
+                    {
+                      "id": "item_armaments_019",
+                      "name": "arm19",
+                      "icon": "arm19",
+                      "type": "armaments",
+                      "cost": 24
+                    },
+                    {
+                      "id": "item_armaments_020",
+                      "name": "arm20",
+                      "icon": "arm20",
+                      "type": "armaments",
+                      "cost": 25
+                    }
+                  ]
+                },
+                {
+                  "id": "item_armaments_012",
+                  "name": "arm12",
+                  "icon": "arm12",
+                  "type": "armaments",
+                  "cost": 29
+                },
+                {
+                  "id": "item_armaments_013",
+                  "name": "arm13",
+                  "icon": "arm13",
+                  "type": "armaments",
+                  "cost": 24
+                },
+                {
+                  "id": "item_armaments_014",
+                  "name": "arm14",
+                  "icon": "arm14",
+                  "type": "armaments",
+                  "cost": 25
+                },
+                {
+                  "id": "item_armaments_015",
+                  "name": "arm15",
+                  "icon": "arm15",
+                  "type": "armaments",
+                  "cost": 26
+                }
+              ]
+            },
+            {
+              "id": "item_armaments_007",
+              "name": "arm7",
+              "icon": "arm7",
+              "type": "armaments",
+              "cost": 24
+            },
+            {
+              "id": "item_armaments_008",
+              "name": "arm8",
+              "icon": "arm8",
+              "type": "armaments",
+              "cost": 25
+            },
+            {
+              "id": "item_armaments_009",
+              "name": "arm9",
+              "icon": "arm9",
+              "type": "armaments",
+              "cost": 26
+            },
+            {
+              "id": "item_armaments_010",
+              "name": "arm10",
+              "icon": "arm10",
+              "type": "armaments",
+              "cost": 27
+            }
+          ]
+        },
+        {
+          "id": "item_armaments_002",
+          "name": "arm2",
+          "icon": "arm2",
+          "type": "armaments",
+          "cost": 25
+        },
+        {
+          "id": "item_armaments_003",
+          "name": "arm3",
+          "icon": "arm3",
+          "type": "armaments",
+          "cost": 26
+        },
+        {
+          "id": "item_armaments_004",
+          "name": "arm4",
+          "icon": "arm4",
+          "type": "armaments",
+          "cost": 27
+        },
+        {
+          "id": "item_armaments_005",
+          "name": "arm5",
+          "icon": "arm5",
+          "type": "armaments",
+          "cost": 28
+        }
+      ]
+    },
+    {
+      "id": "nav_melee_root",
+      "name": "Melee Systems",
+      "icon": "skill-melee",
+      "description": "Close-quarters equipment",
+      "layers": [
+        {
+          "texture": "skill-melee",
+          "depth": 3
+        },
+        {
+          "texture": "frame",
+          "depth": 2
+        }
+      ],
+      "children": [
+        {
+          "id": "item_melee_001",
+          "name": "melee1",
+          "icon": "melee1",
+          "type": "melee",
+          "cost": 18
+        },
+        {
+          "id": "nav_melee_down_1",
+          "name": "More Melee",
+          "icon": "skill-down",
+          "description": "More melee items",
+          "layers": [
+            {
+              "texture": "skill-down",
+              "depth": 3
+            },
+            {
+              "texture": "frame",
+              "depth": 2
+            }
+          ],
+          "children": [
+            {
+              "id": "item_melee_006",
+              "name": "melee6",
+              "icon": "melee6",
+              "type": "melee",
+              "cost": 23
+            },
+            {
+              "id": "nav_melee_down_2",
+              "name": "More Melee",
+              "icon": "skill-down",
+              "description": "More melee items",
+              "layers": [
+                {
+                  "texture": "skill-down",
+                  "depth": 3
+                },
+                {
+                  "texture": "frame",
+                  "depth": 2
+                }
+              ],
+              "children": [
+                {
+                  "id": "item_melee_011",
+                  "name": "melee11",
+                  "icon": "melee11",
+                  "type": "melee",
+                  "cost": 22
+                },
+                {
+                  "id": "nav_melee_down_3",
+                  "name": "More Melee",
+                  "icon": "skill-down",
+                  "description": "More melee items",
+                  "layers": [
+                    {
+                      "texture": "skill-down",
+                      "depth": 3
+                    },
+                    {
+                      "texture": "frame",
+                      "depth": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "id": "item_melee_016",
+                      "name": "melee16",
+                      "icon": "melee16",
+                      "type": "melee",
+                      "cost": 21
+                    },
+                    {
+                      "id": "nav_melee_down_4",
+                      "name": "More Melee",
+                      "icon": "skill-down",
+                      "description": "More melee items",
+                      "layers": [
+                        {
+                          "texture": "skill-down",
+                          "depth": 3
+                        },
+                        {
+                          "texture": "frame",
+                          "depth": 2
+                        }
+                      ],
+                      "children": [
+                        {
+                          "id": "item_melee_021",
+                          "name": "melee21",
+                          "icon": "melee21",
+                          "type": "melee",
+                          "cost": 20
+                        },
+                        {
+                          "id": "nav_melee_down_5",
+                          "name": "More Melee",
+                          "icon": "skill-down",
+                          "description": "More melee items",
+                          "layers": [
+                            {
+                              "texture": "skill-down",
+                              "depth": 3
+                            },
+                            {
+                              "texture": "frame",
+                              "depth": 2
+                            }
+                          ],
+                          "children": [
+                            {
+                              "id": "item_melee_026",
+                              "name": "melee26",
+                              "icon": "melee26",
+                              "type": "melee",
+                              "cost": 19
+                            },
+                            {
+                              "id": "nav_melee_down_6",
+                              "name": "More Melee",
+                              "icon": "skill-down",
+                              "description": "More melee items",
+                              "layers": [
+                                {
+                                  "texture": "skill-down",
+                                  "depth": 3
+                                },
+                                {
+                                  "texture": "frame",
+                                  "depth": 2
+                                }
+                              ],
+                              "children": [
+                                {
+                                  "id": "item_melee_031",
+                                  "name": "melee31",
+                                  "icon": "melee31",
+                                  "type": "melee",
+                                  "cost": 18
+                                },
+                                {
+                                  "id": "nav_melee_down_7",
+                                  "name": "More Melee",
+                                  "icon": "skill-down",
+                                  "description": "More melee items",
+                                  "layers": [
+                                    {
+                                      "texture": "skill-down",
+                                      "depth": 3
+                                    },
+                                    {
+                                      "texture": "frame",
+                                      "depth": 2
+                                    }
+                                  ],
+                                  "children": [
+                                    {
+                                      "id": "item_melee_036",
+                                      "name": "melee36",
+                                      "icon": "melee36",
+                                      "type": "melee",
+                                      "cost": 23
+                                    },
+                                    {
+                                      "id": "item_melee_037",
+                                      "name": "melee37",
+                                      "icon": "melee37",
+                                      "type": "melee",
+                                      "cost": 18
+                                    },
+                                    {
+                                      "id": "item_melee_038",
+                                      "name": "melee38",
+                                      "icon": "melee38",
+                                      "type": "melee",
+                                      "cost": 19
+                                    },
+                                    {
+                                      "id": "item_melee_039",
+                                      "name": "melee39",
+                                      "icon": "melee39",
+                                      "type": "melee",
+                                      "cost": 20
+                                    },
+                                    {
+                                      "id": "item_melee_040",
+                                      "name": "melee40",
+                                      "icon": "melee40",
+                                      "type": "melee",
+                                      "cost": 21
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "item_melee_032",
+                                  "name": "melee32",
+                                  "icon": "melee32",
+                                  "type": "melee",
+                                  "cost": 19
+                                },
+                                {
+                                  "id": "item_melee_033",
+                                  "name": "melee33",
+                                  "icon": "melee33",
+                                  "type": "melee",
+                                  "cost": 20
+                                },
+                                {
+                                  "id": "item_melee_034",
+                                  "name": "melee34",
+                                  "icon": "melee34",
+                                  "type": "melee",
+                                  "cost": 21
+                                },
+                                {
+                                  "id": "item_melee_035",
+                                  "name": "melee35",
+                                  "icon": "melee35",
+                                  "type": "melee",
+                                  "cost": 22
+                                }
+                              ]
+                            },
+                            {
+                              "id": "item_melee_027",
+                              "name": "melee27",
+                              "icon": "melee27",
+                              "type": "melee",
+                              "cost": 20
+                            },
+                            {
+                              "id": "item_melee_028",
+                              "name": "melee28",
+                              "icon": "melee28",
+                              "type": "melee",
+                              "cost": 21
+                            },
+                            {
+                              "id": "item_melee_029",
+                              "name": "melee29",
+                              "icon": "melee29",
+                              "type": "melee",
+                              "cost": 22
+                            },
+                            {
+                              "id": "item_melee_030",
+                              "name": "melee30",
+                              "icon": "melee30",
+                              "type": "melee",
+                              "cost": 23
+                            }
+                          ]
+                        },
+                        {
+                          "id": "item_melee_022",
+                          "name": "melee22",
+                          "icon": "melee22",
+                          "type": "melee",
+                          "cost": 21
+                        },
+                        {
+                          "id": "item_melee_023",
+                          "name": "melee23",
+                          "icon": "melee23",
+                          "type": "melee",
+                          "cost": 22
+                        },
+                        {
+                          "id": "item_melee_024",
+                          "name": "melee24",
+                          "icon": "melee24",
+                          "type": "melee",
+                          "cost": 23
+                        },
+                        {
+                          "id": "item_melee_025",
+                          "name": "melee25",
+                          "icon": "melee25",
+                          "type": "melee",
+                          "cost": 18
+                        }
+                      ]
+                    },
+                    {
+                      "id": "item_melee_017",
+                      "name": "melee17",
+                      "icon": "melee17",
+                      "type": "melee",
+                      "cost": 22
+                    },
+                    {
+                      "id": "item_melee_018",
+                      "name": "melee18",
+                      "icon": "melee18",
+                      "type": "melee",
+                      "cost": 23
+                    },
+                    {
+                      "id": "item_melee_019",
+                      "name": "melee19",
+                      "icon": "melee19",
+                      "type": "melee",
+                      "cost": 18
+                    },
+                    {
+                      "id": "item_melee_020",
+                      "name": "melee20",
+                      "icon": "melee20",
+                      "type": "melee",
+                      "cost": 19
+                    }
+                  ]
+                },
+                {
+                  "id": "item_melee_012",
+                  "name": "melee12",
+                  "icon": "melee12",
+                  "type": "melee",
+                  "cost": 23
+                },
+                {
+                  "id": "item_melee_013",
+                  "name": "melee13",
+                  "icon": "melee13",
+                  "type": "melee",
+                  "cost": 18
+                },
+                {
+                  "id": "item_melee_014",
+                  "name": "melee14",
+                  "icon": "melee14",
+                  "type": "melee",
+                  "cost": 19
+                },
+                {
+                  "id": "item_melee_015",
+                  "name": "melee15",
+                  "icon": "melee15",
+                  "type": "melee",
+                  "cost": 20
+                }
+              ]
+            },
+            {
+              "id": "item_melee_007",
+              "name": "melee7",
+              "icon": "melee7",
               "type": "melee",
               "cost": 18
             },
             {
-              "id": "item_melee_002",
-              "name": "melee2",
-              "icon": "melee2",
+              "id": "item_melee_008",
+              "name": "melee8",
+              "icon": "melee8",
               "type": "melee",
-              "cost": 22
+              "cost": 19
             },
             {
-              "id": "item_melee_003",
-              "name": "melee3",
-              "icon": "melee3",
-              "type": "melee",
-              "cost": 25
-            },
-            {
-              "id": "item_melee_004",
-              "name": "melee4",
-              "icon": "melee4",
+              "id": "item_melee_009",
+              "name": "melee9",
+              "icon": "melee9",
               "type": "melee",
               "cost": 20
             },
             {
-              "id": "item_melee_005",
-              "name": "melee5",
-              "icon": "melee5",
+              "id": "item_melee_010",
+              "name": "melee10",
+              "icon": "melee10",
               "type": "melee",
+              "cost": 21
+            }
+          ]
+        },
+        {
+          "id": "item_melee_002",
+          "name": "melee2",
+          "icon": "melee2",
+          "type": "melee",
+          "cost": 19
+        },
+        {
+          "id": "item_melee_003",
+          "name": "melee3",
+          "icon": "melee3",
+          "type": "melee",
+          "cost": 20
+        },
+        {
+          "id": "item_melee_004",
+          "name": "melee4",
+          "icon": "melee4",
+          "type": "melee",
+          "cost": 21
+        },
+        {
+          "id": "item_melee_005",
+          "name": "melee5",
+          "icon": "melee5",
+          "type": "melee",
+          "cost": 22
+        }
+      ]
+    },
+    {
+      "id": "nav_radioactive_root",
+      "name": "Radioactive Systems",
+      "icon": "skill-radioactive",
+      "description": "Hazardous materials and tech",
+      "layers": [
+        {
+          "texture": "skill-radioactive",
+          "depth": 3
+        },
+        {
+          "texture": "frame",
+          "depth": 2
+        }
+      ],
+      "children": [
+        {
+          "id": "item_radioactive_001",
+          "name": "radioactive1",
+          "icon": "radioactive1",
+          "type": "radioactive",
+          "cost": 32
+        },
+        {
+          "id": "nav_radioactive_down_1",
+          "name": "More Radioactive",
+          "icon": "skill-down",
+          "description": "More radioactive items",
+          "layers": [
+            {
+              "texture": "skill-down",
+              "depth": 3
+            },
+            {
+              "texture": "frame",
+              "depth": 2
+            }
+          ],
+          "children": [
+            {
+              "id": "item_radioactive_006",
+              "name": "radioactive6",
+              "icon": "radioactive6",
+              "type": "radioactive",
+              "cost": 37
+            },
+            {
+              "id": "nav_radioactive_down_2",
+              "name": "More Radioactive",
+              "icon": "skill-down",
+              "description": "More radioactive items",
+              "layers": [
+                {
+                  "texture": "skill-down",
+                  "depth": 3
+                },
+                {
+                  "texture": "frame",
+                  "depth": 2
+                }
+              ],
+              "children": [
+                {
+                  "id": "item_radioactive_011",
+                  "name": "radioactive11",
+                  "icon": "radioactive11",
+                  "type": "radioactive",
+                  "cost": 36
+                },
+                {
+                  "id": "nav_radioactive_down_3",
+                  "name": "More Radioactive",
+                  "icon": "skill-down",
+                  "description": "More radioactive items",
+                  "layers": [
+                    {
+                      "texture": "skill-down",
+                      "depth": 3
+                    },
+                    {
+                      "texture": "frame",
+                      "depth": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "id": "item_radioactive_016",
+                      "name": "radioactive16",
+                      "icon": "radioactive16",
+                      "type": "radioactive",
+                      "cost": 35
+                    },
+                    {
+                      "id": "nav_radioactive_down_4",
+                      "name": "More Radioactive",
+                      "icon": "skill-down",
+                      "description": "More radioactive items",
+                      "layers": [
+                        {
+                          "texture": "skill-down",
+                          "depth": 3
+                        },
+                        {
+                          "texture": "frame",
+                          "depth": 2
+                        }
+                      ],
+                      "children": [
+                        {
+                          "id": "item_radioactive_021",
+                          "name": "radioactive21",
+                          "icon": "radioactive21",
+                          "type": "radioactive",
+                          "cost": 34
+                        },
+                        {
+                          "id": "nav_radioactive_down_5",
+                          "name": "More Radioactive",
+                          "icon": "skill-down",
+                          "description": "More radioactive items",
+                          "layers": [
+                            {
+                              "texture": "skill-down",
+                              "depth": 3
+                            },
+                            {
+                              "texture": "frame",
+                              "depth": 2
+                            }
+                          ],
+                          "children": [
+                            {
+                              "id": "item_radioactive_026",
+                              "name": "radioactive26",
+                              "icon": "radioactive26",
+                              "type": "radioactive",
+                              "cost": 33
+                            },
+                            {
+                              "id": "nav_radioactive_down_6",
+                              "name": "More Radioactive",
+                              "icon": "skill-down",
+                              "description": "More radioactive items",
+                              "layers": [
+                                {
+                                  "texture": "skill-down",
+                                  "depth": 3
+                                },
+                                {
+                                  "texture": "frame",
+                                  "depth": 2
+                                }
+                              ],
+                              "children": [
+                                {
+                                  "id": "item_radioactive_031",
+                                  "name": "radioactive31",
+                                  "icon": "radioactive31",
+                                  "type": "radioactive",
+                                  "cost": 32
+                                },
+                                {
+                                  "id": "nav_radioactive_down_7",
+                                  "name": "More Radioactive",
+                                  "icon": "skill-down",
+                                  "description": "More radioactive items",
+                                  "layers": [
+                                    {
+                                      "texture": "skill-down",
+                                      "depth": 3
+                                    },
+                                    {
+                                      "texture": "frame",
+                                      "depth": 2
+                                    }
+                                  ],
+                                  "children": [
+                                    {
+                                      "id": "item_radioactive_036",
+                                      "name": "radioactive36",
+                                      "icon": "radioactive36",
+                                      "type": "radioactive",
+                                      "cost": 37
+                                    },
+                                    {
+                                      "id": "item_radioactive_037",
+                                      "name": "radioactive37",
+                                      "icon": "radioactive37",
+                                      "type": "radioactive",
+                                      "cost": 32
+                                    },
+                                    {
+                                      "id": "item_radioactive_038",
+                                      "name": "radioactive38",
+                                      "icon": "radioactive38",
+                                      "type": "radioactive",
+                                      "cost": 33
+                                    },
+                                    {
+                                      "id": "item_radioactive_039",
+                                      "name": "radioactive39",
+                                      "icon": "radioactive39",
+                                      "type": "radioactive",
+                                      "cost": 34
+                                    },
+                                    {
+                                      "id": "item_radioactive_040",
+                                      "name": "radioactive40",
+                                      "icon": "radioactive40",
+                                      "type": "radioactive",
+                                      "cost": 35
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "item_radioactive_032",
+                                  "name": "radioactive32",
+                                  "icon": "radioactive32",
+                                  "type": "radioactive",
+                                  "cost": 33
+                                },
+                                {
+                                  "id": "item_radioactive_033",
+                                  "name": "radioactive33",
+                                  "icon": "radioactive33",
+                                  "type": "radioactive",
+                                  "cost": 34
+                                },
+                                {
+                                  "id": "item_radioactive_034",
+                                  "name": "radioactive34",
+                                  "icon": "radioactive34",
+                                  "type": "radioactive",
+                                  "cost": 35
+                                },
+                                {
+                                  "id": "item_radioactive_035",
+                                  "name": "radioactive35",
+                                  "icon": "radioactive35",
+                                  "type": "radioactive",
+                                  "cost": 36
+                                }
+                              ]
+                            },
+                            {
+                              "id": "item_radioactive_027",
+                              "name": "radioactive27",
+                              "icon": "radioactive27",
+                              "type": "radioactive",
+                              "cost": 34
+                            },
+                            {
+                              "id": "item_radioactive_028",
+                              "name": "radioactive28",
+                              "icon": "radioactive28",
+                              "type": "radioactive",
+                              "cost": 35
+                            },
+                            {
+                              "id": "item_radioactive_029",
+                              "name": "radioactive29",
+                              "icon": "radioactive29",
+                              "type": "radioactive",
+                              "cost": 36
+                            },
+                            {
+                              "id": "item_radioactive_030",
+                              "name": "radioactive30",
+                              "icon": "radioactive30",
+                              "type": "radioactive",
+                              "cost": 37
+                            }
+                          ]
+                        },
+                        {
+                          "id": "item_radioactive_022",
+                          "name": "radioactive22",
+                          "icon": "radioactive22",
+                          "type": "radioactive",
+                          "cost": 35
+                        },
+                        {
+                          "id": "item_radioactive_023",
+                          "name": "radioactive23",
+                          "icon": "radioactive23",
+                          "type": "radioactive",
+                          "cost": 36
+                        },
+                        {
+                          "id": "item_radioactive_024",
+                          "name": "radioactive24",
+                          "icon": "radioactive24",
+                          "type": "radioactive",
+                          "cost": 37
+                        },
+                        {
+                          "id": "item_radioactive_025",
+                          "name": "radioactive25",
+                          "icon": "radioactive25",
+                          "type": "radioactive",
+                          "cost": 32
+                        }
+                      ]
+                    },
+                    {
+                      "id": "item_radioactive_017",
+                      "name": "radioactive17",
+                      "icon": "radioactive17",
+                      "type": "radioactive",
+                      "cost": 36
+                    },
+                    {
+                      "id": "item_radioactive_018",
+                      "name": "radioactive18",
+                      "icon": "radioactive18",
+                      "type": "radioactive",
+                      "cost": 37
+                    },
+                    {
+                      "id": "item_radioactive_019",
+                      "name": "radioactive19",
+                      "icon": "radioactive19",
+                      "type": "radioactive",
+                      "cost": 32
+                    },
+                    {
+                      "id": "item_radioactive_020",
+                      "name": "radioactive20",
+                      "icon": "radioactive20",
+                      "type": "radioactive",
+                      "cost": 33
+                    }
+                  ]
+                },
+                {
+                  "id": "item_radioactive_012",
+                  "name": "radioactive12",
+                  "icon": "radioactive12",
+                  "type": "radioactive",
+                  "cost": 37
+                },
+                {
+                  "id": "item_radioactive_013",
+                  "name": "radioactive13",
+                  "icon": "radioactive13",
+                  "type": "radioactive",
+                  "cost": 32
+                },
+                {
+                  "id": "item_radioactive_014",
+                  "name": "radioactive14",
+                  "icon": "radioactive14",
+                  "type": "radioactive",
+                  "cost": 33
+                },
+                {
+                  "id": "item_radioactive_015",
+                  "name": "radioactive15",
+                  "icon": "radioactive15",
+                  "type": "radioactive",
+                  "cost": 34
+                }
+              ]
+            },
+            {
+              "id": "item_radioactive_007",
+              "name": "radioactive7",
+              "icon": "radioactive7",
+              "type": "radioactive",
+              "cost": 32
+            },
+            {
+              "id": "item_radioactive_008",
+              "name": "radioactive8",
+              "icon": "radioactive8",
+              "type": "radioactive",
+              "cost": 33
+            },
+            {
+              "id": "item_radioactive_009",
+              "name": "radioactive9",
+              "icon": "radioactive9",
+              "type": "radioactive",
+              "cost": 34
+            },
+            {
+              "id": "item_radioactive_010",
+              "name": "radioactive10",
+              "icon": "radioactive10",
+              "type": "radioactive",
+              "cost": 35
+            }
+          ]
+        },
+        {
+          "id": "item_radioactive_002",
+          "name": "radioactive2",
+          "icon": "radioactive2",
+          "type": "radioactive",
+          "cost": 33
+        },
+        {
+          "id": "item_radioactive_003",
+          "name": "radioactive3",
+          "icon": "radioactive3",
+          "type": "radioactive",
+          "cost": 34
+        },
+        {
+          "id": "item_radioactive_004",
+          "name": "radioactive4",
+          "icon": "radioactive4",
+          "type": "radioactive",
+          "cost": 35
+        },
+        {
+          "id": "item_radioactive_005",
+          "name": "radioactive5",
+          "icon": "radioactive5",
+          "type": "radioactive",
+          "cost": 36
+        }
+      ]
+    },
+    {
+      "id": "nav_mining_root",
+      "name": "Mining Systems",
+      "icon": "skill-drill",
+      "description": "Extraction and drilling equipment",
+      "layers": [
+        {
+          "texture": "skill-drill",
+          "depth": 3
+        },
+        {
+          "texture": "frame",
+          "depth": 2
+        }
+      ],
+      "children": [
+        {
+          "id": "item_mining_001",
+          "name": "mining1",
+          "icon": "mining1",
+          "type": "mining",
+          "cost": 15
+        },
+        {
+          "id": "nav_mining_down_1",
+          "name": "More Mining",
+          "icon": "skill-down",
+          "description": "More mining items",
+          "layers": [
+            {
+              "texture": "skill-down",
+              "depth": 3
+            },
+            {
+              "texture": "frame",
+              "depth": 2
+            }
+          ],
+          "children": [
+            {
+              "id": "item_mining_006",
+              "name": "mining6",
+              "icon": "mining6",
+              "type": "mining",
+              "cost": 20
+            },
+            {
+              "id": "nav_mining_down_2",
+              "name": "More Mining",
+              "icon": "skill-down",
+              "description": "More mining items",
+              "layers": [
+                {
+                  "texture": "skill-down",
+                  "depth": 3
+                },
+                {
+                  "texture": "frame",
+                  "depth": 2
+                }
+              ],
+              "children": [
+                {
+                  "id": "item_mining_011",
+                  "name": "mining11",
+                  "icon": "mining11",
+                  "type": "mining",
+                  "cost": 19
+                },
+                {
+                  "id": "nav_mining_down_3",
+                  "name": "More Mining",
+                  "icon": "skill-down",
+                  "description": "More mining items",
+                  "layers": [
+                    {
+                      "texture": "skill-down",
+                      "depth": 3
+                    },
+                    {
+                      "texture": "frame",
+                      "depth": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "id": "item_mining_016",
+                      "name": "mining16",
+                      "icon": "mining16",
+                      "type": "mining",
+                      "cost": 18
+                    },
+                    {
+                      "id": "nav_mining_down_4",
+                      "name": "More Mining",
+                      "icon": "skill-down",
+                      "description": "More mining items",
+                      "layers": [
+                        {
+                          "texture": "skill-down",
+                          "depth": 3
+                        },
+                        {
+                          "texture": "frame",
+                          "depth": 2
+                        }
+                      ],
+                      "children": [
+                        {
+                          "id": "item_mining_021",
+                          "name": "mining21",
+                          "icon": "mining21",
+                          "type": "mining",
+                          "cost": 17
+                        },
+                        {
+                          "id": "nav_mining_down_5",
+                          "name": "More Mining",
+                          "icon": "skill-down",
+                          "description": "More mining items",
+                          "layers": [
+                            {
+                              "texture": "skill-down",
+                              "depth": 3
+                            },
+                            {
+                              "texture": "frame",
+                              "depth": 2
+                            }
+                          ],
+                          "children": [
+                            {
+                              "id": "item_mining_026",
+                              "name": "mining26",
+                              "icon": "mining26",
+                              "type": "mining",
+                              "cost": 16
+                            },
+                            {
+                              "id": "nav_mining_down_6",
+                              "name": "More Mining",
+                              "icon": "skill-down",
+                              "description": "More mining items",
+                              "layers": [
+                                {
+                                  "texture": "skill-down",
+                                  "depth": 3
+                                },
+                                {
+                                  "texture": "frame",
+                                  "depth": 2
+                                }
+                              ],
+                              "children": [
+                                {
+                                  "id": "item_mining_031",
+                                  "name": "mining31",
+                                  "icon": "mining31",
+                                  "type": "mining",
+                                  "cost": 15
+                                },
+                                {
+                                  "id": "item_mining_032",
+                                  "name": "mining32",
+                                  "icon": "mining32",
+                                  "type": "mining",
+                                  "cost": 16
+                                },
+                                {
+                                  "id": "item_mining_033",
+                                  "name": "mining33",
+                                  "icon": "mining33",
+                                  "type": "mining",
+                                  "cost": 17
+                                }
+                              ]
+                            },
+                            {
+                              "id": "item_mining_027",
+                              "name": "mining27",
+                              "icon": "mining27",
+                              "type": "mining",
+                              "cost": 17
+                            },
+                            {
+                              "id": "item_mining_028",
+                              "name": "mining28",
+                              "icon": "mining28",
+                              "type": "mining",
+                              "cost": 18
+                            },
+                            {
+                              "id": "item_mining_029",
+                              "name": "mining29",
+                              "icon": "mining29",
+                              "type": "mining",
+                              "cost": 19
+                            },
+                            {
+                              "id": "item_mining_030",
+                              "name": "mining30",
+                              "icon": "mining30",
+                              "type": "mining",
+                              "cost": 20
+                            }
+                          ]
+                        },
+                        {
+                          "id": "item_mining_022",
+                          "name": "mining22",
+                          "icon": "mining22",
+                          "type": "mining",
+                          "cost": 18
+                        },
+                        {
+                          "id": "item_mining_023",
+                          "name": "mining23",
+                          "icon": "mining23",
+                          "type": "mining",
+                          "cost": 19
+                        },
+                        {
+                          "id": "item_mining_024",
+                          "name": "mining24",
+                          "icon": "mining24",
+                          "type": "mining",
+                          "cost": 20
+                        },
+                        {
+                          "id": "item_mining_025",
+                          "name": "mining25",
+                          "icon": "mining25",
+                          "type": "mining",
+                          "cost": 15
+                        }
+                      ]
+                    },
+                    {
+                      "id": "item_mining_017",
+                      "name": "mining17",
+                      "icon": "mining17",
+                      "type": "mining",
+                      "cost": 19
+                    },
+                    {
+                      "id": "item_mining_018",
+                      "name": "mining18",
+                      "icon": "mining18",
+                      "type": "mining",
+                      "cost": 20
+                    },
+                    {
+                      "id": "item_mining_019",
+                      "name": "mining19",
+                      "icon": "mining19",
+                      "type": "mining",
+                      "cost": 15
+                    },
+                    {
+                      "id": "item_mining_020",
+                      "name": "mining20",
+                      "icon": "mining20",
+                      "type": "mining",
+                      "cost": 16
+                    }
+                  ]
+                },
+                {
+                  "id": "item_mining_012",
+                  "name": "mining12",
+                  "icon": "mining12",
+                  "type": "mining",
+                  "cost": 20
+                },
+                {
+                  "id": "item_mining_013",
+                  "name": "mining13",
+                  "icon": "mining13",
+                  "type": "mining",
+                  "cost": 15
+                },
+                {
+                  "id": "item_mining_014",
+                  "name": "mining14",
+                  "icon": "mining14",
+                  "type": "mining",
+                  "cost": 16
+                },
+                {
+                  "id": "item_mining_015",
+                  "name": "mining15",
+                  "icon": "mining15",
+                  "type": "mining",
+                  "cost": 17
+                }
+              ]
+            },
+            {
+              "id": "item_mining_007",
+              "name": "mining7",
+              "icon": "mining7",
+              "type": "mining",
+              "cost": 15
+            },
+            {
+              "id": "item_mining_008",
+              "name": "mining8",
+              "icon": "mining8",
+              "type": "mining",
+              "cost": 16
+            },
+            {
+              "id": "item_mining_009",
+              "name": "mining9",
+              "icon": "mining9",
+              "type": "mining",
+              "cost": 17
+            },
+            {
+              "id": "item_mining_010",
+              "name": "mining10",
+              "icon": "mining10",
+              "type": "mining",
+              "cost": 18
+            }
+          ]
+        },
+        {
+          "id": "item_mining_002",
+          "name": "mining2",
+          "icon": "mining2",
+          "type": "mining",
+          "cost": 16
+        },
+        {
+          "id": "item_mining_003",
+          "name": "mining3",
+          "icon": "mining3",
+          "type": "mining",
+          "cost": 17
+        },
+        {
+          "id": "item_mining_004",
+          "name": "mining4",
+          "icon": "mining4",
+          "type": "mining",
+          "cost": 18
+        },
+        {
+          "id": "item_mining_005",
+          "name": "mining5",
+          "icon": "mining5",
+          "type": "mining",
+          "cost": 19
+        }
+      ]
+    },
+    {
+      "id": "nav_streetwear_root",
+      "name": "Streetwear Systems",
+      "icon": "skill-character",
+      "description": "Apparel and character gear",
+      "layers": [
+        {
+          "texture": "skill-character",
+          "depth": 3
+        },
+        {
+          "texture": "frame",
+          "depth": 2
+        }
+      ],
+      "children": [
+        {
+          "id": "item_streetwear_001",
+          "name": "streetwear1",
+          "icon": "streetwear1",
+          "type": "streetwear",
+          "cost": 16
+        },
+        {
+          "id": "nav_streetwear_down_1",
+          "name": "More Streetwear",
+          "icon": "skill-down",
+          "description": "More streetwear items",
+          "layers": [
+            {
+              "texture": "skill-down",
+              "depth": 3
+            },
+            {
+              "texture": "frame",
+              "depth": 2
+            }
+          ],
+          "children": [
+            {
+              "id": "item_streetwear_006",
+              "name": "streetwear6",
+              "icon": "streetwear6",
+              "type": "streetwear",
+              "cost": 21
+            },
+            {
+              "id": "nav_streetwear_down_2",
+              "name": "More Streetwear",
+              "icon": "skill-down",
+              "description": "More streetwear items",
+              "layers": [
+                {
+                  "texture": "skill-down",
+                  "depth": 3
+                },
+                {
+                  "texture": "frame",
+                  "depth": 2
+                }
+              ],
+              "children": [
+                {
+                  "id": "item_streetwear_011",
+                  "name": "streetwear11",
+                  "icon": "streetwear11",
+                  "type": "streetwear",
+                  "cost": 20
+                },
+                {
+                  "id": "nav_streetwear_down_3",
+                  "name": "More Streetwear",
+                  "icon": "skill-down",
+                  "description": "More streetwear items",
+                  "layers": [
+                    {
+                      "texture": "skill-down",
+                      "depth": 3
+                    },
+                    {
+                      "texture": "frame",
+                      "depth": 2
+                    }
+                  ],
+                  "children": [
+                    {
+                      "id": "item_streetwear_016",
+                      "name": "streetwear16",
+                      "icon": "streetwear16",
+                      "type": "streetwear",
+                      "cost": 19
+                    },
+                    {
+                      "id": "nav_streetwear_down_4",
+                      "name": "More Streetwear",
+                      "icon": "skill-down",
+                      "description": "More streetwear items",
+                      "layers": [
+                        {
+                          "texture": "skill-down",
+                          "depth": 3
+                        },
+                        {
+                          "texture": "frame",
+                          "depth": 2
+                        }
+                      ],
+                      "children": [
+                        {
+                          "id": "item_streetwear_021",
+                          "name": "streetwear21",
+                          "icon": "streetwear21",
+                          "type": "streetwear",
+                          "cost": 18
+                        },
+                        {
+                          "id": "nav_streetwear_down_5",
+                          "name": "More Streetwear",
+                          "icon": "skill-down",
+                          "description": "More streetwear items",
+                          "layers": [
+                            {
+                              "texture": "skill-down",
+                              "depth": 3
+                            },
+                            {
+                              "texture": "frame",
+                              "depth": 2
+                            }
+                          ],
+                          "children": [
+                            {
+                              "id": "item_streetwear_026",
+                              "name": "streetwear26",
+                              "icon": "streetwear26",
+                              "type": "streetwear",
+                              "cost": 17
+                            },
+                            {
+                              "id": "nav_streetwear_down_6",
+                              "name": "More Streetwear",
+                              "icon": "skill-down",
+                              "description": "More streetwear items",
+                              "layers": [
+                                {
+                                  "texture": "skill-down",
+                                  "depth": 3
+                                },
+                                {
+                                  "texture": "frame",
+                                  "depth": 2
+                                }
+                              ],
+                              "children": [
+                                {
+                                  "id": "item_streetwear_031",
+                                  "name": "streetwear31",
+                                  "icon": "streetwear31",
+                                  "type": "streetwear",
+                                  "cost": 16
+                                },
+                                {
+                                  "id": "nav_streetwear_down_7",
+                                  "name": "More Streetwear",
+                                  "icon": "skill-down",
+                                  "description": "More streetwear items",
+                                  "layers": [
+                                    {
+                                      "texture": "skill-down",
+                                      "depth": 3
+                                    },
+                                    {
+                                      "texture": "frame",
+                                      "depth": 2
+                                    }
+                                  ],
+                                  "children": [
+                                    {
+                                      "id": "item_streetwear_036",
+                                      "name": "streetwear36",
+                                      "icon": "streetwear36",
+                                      "type": "streetwear",
+                                      "cost": 21
+                                    },
+                                    {
+                                      "id": "item_streetwear_037",
+                                      "name": "streetwear37",
+                                      "icon": "streetwear37",
+                                      "type": "streetwear",
+                                      "cost": 16
+                                    },
+                                    {
+                                      "id": "item_streetwear_038",
+                                      "name": "streetwear38",
+                                      "icon": "streetwear38",
+                                      "type": "streetwear",
+                                      "cost": 17
+                                    },
+                                    {
+                                      "id": "item_streetwear_039",
+                                      "name": "streetwear39",
+                                      "icon": "streetwear39",
+                                      "type": "streetwear",
+                                      "cost": 18
+                                    },
+                                    {
+                                      "id": "item_streetwear_040",
+                                      "name": "streetwear40",
+                                      "icon": "streetwear40",
+                                      "type": "streetwear",
+                                      "cost": 19
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "item_streetwear_032",
+                                  "name": "streetwear32",
+                                  "icon": "streetwear32",
+                                  "type": "streetwear",
+                                  "cost": 17
+                                },
+                                {
+                                  "id": "item_streetwear_033",
+                                  "name": "streetwear33",
+                                  "icon": "streetwear33",
+                                  "type": "streetwear",
+                                  "cost": 18
+                                },
+                                {
+                                  "id": "item_streetwear_034",
+                                  "name": "streetwear34",
+                                  "icon": "streetwear34",
+                                  "type": "streetwear",
+                                  "cost": 19
+                                },
+                                {
+                                  "id": "item_streetwear_035",
+                                  "name": "streetwear35",
+                                  "icon": "streetwear35",
+                                  "type": "streetwear",
+                                  "cost": 20
+                                }
+                              ]
+                            },
+                            {
+                              "id": "item_streetwear_027",
+                              "name": "streetwear27",
+                              "icon": "streetwear27",
+                              "type": "streetwear",
+                              "cost": 18
+                            },
+                            {
+                              "id": "item_streetwear_028",
+                              "name": "streetwear28",
+                              "icon": "streetwear28",
+                              "type": "streetwear",
+                              "cost": 19
+                            },
+                            {
+                              "id": "item_streetwear_029",
+                              "name": "streetwear29",
+                              "icon": "streetwear29",
+                              "type": "streetwear",
+                              "cost": 20
+                            },
+                            {
+                              "id": "item_streetwear_030",
+                              "name": "streetwear30",
+                              "icon": "streetwear30",
+                              "type": "streetwear",
+                              "cost": 21
+                            }
+                          ]
+                        },
+                        {
+                          "id": "item_streetwear_022",
+                          "name": "streetwear22",
+                          "icon": "streetwear22",
+                          "type": "streetwear",
+                          "cost": 19
+                        },
+                        {
+                          "id": "item_streetwear_023",
+                          "name": "streetwear23",
+                          "icon": "streetwear23",
+                          "type": "streetwear",
+                          "cost": 20
+                        },
+                        {
+                          "id": "item_streetwear_024",
+                          "name": "streetwear24",
+                          "icon": "streetwear24",
+                          "type": "streetwear",
+                          "cost": 21
+                        },
+                        {
+                          "id": "item_streetwear_025",
+                          "name": "streetwear25",
+                          "icon": "streetwear25",
+                          "type": "streetwear",
+                          "cost": 16
+                        }
+                      ]
+                    },
+                    {
+                      "id": "item_streetwear_017",
+                      "name": "streetwear17",
+                      "icon": "streetwear17",
+                      "type": "streetwear",
+                      "cost": 20
+                    },
+                    {
+                      "id": "item_streetwear_018",
+                      "name": "streetwear18",
+                      "icon": "streetwear18",
+                      "type": "streetwear",
+                      "cost": 21
+                    },
+                    {
+                      "id": "item_streetwear_019",
+                      "name": "streetwear19",
+                      "icon": "streetwear19",
+                      "type": "streetwear",
+                      "cost": 16
+                    },
+                    {
+                      "id": "item_streetwear_020",
+                      "name": "streetwear20",
+                      "icon": "streetwear20",
+                      "type": "streetwear",
+                      "cost": 17
+                    }
+                  ]
+                },
+                {
+                  "id": "item_streetwear_012",
+                  "name": "streetwear12",
+                  "icon": "streetwear12",
+                  "type": "streetwear",
+                  "cost": 21
+                },
+                {
+                  "id": "item_streetwear_013",
+                  "name": "streetwear13",
+                  "icon": "streetwear13",
+                  "type": "streetwear",
+                  "cost": 16
+                },
+                {
+                  "id": "item_streetwear_014",
+                  "name": "streetwear14",
+                  "icon": "streetwear14",
+                  "type": "streetwear",
+                  "cost": 17
+                },
+                {
+                  "id": "item_streetwear_015",
+                  "name": "streetwear15",
+                  "icon": "streetwear15",
+                  "type": "streetwear",
+                  "cost": 18
+                }
+              ]
+            },
+            {
+              "id": "item_streetwear_007",
+              "name": "streetwear7",
+              "icon": "streetwear7",
+              "type": "streetwear",
+              "cost": 16
+            },
+            {
+              "id": "item_streetwear_008",
+              "name": "streetwear8",
+              "icon": "streetwear8",
+              "type": "streetwear",
+              "cost": 17
+            },
+            {
+              "id": "item_streetwear_009",
+              "name": "streetwear9",
+              "icon": "streetwear9",
+              "type": "streetwear",
+              "cost": 18
+            },
+            {
+              "id": "item_streetwear_010",
+              "name": "streetwear10",
+              "icon": "streetwear10",
+              "type": "streetwear",
               "cost": 19
             }
           ]
         },
         {
-          "id": "nav_combat_sub_2",
-          "name": "Ranged Combat",
-          "icon": "Skillicon14_13",
-          "description": "Long-distance weapon mastery",
-          "layers": [
-            {
-              "texture": "Skillicon14_13",
-              "depth": 3
-            },
-            {
-              "texture": "Frame_14",
-              "depth": 2
-            }
-          ],
-          "children": [
-            {
-              "id": "item_armaments_001",
-              "name": "arm1",
-              "icon": "arm1",
-              "type": "armaments",
-              "cost": 24
-            },
-            {
-              "id": "item_armaments_002",
-              "name": "arm2",
-              "icon": "arm2",
-              "type": "armaments",
-              "cost": 28
-            },
-            {
-              "id": "item_armaments_003",
-              "name": "arm3",
-              "icon": "arm3",
-              "type": "armaments",
-              "cost": 30
-            },
-            {
-              "id": "item_armaments_004",
-              "name": "arm4",
-              "icon": "arm4",
-              "type": "armaments",
-              "cost": 26
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "nav_survival_2",
-      "name": "Survival  Skill 08",
-      "icon": "Skillicon14_08",
-      "description": "Wilderness and survival expertise",
-      "layers": [
-        {
-          "texture": "Skillicon14_08",
-          "depth": 3
-        },
-        {
-          "texture": "Frame_14",
-          "depth": 2
-        }
-      ],
-      "children": [
-        {
-          "id": "nav_survival_sub_1",
-          "name": "Mining & Resources",
-          "icon": "Skillicon14_14",
-          "description": "Extract valuable resources",
-          "layers": [
-            {
-              "texture": "Skillicon14_14",
-              "depth": 3
-            },
-            {
-              "texture": "Frame_14",
-              "depth": 2
-            }
-          ],
-          "children": [
-            {
-              "id": "item_mining_001",
-              "name": "mining1",
-              "icon": "mining1",
-              "type": "mining",
-              "cost": 15
-            },
-            {
-              "id": "item_mining_002",
-              "name": "mining2",
-              "icon": "mining2",
-              "type": "mining",
-              "cost": 18
-            },
-            {
-              "id": "item_mining_003",
-              "name": "mining3",
-              "icon": "mining3",
-              "type": "mining",
-              "cost": 22
-            },
-            {
-              "id": "item_radioactive_001",
-              "name": "radioactive1",
-              "icon": "radioactive1",
-              "type": "radioactive",
-              "cost": 32
-            },
-            {
-              "id": "item_radioactive_002",
-              "name": "radioactive2",
-              "icon": "radioactive2",
-              "type": "radioactive",
-              "cost": 35
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "nav_crafting_3",
-      "name": "Crafting Skill 15",
-      "icon": "Skillicon14_15",
-      "description": "Create and forge powerful items",
-      "layers": [
-        {
-          "texture": "Skillicon14_15",
-          "depth": 3
-        },
-        {
-          "texture": "Frame_14",
-          "depth": 2
-        }
-      ],
-      "children": [
-        {
-          "id": "item_mining_010",
-          "name": "mining4",
-          "icon": "mining4",
-          "type": "mining",
-          "cost": 16
-        },
-        {
-          "id": "item_mining_011",
-          "name": "mining5",
-          "icon": "mining5",
-          "type": "mining",
-          "cost": 14
-        },
-        {
-          "id": "item_mining_012",
-          "name": "mining6",
-          "icon": "mining6",
-          "type": "mining",
-          "cost": 17
-        },
-        {
-          "id": "item_melee_010",
-          "name": "melee6",
-          "icon": "melee6",
-          "type": "melee",
-          "cost": 11
-        },
-        {
-          "id": "item_melee_011",
-          "name": "melee7",
-          "icon": "melee7",
-          "type": "melee",
-          "cost": 8
-        },
-        {
-          "id": "item_melee_012",
-          "name": "melee8",
-          "icon": "melee8",
-          "type": "melee",
-          "cost": 13
-        }
-      ]
-    },
-    {
-      "id": "nav_exploration_4",
-      "name": "Exploration Skill 22",
-      "icon": "Skillicon14_22",
-      "description": "Discover hidden realms and treasures",
-      "layers": [
-        {
-          "texture": "Skillicon14_22",
-          "depth": 3
-        },
-        {
-          "texture": "Frame_14",
-          "depth": 2
-        }
-      ],
-      "children": [
-        {
-          "id": "nav_exploration_sub_1",
-          "name": "Gear & Equipment",
-          "icon": "Skillicon14_28",
-          "description": "Equip yourself for adventure",
-          "layers": [
-            {
-              "texture": "Skillicon14_28",
-              "depth": 3
-            },
-            {
-              "texture": "Frame_14",
-              "depth": 2
-            }
-          ],
-          "children": [
-            {
-              "id": "item_radioactive_010",
-              "icon": "radioactive3",
-              "type": "radioactive",
-              "cost": 11
-            },
-            {
-              "id": "item_radioactive_011",
-              "icon": "radioactive4",
-              "type": "radioactive",
-              "cost": 8
-            },
-            {
-              "id": "item_radioactive_012",
-              "icon": "radioactive5",
-              "type": "radioactive",
-              "cost": 16
-            }
-          ]
-        },
-        {
-          "id": "item_armaments_010",
-          "icon": "arm5",
-          "type": "armaments",
-          "cost": 20
-        },
-        {
-          "id": "item_armaments_011",
-          "icon": "arm6",
-          "type": "armaments",
-          "cost": 28
-        },
-        {
-          "id": "item_armaments_012",
-          "icon": "arm7",
-          "type": "armaments",
-          "cost": 25
-        }
-      ]
-    },
-    {
-      "id": "nav_technology_5",
-      "name": "Technology Skill 32",
-      "icon": "Skillicon14_32",
-      "description": "Master advanced technology",
-      "layers": [
-        {
-          "texture": "Skillicon14_32",
-          "depth": 3
-        },
-        {
-          "texture": "Frame_14",
-          "depth": 2
-        }
-      ],
-      "children": [
-        {
-          "id": "item_radioactive_020",
-          "icon": "radioactive6",
-          "type": "radioactive",
-          "cost": 28
-        },
-        {
-          "id": "item_radioactive_021",
-          "icon": "radioactive7",
-          "type": "radioactive",
-          "cost": 31
-        },
-        {
-          "id": "item_mining_020",
-          "icon": "mining7",
-          "type": "mining",
-          "cost": 17
-        },
-        {
-          "id": "item_mining_021",
-          "icon": "mining8",
-          "type": "mining",
-          "cost": 19
-        },
-        {
-          "id": "item_radioactive_022",
-          "icon": "radioactive8",
-          "type": "radioactive",
-          "cost": 33
-        },
-        {
-          "id": "item_radioactive_023",
-          "icon": "radioactive9",
-          "type": "radioactive",
-          "cost": 30
-        }
-      ]
-    },
-    {
-      "id": "nav_trading_6",
-      "name": "Trading Skill 39",
-      "icon": "Skillicon14_39",
-      "description": "Become a master trader",
-      "layers": [
-        {
-          "texture": "Skillicon14_39",
-          "depth": 3
-        },
-        {
-          "texture": "Frame_14",
-          "depth": 2
-        }
-      ],
-      "children": [
-        {
-          "id": "nav_trading_sub_1",
-          "name": "Fashion & Style",
-          "icon": "Skillicon14_40",
-          "description": "Collect stylish apparel",
-          "layers": [
-            {
-              "texture": "Skillicon14_40",
-              "depth": 3
-            },
-            {
-              "texture": "Frame_14",
-              "depth": 2
-            }
-          ],
-          "children": [
-            {
-              "id": "item_streetwear_001",
-              "icon": "streetwear1",
-              "type": "streetwear",
-              "cost": 16
-            },
-            {
-              "id": "item_streetwear_002",
-              "icon": "streetwear2",
-              "type": "streetwear",
-              "cost": 18
-            },
-            {
-              "id": "item_streetwear_003",
-              "icon": "streetwear3",
-              "type": "streetwear",
-              "cost": 22
-            },
-            {
-              "id": "item_streetwear_004",
-              "icon": "streetwear4",
-              "type": "streetwear",
-              "cost": 17
-            },
-            {
-              "id": "item_streetwear_005",
-              "icon": "streetwear5",
-              "type": "streetwear",
-              "cost": 14
-            }
-          ]
-        },
-        {
-          "id": "item_streetwear_008",
-          "icon": "streetwear6",
+          "id": "item_streetwear_002",
+          "name": "streetwear2",
+          "icon": "streetwear2",
           "type": "streetwear",
-          "cost": 15
+          "cost": 17
         },
         {
-          "id": "item_streetwear_009",
-          "icon": "streetwear7",
+          "id": "item_streetwear_003",
+          "name": "streetwear3",
+          "icon": "streetwear3",
+          "type": "streetwear",
+          "cost": 18
+        },
+        {
+          "id": "item_streetwear_004",
+          "name": "streetwear4",
+          "icon": "streetwear4",
           "type": "streetwear",
           "cost": 19
         },
         {
-          "id": "item_streetwear_010",
-          "icon": "streetwear8",
+          "id": "item_streetwear_005",
+          "name": "streetwear5",
+          "icon": "streetwear5",
           "type": "streetwear",
           "cost": 20
         }

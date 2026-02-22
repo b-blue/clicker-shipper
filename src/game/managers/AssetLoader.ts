@@ -53,8 +53,8 @@ export class AssetLoader {
    * Determine the correct asset path based on icon name and type
    */
   private static getAssetPath(iconName: string, type?: string): string {
-    // Skill icons (Skillicon14_XX) and Frame go in nav-items
-    if (iconName.startsWith('Skillicon14_') || iconName === 'Frame_14') {
+    // Skill icons and frame go in nav-items
+    if (iconName.startsWith('Skillicon14_') || iconName.startsWith('skill-') || iconName === 'frame') {
       return `assets/nav-items/${iconName}.png`;
     }
     

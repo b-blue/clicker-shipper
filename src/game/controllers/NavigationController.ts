@@ -114,12 +114,10 @@ export class NavigationController {
 
   /**
    * Calculate scale factor based on depth
-   * Deeper levels get progressively smaller
+   * Keep icons consistent size across depths
    * @returns Scale multiplier for rendering at current depth
    */
   getScaleForDepth(): number {
-    const depth = this.getDepth();
-    // Depth 0: 1.4, Depth 1: 1.2, Depth 2: 1.0, Depth 3: 0.8, etc.
-    return Math.max(0.6, 1.4 - depth * 0.2);
+    return 1.4;
   }
 }

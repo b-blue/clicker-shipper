@@ -325,22 +325,13 @@ export class RadialDial {
       } else {
         this.centerImage.setVisible(false);
       }
-    } else if (this.navigationController.getDepth() > 0) {
-      // Display root of current level's parent item when no selection and not at root
-      const displayItems = this.navigationController.getCurrentItems();
-      if (displayItems.length > 0) {
-        // Show the first item's parent icon, or root icon as fallback
-        if (this.scene.textures.exists('rootDialIcon')) {
-          this.centerImage.setTexture('rootDialIcon');
-          this.centerImage.setPosition(this.dialX, this.dialY);
-          this.centerImage.setVisible(true);
-        } else {
-          this.centerImage.setVisible(false);
-        }
-      }
     } else {
-      // Display root dial icon sprite at root level
-      if (this.scene.textures.exists('rootDialIcon')) {
+      const defaultKey = this.navigationController.getDepth() > 0 ? 'skill-up' : 'skill-diagram';
+      if (this.scene.textures.exists(defaultKey)) {
+        this.centerImage.setTexture(defaultKey);
+        this.centerImage.setPosition(this.dialX, this.dialY);
+        this.centerImage.setVisible(true);
+      } else if (this.scene.textures.exists('rootDialIcon')) {
         this.centerImage.setTexture('rootDialIcon');
         this.centerImage.setPosition(this.dialX, this.dialY);
         this.centerImage.setVisible(true);

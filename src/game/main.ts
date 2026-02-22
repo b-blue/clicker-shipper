@@ -17,7 +17,6 @@ const config: Phaser.Types.Core.GameConfig = {
     scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        orientation: Phaser.Scale.Orientation.PORTRAIT_LANDSCAPE,
         expandParent: true,
         width: '100%',
         height: '100%',

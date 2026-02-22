@@ -30,6 +30,10 @@ export class Preloader extends Phaser.Scene {
       if (config.rootDialIconPath) {
         this.load.image('rootDialIcon', config.rootDialIconPath);
       }
+
+      // Load center default icons
+      this.load.image('skill-up', 'assets/nav-items/skill-up.png');
+      this.load.image('skill-diagram', 'assets/nav-items/skill-diagram.png');
       
       // Load item sprite assets
       AssetLoader.preloadItemAssets(this, items);

@@ -11,6 +11,7 @@ export interface MenuItem {
   id: string;
   name: string;
   icon: string;
+  type?: string;
   cost?: number;
   description?: string;
   layers?: ImageLayer[];
@@ -22,6 +23,7 @@ export interface SubItem {
   id: string;
   name: string;
   icon: string;
+  type?: string;
   cost: number;
   description?: string;
   layers?: ImageLayer[];
@@ -31,6 +33,7 @@ export interface Item {
   id: string;
   name: string;
   icon: string;
+  type?: string;
   description?: string;
   subItems: SubItem[];
   layers?: ImageLayer[];

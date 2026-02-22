@@ -183,59 +183,59 @@ export class RadialDial {
     const dragDy = endY - this.dragStartY;
     const dragDistance = Math.sqrt(dragDx * dragDx + dragDy * dragDy);
 
-    // Check if this was a drag from slice to center
-    if (this.dragStartSliceIndex >= 0 && this.selectedItem) {
-      if (dragDistance < this.minDragDistance) {
-        this.selectedItem = null;
-        this.highlightedSliceIndex = -1;
-        this.showDropCue = false;
-        this.redrawDial();
-      } else if (endDistance < this.centerRadius) {
-        // Drag ended in center - confirm selection
-        // Use actual end position instead of relying on showDropCue
-        // (pointermove may not fire consistently on mobile)
-        if (this.lastNonCenterSliceIndex >= 0) {
-          this.highlightedSliceIndex = this.lastNonCenterSliceIndex;
-          this.updateSelectedItem();
-        }
+    // Check if this was a drag (minimum distance required)
+    const wasDrag = dragDistance >= this.minDragDistance;
+
+    // If we started on a valid slice and dragged to center, confirm selection
+    if (this.dragStartSliceIndex >= 0 && wasDrag && endDistance < this.centerRadius) {
+      // Use lastNonCenterSliceIndex if available (the last slice highlighted during drag)
+      // Otherwise fall back to dragStartSliceIndex
+      const confirmedSliceIndex = this.lastNonCenterSliceIndex >= 0 
+        ? this.lastNonCenterSliceIndex 
+        : this.dragStartSliceIndex;
+      
+      const displayItems = this.currentLevel === 0 ? this.items : this.currentSubItems;
+      
+      if (confirmedSliceIndex < displayItems.length) {
+        const confirmedItem = displayItems[confirmedSliceIndex];
+        
         if (this.currentLevel === 1) {
-          this.scene.events.emit('dial:itemConfirmed', { item: this.selectedItem });
-          this.selectedItem = null;
-          this.showDropCue = false;
-        } else if (this.currentLevel === 0) {
-          this.currentParentItem = this.items[this.highlightedSliceIndex];
-          this.currentSubItems = this.currentParentItem.subItems;
-          this.currentLevel = 1;
+          // Confirm sub-item selection
+          this.scene.events.emit('dial:itemConfirmed', { item: confirmedItem });
           this.selectedItem = null;
           this.highlightedSliceIndex = -1;
-          // Reset drag state before redrawing new level
-          this.dragStartSliceIndex = -1;
-          this.isDragging = false;
-          this.showDropCue = false;
-          this.lastNonCenterSliceIndex = -1;
+          this.redrawDial();
+        } else if (this.currentLevel === 0) {
+          // Drill down to sub-items
+          this.currentParentItem = confirmedItem as Item;
+          this.currentSubItems = this.currentParentItem.subItems;
+          this.currentLevel = 1;
           this.updateSliceCount();
+          this.highlightedSliceIndex = -1;
+          this.selectedItem = null;
           this.redrawDial();
           this.scene.events.emit('dial:levelChanged', { level: 1, item: this.currentParentItem });
         }
-      } else {
-        // Drag ended away from center - revert center image
-        this.selectedItem = null;
-        this.highlightedSliceIndex = -1;
-        this.showDropCue = false;
-        this.redrawDial();
       }
-    } else if (endDistance < this.centerRadius) {
+    } else if (!wasDrag && endDistance < this.centerRadius) {
       // Single tap on center (not drag) = go back
       if (this.currentLevel === 1) {
         this.reset();
         this.scene.events.emit('dial:goBack');
       }
+    } else if (this.dragStartSliceIndex >= 0 && wasDrag) {
+      // Drag ended but not in center - clear selection
+      this.selectedItem = null;
+      this.highlightedSliceIndex = -1;
+      this.showDropCue = false;
+      this.redrawDial();
     }
 
-    // Reset drag state
+    // Reset drag state and selection
     this.dragStartSliceIndex = -1;
     this.isDragging = false;
     this.showDropCue = false;
+    this.lastNonCenterSliceIndex = -1;
   }
 
   private updateSelectedItem(): void {

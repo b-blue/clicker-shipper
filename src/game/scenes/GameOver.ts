@@ -1,3 +1,5 @@
+import { Colors, toColorString } from '../constants/Colors';
+
 export class GameOver extends Phaser.Scene {
   constructor() {
     super('GameOver');
@@ -6,7 +8,7 @@ export class GameOver extends Phaser.Scene {
   create(_data: any) {
     // Display stats from data
     // Show replay button
-    this.add.text(400, 300, 'Game Over - Stats will appear here', { fontSize: '24px', color: '#ffd54a' }).setOrigin(0.5);
+    this.add.text(400, 300, 'Game Over - Stats will appear here', { fontSize: '24px', color: toColorString(Colors.HIGHLIGHT_YELLOW) }).setOrigin(0.5);
   }
 
   replay() {

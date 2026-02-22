@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { Item, SubItem } from '../types/GameTypes';
-import { Colors } from '../constants/Colors';
+import { Colors, toColorString } from '../constants/Colors';
 
 export class RadialDial {
   private scene: Phaser.Scene;
@@ -418,7 +418,7 @@ export class RadialDial {
           // Texture doesn't exist, fall back to text
           const text = this.scene.add.text(textX, textY, item.name, {
             fontSize: this.currentLevel === 0 ? '12px' : '11px',
-            color: '#ffffff',
+            color: toColorString(Colors.WHITE),
             align: 'center',
             wordWrap: { width: 80 }
           });
@@ -430,7 +430,7 @@ export class RadialDial {
         // No id property, fall back to text
         const text = this.scene.add.text(textX, textY, (item as any).name, {
           fontSize: '12px',
-          color: '#ffffff',
+          color: toColorString(Colors.WHITE),
           align: 'center',
           wordWrap: { width: 80 }
         });
@@ -444,7 +444,7 @@ export class RadialDial {
           const badgeY = textY - 20;
           const badgeText = this.scene.add.text(badgeX, badgeY, '▶', {
             fontSize: '16px',
-            color: '#ffff00',
+            color: toColorString(Colors.HIGHLIGHT_YELLOW),
             fontStyle: 'bold'
           });
           badgeText.setOrigin(0.5, 0.5);

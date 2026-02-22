@@ -1,7 +1,7 @@
 import { RadialDial } from '../ui/RadialDial';
 import { GameManager } from '../managers/GameManager';
 import { SettingsManager } from '../managers/SettingsManager';
-import { Colors } from '../constants/Colors';
+import { Colors, toColorString } from '../constants/Colors';
 
 export class Game extends Phaser.Scene {
   private radialDial: RadialDial | null = null;
@@ -49,13 +49,13 @@ export class Game extends Phaser.Scene {
       });
 
       const buildHash = '84bee6b';
-      this.add.text(24, 16, `Build: ${buildHash}`, { fontSize: '12px', color: '#ffd54a' });
+      this.add.text(24, 16, `Build: ${buildHash}`, { fontSize: '12px', color: toColorString(Colors.HIGHLIGHT_YELLOW) });
 
       // Add temporary info text
-      this.add.text(24, 42, 'Drag slice → center to select item, Tap center to go back', { fontSize: '14px', color: '#8fd4ff' });
+      this.add.text(24, 42, 'Drag slice → center to select item, Tap center to go back', { fontSize: '14px', color: toColorString(Colors.LIGHT_BLUE) });
     } catch (error) {
       console.error('Error creating Game scene:', error);
-      this.add.text(50, 50, 'Error loading game data', { fontSize: '20px', color: '#ffd54a' });
+      this.add.text(50, 50, 'Error loading game data', { fontSize: '20px', color: toColorString(Colors.HIGHLIGHT_YELLOW) });
     }
   }
 

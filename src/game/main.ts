@@ -2,16 +2,18 @@ import { Boot } from './scenes/Boot';
 import { GameOver } from './scenes/GameOver';
 import { Game as MainGame } from './scenes/Game';
 import { MainMenu } from './scenes/MainMenu';
+import { Settings } from './scenes/Settings';
 import { ItemManual } from './ui/ItemManual';
 import { AUTO, Game } from 'phaser';
 import { Preloader } from './scenes/Preloader';
+import { Colors } from './constants/Colors';
 
 //  Find out more information about the Game Config at:
 //  https://docs.phaser.io/api-documentation/typedef/types-core#gameconfig
 const config: Phaser.Types.Core.GameConfig = {
     type: AUTO,
     parent: 'game-container',
-    backgroundColor: '#028af8',
+    backgroundColor: Colors.BACKGROUND_DARK,
     scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -34,6 +36,7 @@ const config: Phaser.Types.Core.GameConfig = {
         MainMenu,
         MainGame,
         GameOver,
+        Settings,
         ItemManual
     ]
 };

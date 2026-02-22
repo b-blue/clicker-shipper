@@ -1,4 +1,4 @@
-import { Colors } from '../constants/Colors';
+import { Colors, toColorString } from '../constants/Colors';
 
 export class MainMenu extends Phaser.Scene {
   constructor() {
@@ -16,7 +16,7 @@ export class MainMenu extends Phaser.Scene {
     // Title
     this.add.text(gameWidth / 2, gameHeight * 0.15, 'INTERGALACTIC SHIPPER', {
       fontSize: '48px',
-      color: '#ffd54a',
+      color: toColorString(Colors.HIGHLIGHT_YELLOW),
       fontStyle: 'bold',
       fontFamily: 'monospace'
     }).setOrigin(0.5);
@@ -24,27 +24,30 @@ export class MainMenu extends Phaser.Scene {
     // Subtitle
     this.add.text(gameWidth / 2, gameHeight * 0.25, 'Order Fulfillment Terminal', {
       fontSize: '20px',
-      color: '#8fd4ff',
+      color: toColorString(Colors.LIGHT_BLUE),
       fontFamily: 'monospace'
     }).setOrigin(0.5);
 
     // Menu buttons
-    const buttonY = gameHeight * 0.5;
-    const buttonSpacing = 80;
+    const buttonY = gameHeight * 0.45;
+    const buttonSpacing = 70;
 
     // Start Shift button
-    this.createButton(gameWidth / 2, buttonY, 'START SHIFT', () => this.punchIn(), '#ffd54a');
+    this.createButton(gameWidth / 2, buttonY, 'START SHIFT', () => this.punchIn());
 
-    // Item Manual button
-    this.createButton(gameWidth / 2, buttonY + buttonSpacing, 'ITEM MANUAL', () => this.openManual(), '#ffd54a');
+    // Manual button
+    this.createButton(gameWidth / 2, buttonY + buttonSpacing, 'ITEM MANUAL', () => this.openManual());
+
+    // Settings button
+    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 2, 'SETTINGS', () => this.openSettings());
 
     // Exit button
-    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 2, 'EXIT', () => this.exitGame(), '#ffd54a');
+    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 3, 'EXIT', () => this.exitGame());
 
     // Footer
     this.add.text(gameWidth / 2, gameHeight * 0.9, 'Press SPACE to START SHIFT • Press M to view MANUAL', {
       fontSize: '12px',
-      color: '#6e90b8',
+      color: toColorString(Colors.TEXT_MUTED_BLUE),
       align: 'center',
       fontFamily: 'monospace'
     }).setOrigin(0.5);
@@ -54,7 +57,7 @@ export class MainMenu extends Phaser.Scene {
     this.input.keyboard?.on('keydown-M', () => this.openManual());
   }
 
-  private createButton(x: number, y: number, text: string, callback: () => void, colorHex: string = '#ffd54a'): void {
+  private createButton(x: number, y: number, text: string, callback: () => void, colorHex: string = toColorString(Colors.HIGHLIGHT_YELLOW)): void {
     const buttonWidth = 200;
     const buttonHeight = 50;
 
@@ -91,6 +94,11 @@ export class MainMenu extends Phaser.Scene {
   openManual() {
     // Launch ItemManual scene as overlay
     this.scene.launch('ItemManual');
+  }
+
+  openSettings() {
+    // Transition to Settings scene
+    this.scene.start('Settings');
   }
 
   exitGame() {

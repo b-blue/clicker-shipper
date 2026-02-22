@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { Item, SubItem } from '../types/GameTypes';
 import { GameManager } from '../managers/GameManager';
-import { Colors } from '../constants/Colors';
+import { Colors, toColorString } from '../constants/Colors';
 
 export class ItemManual extends Phaser.Scene {
   private items: Item[] = [];
@@ -34,7 +34,7 @@ export class ItemManual extends Phaser.Scene {
     // Title
     this.add.text(gameWidth / 2, gameHeight * 0.05, 'ITEM MANUAL', {
       fontSize: '32px',
-      color: '#ffd54a',
+      color: toColorString(Colors.HIGHLIGHT_YELLOW),
       align: 'center',
       fontFamily: 'Arial',
     }).setOrigin(0.5);
@@ -42,7 +42,7 @@ export class ItemManual extends Phaser.Scene {
     // Instructions
     this.add.text(gameWidth / 2, gameHeight * 0.1, 'Browse items and their descriptions', {
       fontSize: '12px',
-      color: '#8fd4ff',
+      color: toColorString(Colors.LIGHT_BLUE),
       align: 'center',
     }).setOrigin(0.5);
 
@@ -52,7 +52,7 @@ export class ItemManual extends Phaser.Scene {
     closeBtn.on('pointerdown', () => this.scene.stop());
     this.add.text(gameWidth * 0.95, gameHeight * 0.05, 'X', {
       fontSize: '20px',
-      color: '#ffd54a',
+      color: toColorString(Colors.HIGHLIGHT_YELLOW),
     }).setOrigin(0.5);
 
     // Setup grid area
@@ -108,7 +108,7 @@ export class ItemManual extends Phaser.Scene {
     // Placeholder text
     this.add.text(panelX - panelWidth / 2 + 20, panelY - panelHeight / 2 + 20, 'SELECT AN ITEM', {
       fontSize: '14px',
-      color: '#ffd54a',
+      color: toColorString(Colors.HIGHLIGHT_YELLOW),
       wordWrap: { width: panelWidth - 40 },
     });
   }
@@ -157,7 +157,7 @@ export class ItemManual extends Phaser.Scene {
       const name = this.getItemName(item).substring(0, 15);
       const nameText = this.add.text(x, y + itemHeight / 2 - 25, name, {
         fontSize: '10px',
-        color: '#cfe7ff',
+        color: toColorString(Colors.PALE_BLUE),
         align: 'center',
         wordWrap: { width: itemWidth - 10 },
       }).setOrigin(0.5);
@@ -173,7 +173,7 @@ export class ItemManual extends Phaser.Scene {
         const cost = (item as SubItem).cost;
         this.add.text(x, y + itemHeight / 2 - 5, `$${cost}`, {
           fontSize: '9px',
-          color: '#ffd54a',
+          color: toColorString(Colors.HIGHLIGHT_YELLOW),
           align: 'center',
         }).setOrigin(0.5).setData('isItemDisplay', true);
       }
@@ -189,7 +189,7 @@ export class ItemManual extends Phaser.Scene {
 
     const pageText = this.add.text(400, 560, `Page ${pageNum + 1} of ${totalPages}`, {
       fontSize: '12px',
-      color: '#8aa6c6',
+      color: toColorString(Colors.MUTED_BLUE),
       align: 'center',
     }).setOrigin(0.5);
     pageText.setData('isPageText', true);
@@ -215,7 +215,7 @@ export class ItemManual extends Phaser.Scene {
     // Name
     const nameText = this.add.text(panelX - panelWidth / 2 + 20, panelY - panelHeight / 2 + 30, name, {
       fontSize: '18px',
-      color: '#ffd54a',
+      color: toColorString(Colors.HIGHLIGHT_YELLOW),
       fontStyle: 'bold',
     });
     nameText.setData('isDetailsText', true);
@@ -224,7 +224,7 @@ export class ItemManual extends Phaser.Scene {
     if (cost !== null) {
       const costText = this.add.text(panelX - panelWidth / 2 + 20, panelY - panelHeight / 2 + 60, `Cost: $${cost}`, {
         fontSize: '14px',
-        color: '#ffd54a',
+        color: toColorString(Colors.HIGHLIGHT_YELLOW),
       });
       costText.setData('isDetailsText', true);
 
@@ -235,7 +235,7 @@ export class ItemManual extends Phaser.Scene {
         description,
         {
           fontSize: '12px',
-          color: '#b6c9e6',
+          color: toColorString(Colors.PALE_BLUE_2),
           wordWrap: { width: panelWidth - 40 },
         }
       );
@@ -248,7 +248,7 @@ export class ItemManual extends Phaser.Scene {
         description,
         {
           fontSize: '12px',
-          color: '#b6c9e6',
+          color: toColorString(Colors.PALE_BLUE_2),
           wordWrap: { width: panelWidth - 40 },
         }
       );
@@ -271,7 +271,7 @@ export class ItemManual extends Phaser.Scene {
     });
     this.add.text(100, 540, '< PREV', {
       fontSize: '11px',
-      color: '#ffd54a',
+      color: toColorString(Colors.HIGHLIGHT_YELLOW),
     }).setOrigin(0.5);
 
     // Next button
@@ -285,7 +285,7 @@ export class ItemManual extends Phaser.Scene {
     });
     this.add.text(700, 540, 'NEXT >', {
       fontSize: '11px',
-      color: '#ffd54a',
+      color: toColorString(Colors.HIGHLIGHT_YELLOW),
     }).setOrigin(0.5);
 
     // Close button (bottom)
@@ -294,7 +294,7 @@ export class ItemManual extends Phaser.Scene {
     closeBtn2.on('pointerdown', () => this.scene.stop());
     this.add.text(400, 580, 'CLOSE (ESC)', {
       fontSize: '11px',
-      color: '#ffd54a',
+      color: toColorString(Colors.HIGHLIGHT_YELLOW),
     }).setOrigin(0.5);
 
     // ESC key

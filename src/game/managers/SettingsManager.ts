@@ -29,6 +29,19 @@ export class SettingsManager {
 
   async loadSettings(): Promise<void> {
     try {
+      // First, try to load from localStorage
+      const savedSettings = localStorage.getItem('clicker-shipper-settings');
+      if (savedSettings) {
+        this.settings = JSON.parse(savedSettings);
+        console.log('Loaded settings from localStorage');
+        return;
+      }
+    } catch (error) {
+      console.warn('Failed to load settings from localStorage:', error);
+    }
+
+    // If no saved settings, load from JSON file
+    try {
       const response = await fetch('data/settings.json');
       if (!response.ok) {
         throw new Error(`Failed to load settings.json: ${response.statusText}`);

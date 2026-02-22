@@ -1,9 +1,30 @@
+export interface ImageLayer {
+  texture: string;
+  depth?: number;
+  tint?: number;
+  alpha?: number;
+  scale?: number;
+}
+
+// Hierarchical menu item (new unified type)
+export interface MenuItem {
+  id: string;
+  name: string;
+  icon: string;
+  cost?: number;
+  description?: string;
+  layers?: ImageLayer[];
+  children?: MenuItem[];
+}
+
+// Legacy types (kept for backward compatibility)
 export interface SubItem {
   id: string;
   name: string;
   icon: string;
   cost: number;
   description?: string;
+  layers?: ImageLayer[];
 }
 
 export interface Item {
@@ -12,10 +33,16 @@ export interface Item {
   icon: string;
   description?: string;
   subItems: SubItem[];
+  layers?: ImageLayer[];
 }
 
 export interface ItemsData {
   items: Item[];
+}
+
+// New hierarchical data format
+export interface MenuItemsData {
+  items: MenuItem[];
 }
 
 export interface GameConfig {

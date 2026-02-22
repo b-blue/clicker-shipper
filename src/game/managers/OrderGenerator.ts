@@ -92,18 +92,40 @@ export class OrderGenerator {
 
   private getAllSubItems(): Array<{ id: string; name: string; cost: number }> {
     const items = this.gameManager.getItems();
-    const allSubItems: Array<{ id: string; name: string; cost: number }> = [];
+    const allLeafItems: Array<{ id: string; name: string; cost: number }> = [];
 
-    items.forEach(item => {
-      item.subItems.forEach((subItem: any) => {
-        allSubItems.push({
-          id: subItem.id,
-          name: subItem.name,
-          cost: subItem.cost
-        });
+    // Handle both legacy Item[] and hierarchical MenuItem[] formats
+    const collectLeafItems = (items: any[]) => {
+      items.forEach(item => {
+        // Check if this is a legacy Item with subItems
+        if ('subItems' in item && item.subItems) {
+          item.subItems.forEach((subItem: any) => {
+            if (subItem.cost !== undefined) {
+              allLeafItems.push({
+                id: subItem.id,
+                name: subItem.name,
+                cost: subItem.cost
+              });
+            }
+          });
+        }
+        // Check if this is a MenuItem with children
+        else if ('children' in item && item.children && item.children.length > 0) {
+          // Recursively collect from children
+          collectLeafItems(item.children);
+        }
+        // This is a leaf item (has cost, no children)
+        else if (item.cost !== undefined) {
+          allLeafItems.push({
+            id: item.id,
+            name: item.name,
+            cost: item.cost
+          });
+        }
       });
-    });
+    };
 
-    return allSubItems;
+    collectLeafItems(items);
+    return allLeafItems;
   }
 }

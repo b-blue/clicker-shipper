@@ -1,13 +1,13 @@
 import Phaser from 'phaser';
-import { Item, SubItem } from '../types/GameTypes';
+import { MenuItem, Item } from '../types/GameTypes';
 import { Colors, toColorString } from '../constants/Colors';
+import { NavigationController } from '../controllers/NavigationController';
+import { normalizeItems } from '../utils/ItemAdapter';
 
 export class RadialDial {
   private scene: Phaser.Scene;
-  private items: Item[];
-  private currentLevel: number = 0; // 0 = top level, 1 = sub-items
-  private currentParentItem: Item | null = null;
-  private currentSubItems: SubItem[] = [];
+  private items: MenuItem[];
+  private navigationController: NavigationController;
   private sliceCount: number = 6;
   private readonly minSlices: number = 2;
   private readonly maxSlices: number = 6;
@@ -38,9 +38,11 @@ export class RadialDial {
   private glowAngle: number = 0;
   private glowTimer: Phaser.Time.TimerEvent | null = null;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, items: Item[]) {
+  constructor(scene: Phaser.Scene, x: number, y: number, items: Item[] | MenuItem[]) {
     this.scene = scene;
-    this.items = items;
+    // Normalize to MenuItem[] format (handles both legacy and new formats)
+    this.items = normalizeItems(items as any);
+    this.navigationController = new NavigationController(this.items);
     this.dialX = x;
     this.dialY = y;
     this.updateSliceCount();
@@ -189,33 +191,38 @@ export class RadialDial {
         ? this.lastNonCenterSliceIndex 
         : this.dragStartSliceIndex;
       
-      const displayItems = this.currentLevel === 0 ? this.items : this.currentSubItems;
+      const displayItems = this.navigationController.getCurrentItems();
       
       if (confirmedSliceIndex < displayItems.length) {
         const confirmedItem = displayItems[confirmedSliceIndex];
         
-        if (this.currentLevel === 1) {
-          // Confirm sub-item selection
-          this.scene.events.emit('dial:itemConfirmed', { item: confirmedItem });
-          this.selectedItem = null;
-          this.highlightedSliceIndex = -1;
-          this.redrawDial();
-        } else if (this.currentLevel === 0) {
-          // Drill down to sub-items
-          this.currentParentItem = confirmedItem as Item;
-          this.currentSubItems = this.currentParentItem.subItems;
-          this.currentLevel = 1;
+        if (this.navigationController.isNavigable(confirmedItem)) {
+          // Drill down to children
+          this.navigationController.drillDown(confirmedItem);
           this.updateSliceCount();
           this.highlightedSliceIndex = -1;
           this.selectedItem = null;
           this.redrawDial();
-          this.scene.events.emit('dial:levelChanged', { level: 1, item: this.currentParentItem });
+          this.scene.events.emit('dial:levelChanged', { 
+            depth: this.navigationController.getDepth(),
+            item: confirmedItem 
+          });
+        } else {
+          // Confirm leaf item selection
+          this.scene.events.emit('dial:itemConfirmed', { item: confirmedItem });
+          this.selectedItem = null;
+          this.highlightedSliceIndex = -1;
+          this.redrawDial();
         }
       }
     } else if (!wasDrag && endDistance < this.centerRadius) {
       // Single tap on center (not drag) = go back
-      if (this.currentLevel === 1) {
-        this.reset();
+      if (this.navigationController.canGoBack()) {
+        this.navigationController.goBack();
+        this.updateSliceCount();
+        this.highlightedSliceIndex = -1;
+        this.selectedItem = null;
+        this.redrawDial();
         this.scene.events.emit('dial:goBack');
       }
     } else if (this.dragStartSliceIndex >= 0 && wasDrag) {
@@ -233,7 +240,7 @@ export class RadialDial {
   }
 
   private updateSelectedItem(): void {
-    const displayItems = this.currentLevel === 0 ? this.items : this.currentSubItems;
+    const displayItems = this.navigationController.getCurrentItems();
     
     if (this.highlightedSliceIndex >= 0 && this.highlightedSliceIndex < displayItems.length) {
       this.selectedItem = displayItems[this.highlightedSliceIndex];
@@ -253,7 +260,7 @@ export class RadialDial {
 
     this.dialFrameGraphic.clear();
 
-    const displayItems = this.currentLevel === 0 ? this.items : this.currentSubItems;
+    const displayItems = this.navigationController.getCurrentItems();
     const sliceAngle = (Math.PI * 2) / this.sliceCount;
 
     // Draw glassy HUD frame
@@ -288,7 +295,7 @@ export class RadialDial {
 
     const ringColor = this.showDropCue
       ? Colors.HIGHLIGHT_YELLOW
-      : this.highlightedSliceIndex === -999 && this.currentLevel === 1
+      : this.highlightedSliceIndex === -999 && this.navigationController.getDepth() > 0
         ? Colors.HIGHLIGHT_YELLOW
         : Colors.LIGHT_BLUE;
     const ringAlpha = this.showDropCue ? 1 : 0.7;
@@ -317,18 +324,21 @@ export class RadialDial {
       } else {
         this.centerImage.setVisible(false);
       }
-    } else if (this.currentLevel === 1 && this.currentParentItem) {
-      // Display parent item's sprite when no selection
-      const itemId = (this.currentParentItem as Item).id;
-      if (this.scene.textures.exists(itemId)) {
-        this.centerImage.setTexture(itemId);
-        this.centerImage.setPosition(this.dialX, this.dialY);
-        this.centerImage.setVisible(true);
-      } else {
-        this.centerImage.setVisible(false);
+    } else if (this.navigationController.getDepth() > 0) {
+      // Display root of current level's parent item when no selection and not at root
+      const displayItems = this.navigationController.getCurrentItems();
+      if (displayItems.length > 0) {
+        // Show the first item's parent icon, or root icon as fallback
+        if (this.scene.textures.exists('rootDialIcon')) {
+          this.centerImage.setTexture('rootDialIcon');
+          this.centerImage.setPosition(this.dialX, this.dialY);
+          this.centerImage.setVisible(true);
+        } else {
+          this.centerImage.setVisible(false);
+        }
       }
     } else {
-      // Display root dial icon sprite
+      // Display root dial icon sprite at root level
       if (this.scene.textures.exists('rootDialIcon')) {
         this.centerImage.setTexture('rootDialIcon');
         this.centerImage.setPosition(this.dialX, this.dialY);
@@ -408,16 +418,40 @@ export class RadialDial {
       // Try to display sprite for items; fall back to text
       if ('id' in item) {
         const itemId = item.id;
-        if (this.scene.textures.exists(itemId)) {
-          // Create main image
+        const hasLayers = 'layers' in item && item.layers && item.layers.length > 0;
+        
+        if (hasLayers) {
+          // Render multi-layer image
+          const baseScale = this.navigationController.getScaleForDepth();
+          const baseDepth = 2;
+          
+          item.layers!.forEach((layer, index) => {
+            if (this.scene.textures.exists(layer.texture)) {
+              const layerImage = this.scene.add.image(textX, textY, layer.texture);
+              layerImage.setScale((layer.scale ?? 1) * baseScale);
+              layerImage.setDepth(layer.depth ?? (baseDepth + index));
+              
+              if (layer.tint !== undefined) {
+                layerImage.setTint(layer.tint);
+              }
+              
+              if (layer.alpha !== undefined) {
+                layerImage.setAlpha(layer.alpha);
+              }
+              
+              this.sliceImages.push(layerImage);
+            }
+          });
+        } else if (this.scene.textures.exists(itemId)) {
+          // Create single image (legacy behavior)
           const image = this.scene.add.image(textX, textY, itemId);
-          image.setScale(this.currentLevel === 0 ? 1.4 : 1.2);
+          image.setScale(this.navigationController.getScaleForDepth());
           image.setDepth(2);
           this.sliceImages.push(image);
         } else {
           // Texture doesn't exist, fall back to text
           const text = this.scene.add.text(textX, textY, item.name, {
-            fontSize: this.currentLevel === 0 ? '12px' : '11px',
+            fontSize: this.navigationController.getDepth() === 0 ? '12px' : '11px',
             color: toColorString(Colors.WHITE),
             align: 'center',
             wordWrap: { width: 80 }
@@ -438,8 +472,8 @@ export class RadialDial {
         text.setDepth(0);
         this.sliceTexts.push(text);
 
-        // Add corner badge indicator for items with sub-items
-        if (this.currentLevel === 0 && 'subItems' in item && (item as Item).subItems.length > 0) {
+        // Add corner badge indicator for navigable items
+        if (this.navigationController.isNavigable(item)) {
           const badgeX = textX + 20;
           const badgeY = textY - 20;
           const badgeText = this.scene.add.text(badgeX, badgeY, '▶', {
@@ -460,9 +494,7 @@ export class RadialDial {
   }
 
   public reset(): void {
-    this.currentLevel = 0;
-    this.currentParentItem = null;
-    this.currentSubItems = [];
+    this.navigationController.reset();
     this.highlightedSliceIndex = -1;
     this.selectedItem = null;
     this.dragStartSliceIndex = -1;
@@ -476,7 +508,7 @@ export class RadialDial {
   }
 
   private updateSliceCount(): void {
-    const displayItems = this.currentLevel === 0 ? this.items : this.currentSubItems;
+    const displayItems = this.navigationController.getCurrentItems();
     const itemCount = displayItems.length;
     
     this.sliceCount = Math.max(this.minSlices, Math.min(this.maxSlices, itemCount));

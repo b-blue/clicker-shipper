@@ -21,6 +21,38 @@ Some orders should require the player to combine base components into composite 
 
 ---
 
+### Achievement System
+Reward players with achievements for reaching fulfillment milestones and completing special challenges.
+
+**Design considerations:**
+- Track player progress across shifts (persistent data)
+- Display achievement notifications when unlocked
+- Provide visual indicators for locked/unlocked achievements
+- Achievement categories: Order milestones, Speed records, Accuracy, Special challenges
+
+**Milestone achievements:**
+- **First Order**: "Getting Started" - Fulfill your first order
+- **Decade**: "Ten Down" - Fulfill 10 orders
+- **Half Century**: "Halfway There" - Fulfill 50 orders
+- **Century**: "Order Centurion" - Fulfill 100 orders
+- **Grand Master**: "Logistics Legend" - Fulfill 1,000 orders
+
+**Additional achievement ideas:**
+- Speed-based: "Lightning Fast" - Fulfill 5 orders in under 60 seconds
+- Accuracy-based: "Perfect Shift" - Complete a shift with 100% accuracy
+- Combo-based: "On a Roll" - Fulfill 10 orders in a row without mistakes
+- Component-specific: "Specialist" - Fulfill 20 orders using only items from one category
+
+**Technical requirements:**
+- Achievement tracking system with localStorage persistence
+- Achievement definition structure (id, name, description, icon, unlock condition)
+- Progress tracking for incremental achievements
+- Toast/modal notification system for achievement unlocks
+- Achievement gallery/collection view accessible from main menu
+- Sound effects and visual flourishes for unlock moments
+
+---
+
 ## UI/UX Improvements
 
 ### Differentiated Radial Dial Interactions

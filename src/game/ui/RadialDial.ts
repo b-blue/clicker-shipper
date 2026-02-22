@@ -416,6 +416,11 @@ export class RadialDial {
       const textY = this.dialY + Math.sin(midAngle) * textDistance;
       const item = displayItems[i];
 
+      // Skip rendering if no item at this slice (fewer items than slices)
+      if (!item) {
+        continue;
+      }
+
       // Try to display sprite for items; fall back to text
       if ('id' in item) {
         const itemId = item.id;

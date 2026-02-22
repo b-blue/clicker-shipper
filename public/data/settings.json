@@ -2,6 +2,7 @@
   "dial": {
     "offsetX": -200,
     "offsetY": -150,
+    "showOutline": false,
     "description": "Dial position offset from bottom-right corner (negative = left/up)"
   },
   "ui": {

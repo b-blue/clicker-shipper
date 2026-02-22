@@ -6,6 +6,9 @@ export class Settings extends Scene {
   private settingsManager: SettingsManager;
   private dialX: number = -200;
   private dialY: number = -150;
+  private showOutline: boolean = false;
+  private temporarilyShowOutline: boolean = false;
+  private fadeOutTimer: Phaser.Time.TimerEvent | null = null;
   private previewDial: Phaser.GameObjects.Graphics | null = null;
 
   constructor() {
@@ -17,18 +20,19 @@ export class Settings extends Scene {
     const gameWidth = this.cameras.main.width;
     const gameHeight = this.cameras.main.height;
     const panelWidth = Math.min(gameWidth * 0.9, 600);
-    const panelHeight = Math.min(gameHeight * 0.8, 500);
+    const panelHeight = Math.min(gameHeight * 0.55, 400);
+    const panelCenterY = gameHeight * 0.32;
 
     // Background
     this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, Colors.BACKGROUND_DARK);
 
     // Panel
-    this.add.rectangle(gameWidth / 2, gameHeight / 2, panelWidth, panelHeight, Colors.PANEL_DARK, 0.9);
-    this.add.rectangle(gameWidth / 2, gameHeight / 2, panelWidth, panelHeight)
+    this.add.rectangle(gameWidth / 2, panelCenterY, panelWidth, panelHeight, Colors.PANEL_DARK, 0.9);
+    this.add.rectangle(gameWidth / 2, panelCenterY, panelWidth, panelHeight)
       .setStrokeStyle(2, Colors.BORDER_BLUE);
 
     // Title
-    this.add.text(gameWidth / 2, gameHeight * 0.15, 'SETTINGS', {
+    this.add.text(gameWidth / 2, gameHeight * 0.10, 'SETTINGS', {
       fontSize: '32px',
       color: toColorString(Colors.HIGHLIGHT_YELLOW),
       fontStyle: 'bold',
@@ -38,21 +42,22 @@ export class Settings extends Scene {
     const currentSettings = this.settingsManager.getDialSettings();
     this.dialX = currentSettings.offsetX;
     this.dialY = currentSettings.offsetY;
+    this.showOutline = currentSettings.showOutline ?? false;
 
     // Dial Position Section
-    this.add.text(gameWidth / 2, gameHeight * 0.28, 'DIAL POSITION', {
-      fontSize: '18px',
+    this.add.text(gameWidth / 2, gameHeight * 0.18, 'DIAL POSITION', {
+      fontSize: '16px',
       color: toColorString(Colors.LIGHT_BLUE),
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
-    this.add.text(gameWidth / 2, gameHeight * 0.33, 'Adjust the radial dial position from bottom-right corner', {
-      fontSize: '12px',
+    this.add.text(gameWidth / 2, gameHeight * 0.22, 'Adjust the radial dial position from bottom-right corner', {
+      fontSize: '11px',
       color: toColorString(Colors.LIGHT_BLUE),
     }).setOrigin(0.5);
 
     // Horizontal position controls
-    const xLabelY = gameHeight * 0.42;
+    const xLabelY = gameHeight * 0.29;
     this.add.text(gameWidth / 2 - panelWidth / 2 + 40, xLabelY, 'Horizontal:', {
       fontSize: '14px',
       color: toColorString(Colors.HIGHLIGHT_YELLOW),
@@ -78,7 +83,7 @@ export class Settings extends Scene {
     );
 
     // Vertical position controls
-    const yLabelY = gameHeight * 0.52;
+    const yLabelY = gameHeight * 0.36;
     this.add.text(gameWidth / 2 - panelWidth / 2 + 40, yLabelY, 'Vertical:', {
       fontSize: '14px',
       color: toColorString(Colors.HIGHLIGHT_YELLOW),
@@ -107,34 +112,68 @@ export class Settings extends Scene {
     this.data.set('xValueText', xValueText);
     this.data.set('yValueText', yValueText);
 
+    // Dial Outline Toggle
+    const toggleY = gameHeight * 0.43;
+    this.add.text(gameWidth / 2 - panelWidth / 2 + 40, toggleY, 'Show Outline:', {
+      fontSize: '14px',
+      color: toColorString(Colors.HIGHLIGHT_YELLOW),
+    }).setOrigin(0, 0.5);
+
+    const toggleButton = this.add.rectangle(gameWidth / 2, toggleY, 60, 30, 
+      this.showOutline ? Colors.SLICE_HIGHLIGHTED : Colors.PANEL_DARK, 0.8);
+    toggleButton.setStrokeStyle(2, Colors.BORDER_BLUE);
+    toggleButton.setInteractive();
+
+    const toggleText = this.add.text(gameWidth / 2, toggleY, this.showOutline ? 'ON' : 'OFF', {
+      fontSize: '14px',
+      color: toColorString(Colors.WHITE),
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    toggleButton.on('pointerdown', () => {
+      this.showOutline = !this.showOutline;
+      toggleButton.setFillStyle(this.showOutline ? Colors.SLICE_HIGHLIGHTED : Colors.PANEL_DARK, 0.8);
+      toggleText.setText(this.showOutline ? 'ON' : 'OFF');
+      this.drawPreviewDial();
+    });
+
+    toggleButton.on('pointerover', () => {
+      toggleButton.setFillStyle(this.showOutline ? Colors.SLICE_HIGHLIGHTED : Colors.BUTTON_HOVER, 0.9);
+    });
+
+    toggleButton.on('pointerout', () => {
+      toggleButton.setFillStyle(this.showOutline ? Colors.SLICE_HIGHLIGHTED : Colors.PANEL_DARK, 0.8);
+    });
+
     // Preview dial
     this.drawPreviewDial();
 
-    // Reset button
+    // Action buttons in single row: Reset, Cancel, Save
+    const buttonY = gameHeight * 0.52;
+    const buttonSpacing = 150;
+    
     this.createButton(
-      gameWidth / 2 - 100,
-      gameHeight * 0.75,
+      gameWidth / 2 - buttonSpacing,
+      buttonY,
       'RESET',
       () => this.resetToDefaults(),
-      150
+      120
     );
 
-    // Save & Close button
-    this.createButton(
-      gameWidth / 2 + 100,
-      gameHeight * 0.75,
-      'SAVE',
-      () => this.saveAndClose(),
-      150
-    );
-
-    // Cancel button
     this.createButton(
       gameWidth / 2,
-      gameHeight * 0.85,
+      buttonY,
       'CANCEL',
       () => this.scene.start('MainMenu'),
-      180
+      120
+    );
+
+    this.createButton(
+      gameWidth / 2 + buttonSpacing,
+      buttonY,
+      'SAVE',
+      () => this.saveAndClose(),
+      120
     );
   }
 
@@ -169,13 +208,16 @@ export class Settings extends Scene {
 
     this.previewDial = this.add.graphics();
     
-    // Draw simplified dial preview
-    this.previewDial.lineStyle(2, Colors.HIGHLIGHT_YELLOW, 0.8);
+    // Draw simplified dial preview only if showOutline is true or temporarily showing
+    const shouldShow = this.showOutline || this.temporarilyShowOutline;
+    const alpha = shouldShow ? 0.8 : 0;
+    
+    this.previewDial.lineStyle(2, Colors.HIGHLIGHT_YELLOW, alpha);
     this.previewDial.strokeCircle(dialPreviewX, dialPreviewY, 150);
     this.previewDial.strokeCircle(dialPreviewX, dialPreviewY, 50);
     
     // Draw crosshair at center
-    this.previewDial.lineStyle(1, Colors.HIGHLIGHT_YELLOW, 0.6);
+    this.previewDial.lineStyle(1, Colors.HIGHLIGHT_YELLOW, alpha * 0.75);
     this.previewDial.lineBetween(dialPreviewX - 10, dialPreviewY, dialPreviewX + 10, dialPreviewY);
     this.previewDial.lineBetween(dialPreviewX, dialPreviewY - 10, dialPreviewX, dialPreviewY + 10);
 
@@ -198,6 +240,7 @@ export class Settings extends Scene {
   private saveAndClose(): void {
     // Update settings manager
     this.settingsManager.updateDialPosition(this.dialX, this.dialY);
+    this.settingsManager.updateDialOutline(this.showOutline);
     
     // Save to localStorage
     try {
@@ -216,12 +259,41 @@ export class Settings extends Scene {
     button.setStrokeStyle(2, Colors.BORDER_BLUE);
     button.setInteractive();
 
-    button.on('pointerdown', callback);
+    button.on('pointerdown', () => {
+      // Show outline temporarily
+      this.temporarilyShowOutline = true;
+      this.drawPreviewDial();
+      
+      // Clear any existing fade timer
+      if (this.fadeOutTimer) {
+        this.fadeOutTimer.remove();
+      }
+      
+      callback();
+    });
+    
+    button.on('pointerup', () => {
+      // Start fade out timer
+      this.fadeOutTimer = this.time.delayedCall(500, () => {
+        this.temporarilyShowOutline = false;
+        this.drawPreviewDial();
+      });
+    });
+    
     button.on('pointerover', () => {
       button.setFillStyle(Colors.BUTTON_HOVER, 0.9);
     });
     button.on('pointerout', () => {
       button.setFillStyle(Colors.PANEL_DARK, 0.8);
+      
+      // Also trigger fade out on pointer leaving button
+      if (this.temporarilyShowOutline && this.fadeOutTimer) {
+        this.fadeOutTimer.remove();
+        this.fadeOutTimer = this.time.delayedCall(500, () => {
+          this.temporarilyShowOutline = false;
+          this.drawPreviewDial();
+        });
+      }
     });
 
     this.add.text(x, y, text, {

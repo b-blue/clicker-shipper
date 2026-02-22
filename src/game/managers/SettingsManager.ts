@@ -1,6 +1,7 @@
 export interface DialSettings {
   offsetX: number;
   offsetY: number;
+  showOutline: boolean;
   description?: string;
 }
 
@@ -51,7 +52,7 @@ export class SettingsManager {
       console.error('Error loading settings:', error);
       // Use default settings if loading fails
       this.settings = {
-        dial: { offsetX: -200, offsetY: -150 },
+        dial: { offsetX: -200, offsetY: -150, showOutline: false },
         ui: { hudStripY: 28, hudStripHeight: 40 }
       };
     }
@@ -61,7 +62,7 @@ export class SettingsManager {
     if (!this.settings) {
       // Return defaults if settings haven't been loaded yet
       return {
-        dial: { offsetX: -200, offsetY: -150 },
+        dial: { offsetX: -200, offsetY: -150, showOutline: false },
         ui: { hudStripY: 28, hudStripHeight: 40 }
       };
     }
@@ -80,6 +81,12 @@ export class SettingsManager {
     if (this.settings) {
       this.settings.dial.offsetX = offsetX;
       this.settings.dial.offsetY = offsetY;
+    }
+  }
+
+  updateDialOutline(showOutline: boolean): void {
+    if (this.settings) {
+      this.settings.dial.showOutline = showOutline;
     }
   }
 }

@@ -36,10 +36,12 @@ describe('AssetLoader', () => {
 
       AssetLoader.preloadItemAssets(mockScene, items);
 
-      // Should call load.image 3 times (once for each sub-item)
-      expect(mockScene.load.image).toHaveBeenCalledTimes(3);
+      // Should call load.image 5 times (2 categories + 3 sub-items)
+      expect(mockScene.load.image).toHaveBeenCalledTimes(5);
+      expect(mockScene.load.image).toHaveBeenCalledWith('item_1', 'assets/items/item_1.png');
       expect(mockScene.load.image).toHaveBeenCalledWith('item_1_1', 'assets/items/item_1_1.png');
       expect(mockScene.load.image).toHaveBeenCalledWith('item_1_2', 'assets/items/item_1_2.png');
+      expect(mockScene.load.image).toHaveBeenCalledWith('item_2', 'assets/items/item_2.png');
       expect(mockScene.load.image).toHaveBeenCalledWith('item_2_1', 'assets/items/item_2_1.png');
     });
 
@@ -59,7 +61,9 @@ describe('AssetLoader', () => {
       ];
 
       AssetLoader.preloadItemAssets(mockScene, items);
-      expect(mockScene.load.image).not.toHaveBeenCalled();
+      // Category image should still be loaded even with no sub-items
+      expect(mockScene.load.image).toHaveBeenCalledTimes(1);
+      expect(mockScene.load.image).toHaveBeenCalledWith('item_1', 'assets/items/item_1.png');
     });
 
     it('should construct correct asset paths', () => {
@@ -75,6 +79,9 @@ describe('AssetLoader', () => {
       ];
 
       AssetLoader.preloadItemAssets(mockScene, items);
+      // Should call load.image 2 times (1 category + 1 sub-item)
+      expect(mockScene.load.image).toHaveBeenCalledTimes(2);
+      expect(mockScene.load.image).toHaveBeenCalledWith('item_5', 'assets/items/item_5.png');
       expect(mockScene.load.image).toHaveBeenCalledWith(
         'item_5_3',
         'assets/items/item_5_3.png'
@@ -99,7 +106,8 @@ describe('AssetLoader', () => {
       ];
 
       AssetLoader.preloadItemAssets(mockScene, items);
-      expect(mockScene.load.image).toHaveBeenCalledTimes(36);
+      // Should call load.image 37 times (1 category + 36 sub-items)
+      expect(mockScene.load.image).toHaveBeenCalledTimes(37);
     });
   });
 });

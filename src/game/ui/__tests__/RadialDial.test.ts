@@ -26,6 +26,7 @@ type MockScene = {
       width: number;
     };
   };
+  __images?: any[];
 };
 
 const createMockItems = (): Item[] => {
@@ -45,6 +46,7 @@ const createMockItems = (): Item[] => {
 };
 
 const createMockScene = (): MockScene => {
+  const images: any[] = [];
   const createGraphicsMock = () => ({
     clear: jest.fn(function () { return this; }),
     fillStyle: jest.fn(function () { return this; }),
@@ -68,7 +70,7 @@ const createMockScene = (): MockScene => {
     add: {
       graphics: jest.fn(createGraphicsMock),
       image: jest.fn(function() {
-        return {
+        const image = {
           setScale: jest.fn(function () { return this; }),
           setOrigin: jest.fn(function () { return this; }),
           setDepth: jest.fn(function () { return this; }),
@@ -79,6 +81,8 @@ const createMockScene = (): MockScene => {
           setAlpha: jest.fn(function () { return this; }),
           destroy: jest.fn(),
         };
+        images.push(image);
+        return image;
       }),
       text: jest.fn(() => ({
         setOrigin: jest.fn(function () { return this; }),
@@ -108,6 +112,7 @@ const createMockScene = (): MockScene => {
         width: 375,
       },
     },
+    __images: images,
   };
 };
 
@@ -187,6 +192,34 @@ describe('RadialDial drag-to-center selection', () => {
 
     // Verify that add.image was called (for centerImage creation)
     expect(scene.add.image).toHaveBeenCalled();
+  });
+
+  it('uses skill-diagram as center default at root', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockImplementation((key: string) => key === 'skill-diagram');
+
+    new RadialDial(scene as any, 100, 100, items);
+
+    const centerImage = (scene as any).__images[0];
+    expect(centerImage.setTexture).toHaveBeenCalledWith('skill-diagram');
+  });
+
+  it('uses skill-up as center default on nested dials', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockImplementation((key: string) => key === 'skill-up' || key === 'skill-diagram');
+
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    // Drill into the first category to reach depth 1
+    const catStart = slicePoint(dialX, dialY, 6, 0, 120);
+    (dial as any).handlePointerDown(catStart);
+    (dial as any).handleMouseMove({ x: dialX, y: dialY });
+    (dial as any).handlePointerUp({ x: dialX, y: dialY });
+
+    const centerImage = (scene as any).__images[0];
+    expect(centerImage.setTexture).toHaveBeenCalledWith('skill-up');
   });
 
   it('creates glow beneath icons when rendering', () => {

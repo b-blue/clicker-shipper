@@ -3,7 +3,7 @@ export class GameOver extends Phaser.Scene {
     super('GameOver');
   }
 
-  create(data: any) {
+  create(_data: any) {
     // Display stats from data
     // Show replay button
     this.add.text(400, 300, 'Game Over - Stats will appear here', { fontSize: '24px', color: '#ffd54a' }).setOrigin(0.5);

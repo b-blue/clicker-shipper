@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+import { Colors } from '../../constants/Colors';
 
 describe('MainMenu scene', () => {
   beforeAll(() => {
@@ -51,7 +52,7 @@ describe('MainMenu scene', () => {
 
     scene.create();
 
-    expect(rectangle).toHaveBeenCalledWith(400, 300, 800, 600, 0x0a1022);
+    expect(rectangle).toHaveBeenCalledWith(400, 300, 800, 600, Colors.BACKGROUND_DARK);
     expect(text).toHaveBeenCalledWith(
       400,
       90,

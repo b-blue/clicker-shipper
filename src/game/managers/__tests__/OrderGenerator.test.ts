@@ -1,4 +1,4 @@
-import { OrderGenerator, Order } from '../OrderGenerator';
+import { OrderGenerator } from '../OrderGenerator';
 import { Item, SubItem } from '../types/GameTypes';
 
 // Mock GameManager

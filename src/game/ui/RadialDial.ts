@@ -28,14 +28,12 @@ export class RadialDial {
   
   // Drag-to-confirm properties
   private dragStartSliceIndex: number = -1; // Index of slice where drag started
-  private isDragging: boolean = false;
   private dragStartX: number = 0;
   private dragStartY: number = 0;
   private lastPointerX: number = 0;
   private lastPointerY: number = 0;
   private lastNonCenterSliceIndex: number = -1;
   private readonly minDragDistance: number = 20;
-  private centerDropRadiusMultiplier: number = 1.75;
   private showDropCue: boolean = false;
   private glowAngle: number = 0;
   private glowTimer: Phaser.Time.TimerEvent | null = null;
@@ -45,8 +43,6 @@ export class RadialDial {
     this.items = items;
     this.dialX = x;
     this.dialY = y;
-    const viewportWidth = scene.cameras?.main?.width ?? 1024;
-    this.centerDropRadiusMultiplier = viewportWidth < 600 ? 2.2 : 1.75;
     this.updateSliceCount();
     
     this.dialFrameGraphic = scene.add.graphics();
@@ -98,7 +94,6 @@ export class RadialDial {
     const dragDistance = Math.sqrt(dragDx * dragDx + dragDy * dragDy);
 
     if (this.dragStartSliceIndex >= 0 && dragDistance >= this.minDragDistance) {
-      this.isDragging = true;
       if (distance < this.centerRadius) {
         this.showDropCue = true;
         if (this.highlightedSliceIndex !== -999) {
@@ -153,7 +148,6 @@ export class RadialDial {
     this.dragStartX = pointer.x;
     this.dragStartY = pointer.y;
     this.dragStartSliceIndex = -1;
-    this.isDragging = false;
     this.lastNonCenterSliceIndex = -1;
     this.showDropCue = false;
 
@@ -234,7 +228,6 @@ export class RadialDial {
 
     // Reset drag state and selection
     this.dragStartSliceIndex = -1;
-    this.isDragging = false;
     this.showDropCue = false;
     this.lastNonCenterSliceIndex = -1;
   }
@@ -422,6 +415,7 @@ export class RadialDial {
           image.setDepth(2);
           this.sliceImages.push(image);
         } else {
+          // Texture doesn't exist, fall back to text
           const text = this.scene.add.text(textX, textY, item.name, {
             fontSize: this.currentLevel === 0 ? '12px' : '11px',
             color: '#ffffff',
@@ -433,8 +427,8 @@ export class RadialDial {
           this.sliceTexts.push(text);
         }
       } else {
-        // Fallback to text if no id
-        const text = this.scene.add.text(textX, textY, item.name, {
+        // No id property, fall back to text
+        const text = this.scene.add.text(textX, textY, (item as any).name, {
           fontSize: '12px',
           color: '#ffffff',
           align: 'center',
@@ -472,7 +466,6 @@ export class RadialDial {
     this.highlightedSliceIndex = -1;
     this.selectedItem = null;
     this.dragStartSliceIndex = -1;
-    this.isDragging = false;
     this.showDropCue = false;
     this.lastNonCenterSliceIndex = -1;
     // Clean up glow graphics

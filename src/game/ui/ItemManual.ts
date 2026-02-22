@@ -1,13 +1,13 @@
 import Phaser from 'phaser';
 import { Item, SubItem } from '../types/GameTypes';
 import { GameManager } from '../managers/GameManager';
+import { Colors } from '../constants/Colors';
 
 export class ItemManual extends Phaser.Scene {
   private items: Item[] = [];
   private currentPage: number = 0;
   private itemsPerPage: number = 6;
   private selectedItemId: string | null = null;
-  private itemDetailsPanel: Phaser.GameObjects.Zone | null = null;
 
   constructor() {
     super({ key: 'ItemManual' });
@@ -29,7 +29,7 @@ export class ItemManual extends Phaser.Scene {
     const panelHeight = Math.min(gameHeight * 0.9, 700);
 
     // Background
-    this.add.rectangle(gameWidth / 2, gameHeight / 2, panelWidth, panelHeight, 0x0a1022);
+    this.add.rectangle(gameWidth / 2, gameHeight / 2, panelWidth, panelHeight, Colors.BACKGROUND_DARK);
 
     // Title
     this.add.text(gameWidth / 2, gameHeight * 0.05, 'ITEM MANUAL', {
@@ -47,7 +47,7 @@ export class ItemManual extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Close button
-    const closeBtn = this.add.rectangle(gameWidth * 0.95, gameHeight * 0.05, 40, 40, 0x102a52);
+    const closeBtn = this.add.rectangle(gameWidth * 0.95, gameHeight * 0.05, 40, 40, Colors.BUTTON_DARK);
     closeBtn.setInteractive();
     closeBtn.on('pointerdown', () => this.scene.stop());
     this.add.text(gameWidth * 0.95, gameHeight * 0.05, 'X', {
@@ -102,8 +102,8 @@ export class ItemManual extends Phaser.Scene {
     const panelWidth = 350;
     const panelHeight = 350;
 
-    this.add.rectangle(panelX, panelY, panelWidth, panelHeight, 0x0b1f3a, 0.65);
-    this.add.rectangle(panelX, panelY, panelWidth, panelHeight).setStrokeStyle(2, 0xffd54a);
+    this.add.rectangle(panelX, panelY, panelWidth, panelHeight, Colors.PANEL_MEDIUM, 0.65);
+    this.add.rectangle(panelX, panelY, panelWidth, panelHeight).setStrokeStyle(2, Colors.HIGHLIGHT_YELLOW);
 
     // Placeholder text
     this.add.text(panelX - panelWidth / 2 + 20, panelY - panelHeight / 2 + 20, 'SELECT AN ITEM', {
@@ -145,12 +145,12 @@ export class ItemManual extends Phaser.Scene {
       const y = gridStartY + row * (itemHeight + padding) + itemHeight / 2;
 
       // Item background
-      const bg = this.add.rectangle(x, y, itemWidth, itemHeight, 0x0f274d, 0.75);
+      const bg = this.add.rectangle(x, y, itemWidth, itemHeight, Colors.SLICE_DARK, 0.75);
       bg.setData('isItemDisplay', true);
 
       // Item frame
       this.add.rectangle(x, y, itemWidth, itemHeight)
-        .setStrokeStyle(1, this.selectedItemId === this.getItemId(item) ? 0xffd54a : 0x4a6a90)
+        .setStrokeStyle(1, this.selectedItemId === this.getItemId(item) ? Colors.HIGHLIGHT_YELLOW : Colors.BORDER_LIGHT_BLUE)
         .setData('isItemDisplay', true);
 
       // Item name (abbreviated)
@@ -261,8 +261,8 @@ export class ItemManual extends Phaser.Scene {
     const totalPages = Math.ceil(allItems.length / this.itemsPerPage);
 
     // Previous button
-    const prevBtn = this.add.rectangle(100, 540, 60, 30, 0x0b1c3a);
-    prevBtn.setStrokeStyle(2, 0xffd54a);
+    const prevBtn = this.add.rectangle(100, 540, 60, 30, Colors.PANEL_DARK);
+    prevBtn.setStrokeStyle(2, Colors.HIGHLIGHT_YELLOW);
     prevBtn.setInteractive();
     prevBtn.on('pointerdown', () => {
       if (this.currentPage > 0) {
@@ -275,8 +275,8 @@ export class ItemManual extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Next button
-    const nextBtn = this.add.rectangle(700, 540, 60, 30, 0x0b1c3a);
-    nextBtn.setStrokeStyle(2, 0xffd54a);
+    const nextBtn = this.add.rectangle(700, 540, 60, 30, Colors.PANEL_DARK);
+    nextBtn.setStrokeStyle(2, Colors.HIGHLIGHT_YELLOW);
     nextBtn.setInteractive();
     nextBtn.on('pointerdown', () => {
       if (this.currentPage < totalPages - 1) {
@@ -289,7 +289,7 @@ export class ItemManual extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Close button (bottom)
-    const closeBtn2 = this.add.rectangle(400, 580, 100, 30, 0x102a52);
+    const closeBtn2 = this.add.rectangle(400, 580, 100, 30, Colors.BUTTON_DARK);
     closeBtn2.setInteractive();
     closeBtn2.on('pointerdown', () => this.scene.stop());
     this.add.text(400, 580, 'CLOSE (ESC)', {

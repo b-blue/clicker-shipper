@@ -14,7 +14,7 @@ export class MainMenu extends Phaser.Scene {
     this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, Colors.BACKGROUND_DARK);
 
     // Title
-    const titleText = this.add.text(gameWidth / 2, gameHeight * 0.15, 'INTERGALACTIC SHIPPER', {
+    this.add.text(gameWidth / 2, gameHeight * 0.15, 'INTERGALACTIC SHIPPER', {
       fontSize: '48px',
       color: '#ffd54a',
       fontStyle: 'bold',
@@ -54,7 +54,7 @@ export class MainMenu extends Phaser.Scene {
     this.input.keyboard?.on('keydown-M', () => this.openManual());
   }
 
-  private createButton(x: number, y: number, text: string, callback: () => void, color: string = '#ffd54a'): void {
+  private createButton(x: number, y: number, text: string, callback: () => void, colorHex: string = '#ffd54a'): void {
     const buttonWidth = 200;
     const buttonHeight = 50;
 
@@ -63,19 +63,20 @@ export class MainMenu extends Phaser.Scene {
     buttonBg.setInteractive();
     buttonBg.on('pointerdown', callback);
     buttonBg.on('pointerover', () => {
-      buttonBg.setFillStyle(0x122a52, 0.9);
+      buttonBg.setFillStyle(Colors.BUTTON_HOVER, 0.9);
     });
     buttonBg.on('pointerout', () => {
       buttonBg.setFillStyle(Colors.PANEL_DARK, 0.75);
     });
 
     // Button border
+    const color = parseInt(colorHex.replace('#', ''), 16);
     this.add.rectangle(x, y, buttonWidth, buttonHeight).setStrokeStyle(2, color);
 
     // Button text
     this.add.text(x, y, text, {
       fontSize: '18px',
-      color: color,
+      color: colorHex,
       fontStyle: 'bold',
       fontFamily: 'monospace',
       align: 'center'

@@ -18,6 +18,9 @@ type MockScene = {
   textures: {
     exists: jest.Mock;
   };
+  time: {
+    addEvent: jest.Mock;
+  };
   cameras: {
     main: {
       width: number;
@@ -169,7 +172,7 @@ describe('RadialDial drag-to-center selection', () => {
     const items = createMockItems();
 
     // Create dial and check that scene.add.image was called
-    const dial = new RadialDial(scene as any, 100, 100, items);
+    new RadialDial(scene as any, 100, 100, items);
 
     // Verify that add.image was called (for centerImage creation)
     expect(scene.add.image).toHaveBeenCalled();

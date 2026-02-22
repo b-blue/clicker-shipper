@@ -4,14 +4,10 @@ import { SettingsManager } from '../managers/SettingsManager';
 import { Colors } from '../constants/Colors';
 
 export class Game extends Phaser.Scene {
-  private currentOrderIndex: number = 0;
-  private shiftTimer: Phaser.Time.TimerEvent | null = null;
-  private eventEmitter: Phaser.Events.EventEmitter;
   private radialDial: RadialDial | null = null;
 
   constructor() {
     super('Game');
-    this.eventEmitter = new Phaser.Events.EventEmitter();
   }
 
   create() {
@@ -63,7 +59,7 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  update(time: number, delta: number) {
+  update(_time: number, _delta: number) {
     // Update shift timer display
   }
 

@@ -89,7 +89,7 @@ export class Game extends Phaser.Scene {
       timerBg.lineStyle(1, Colors.BORDER_BLUE, 0.7);
       timerBg.strokeCircle(timerX, timerY, timerR);
       this.shiftArcGraphic = this.add.graphics();
-      this.shiftStartTime = this.time.now;
+      this.shiftStartTime = Date.now();
       this.shiftTimerEvent = this.time.addEvent({
         delay: this.shiftDurationMs,
         callback: this.endShift,
@@ -287,7 +287,7 @@ export class Game extends Phaser.Scene {
 
   update(): void {
     if (!this.shiftArcGraphic || this.shiftDurationMs <= 0) return;
-    const elapsed = this.time.now - this.shiftStartTime;
+    const elapsed = Date.now() - this.shiftStartTime;
     const fraction = Math.min(1, elapsed / this.shiftDurationMs);
     const r = this.shiftTimerRadius;
     this.shiftArcGraphic.clear();
@@ -484,7 +484,7 @@ export class Game extends Phaser.Scene {
         this.shiftDurationMs = preset.ms;
         // Restart the running timer from now with the new duration
         this.shiftTimerEvent?.remove();
-        this.shiftStartTime = this.time.now;
+        this.shiftStartTime = Date.now();
         this.shiftTimerEvent = this.time.addEvent({
           delay: this.shiftDurationMs,
           callback: this.endShift,

@@ -38,17 +38,14 @@ export class MainMenu extends Phaser.Scene {
     // Start Shift button
     this.createButton(gameWidth / 2, buttonY, 'START SHIFT', () => this.punchIn());
 
-    // Catalog button
-    this.createButton(gameWidth / 2, buttonY + buttonSpacing, 'ITEM CATALOG', () => this.openManual());
-
     // Upgrades button
-    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 2, 'UPGRADES', () => this.openUpgrades());
+    this.createButton(gameWidth / 2, buttonY + buttonSpacing, 'UPGRADES', () => this.openUpgrades());
 
     // Settings button
-    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 3, 'CALIBRATE DIAL', () => this.openSettings());
+    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 2, 'CALIBRATE DIAL', () => this.openSettings());
 
     // Exit button
-    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 4, 'EXIT', () => this.exitGame());
+    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 3, 'EXIT', () => this.exitGame());
 
     // Footer with background
     const footerText = 'PRESS SPACE TO START SHIFT';
@@ -59,7 +56,6 @@ export class MainMenu extends Phaser.Scene {
 
     // Keyboard shortcuts
     this.input.keyboard?.on('keydown-SPACE', () => this.punchIn());
-    this.input.keyboard?.on('keydown-M', () => this.openManual());
   }
 
   private createButton(x: number, y: number, text: string, callback: () => void, colorHex: string = toColorString(Colors.HIGHLIGHT_YELLOW)): void {
@@ -91,11 +87,6 @@ export class MainMenu extends Phaser.Scene {
   punchIn() {
     // Transition to Game scene
     this.scene.start('Game');
-  }
-
-  openManual() {
-    // Launch ItemManual scene as overlay
-    this.scene.launch('ItemManual');
   }
 
   openUpgrades() {

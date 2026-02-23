@@ -70,7 +70,6 @@ describe('MainMenu scene', () => {
     scene.create();
 
     expect(keyboardOn).toHaveBeenCalledWith('keydown-SPACE', expect.any(Function));
-    expect(keyboardOn).toHaveBeenCalledWith('keydown-M', expect.any(Function));
   });
 
   it('starts the game from punchIn', async () => {
@@ -81,13 +80,6 @@ describe('MainMenu scene', () => {
     expect((scene as any).scene.start).toHaveBeenCalledWith('Game');
   });
 
-  it('launches the manual from openManual', async () => {
-    const { scene } = await createScene();
-
-    scene.openManual();
-
-    expect((scene as any).scene.launch).toHaveBeenCalledWith('ItemManual');
-  });
 });
 describe('fitFontSize', () => {
   const CHAR_RATIO = 0.6;

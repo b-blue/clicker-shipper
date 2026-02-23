@@ -45,6 +45,7 @@ export class RadialDial {
   private readonly touchSynthesisWindow: number = 500; // ms within which mouse events after a touch are ignored
   private lastActionTime: number = 0;       // timestamp of last confirmed terminal action, used to debounce rapid double-sends
   private readonly actionDebounceWindow: number = 300; // ms to block a second terminal action after the first
+  private activePointerId: number = -1;     // pointer ID that owns the current gesture; -1 = no active gesture
   private glowAngle: number = 0;
   private glowTimer: Phaser.Time.TimerEvent | null = null;
 
@@ -134,6 +135,13 @@ export class RadialDial {
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
+    // If another pointer already owns the active gesture, ignore this one.
+    // This prevents a second finger/palm contact from resetting pointerConsumed
+    // and firing duplicate actions (root cause of 2–3 items at once on mobile).
+    if (this.activePointerId !== -1 && pointer.pointerId !== this.activePointerId) {
+      return;
+    }
+
     this.lastPointerX = pointer.x;
     this.lastPointerY = pointer.y;
     const dx = pointer.x - this.dialX;
@@ -151,6 +159,7 @@ export class RadialDial {
       return;
     }
 
+    this.activePointerId = pointer.pointerId; // claim this gesture for this pointer
     this.pointerConsumed = false; // genuine new gesture — allow next pointerup to process
 
     // Check if started on a slice
@@ -171,9 +180,14 @@ export class RadialDial {
   }
 
   private handlePointerUp(pointer: Phaser.Input.Pointer): void {
+    // Only process the pointer that owns the current gesture.
+    if (this.activePointerId !== -1 && pointer.pointerId !== this.activePointerId) {
+      return;
+    }
     // Ignore duplicate pointerup events from the same gesture (e.g. touch + synthesized mouse)
     if (this.pointerConsumed) return;
     this.pointerConsumed = true;
+    this.activePointerId = -1; // release gesture ownership
 
     // Record when a real touch ends so handlePointerDown can suppress the
     // synthesized mouse events the browser fires shortly after.
@@ -568,6 +582,7 @@ export class RadialDial {
     this.selectedItem = null;
     this.dragStartSliceIndex = -1;
     this.lastNonCenterSliceIndex = -1;
+    this.activePointerId = -1;
     // Clean up glow graphics
     this.sliceGlows.forEach(g => g.destroy());
     this.sliceGlows = [];

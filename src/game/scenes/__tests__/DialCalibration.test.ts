@@ -8,7 +8,7 @@ jest.mock('phaser', () => ({
   },
 }));
 
-describe('Settings scene', () => {
+describe('DialCalibration scene', () => {
   let mockSettingsManager: any;
 
   beforeAll(() => {
@@ -53,8 +53,8 @@ describe('Settings scene', () => {
     const SettingsManagerModule = await import('../../managers/SettingsManager');
     jest.spyOn(SettingsManagerModule.SettingsManager, 'getInstance').mockReturnValue(mockSettingsManager);
 
-    const { Settings } = await import('../Settings');
-    const scene = new Settings();
+    const { DialCalibration } = await import('../DialCalibration');
+    const scene = new DialCalibration();
 
     const mockRectangle = jest.fn(() => ({
       setInteractive: jest.fn().mockReturnThis(),
@@ -131,7 +131,7 @@ describe('Settings scene', () => {
 
     scene.create();
 
-    expect(mockBitmapText).toHaveBeenCalledWith(400, 60, 'clicker', 'SETTINGS', 32);
+    expect(mockBitmapText).toHaveBeenCalledWith(400, 60, 'clicker', 'CALIBRATE DIAL', 26);
   });
 
   it('renders section header and controls', async () => {

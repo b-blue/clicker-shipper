@@ -11,6 +11,15 @@ export class Game extends Phaser.Scene {
   private fulfillmentSlots: Array<{ x: number; y: number; size: number; slotBg: Phaser.GameObjects.Graphics; expectedIconKey: string }> = [];
   private fulfillmentImages: Array<{ img: Phaser.GameObjects.Image; iconKey: string } | null> = [];
   private fulfillmentOrderIconKeys: Set<string> = new Set();
+  private shiftRevenue: number = 0;
+  private shiftBonus: number = 0;
+  private currentOrder: Order | null = null;
+  private ordersPanelX: number = 0;
+  private ordersPanelWidth: number = 0;
+  private ordersPanelTop: number = 0;
+  private ordersPanelHeight: number = 0;
+  private revenueText: Phaser.GameObjects.BitmapText | null = null;
+  private bonusText: Phaser.GameObjects.BitmapText | null = null;
 
   constructor() {
     super('Game');
@@ -51,6 +60,20 @@ export class Game extends Phaser.Scene {
       const panelTitle = this.add.bitmapText(panelX, titleY, 'clicker', 'ORDERS', 14)
         .setOrigin(0.5);
 
+      // Stats bar — persistent revenue & bonus tallies across orders
+      const statsBarDivTop = this.add.graphics();
+      statsBarDivTop.lineStyle(1, Colors.BORDER_BLUE, 0.45);
+      statsBarDivTop.lineBetween(panelX - panelWidth / 2 + 8, panelTop + 42, panelX + panelWidth / 2 - 8, panelTop + 42);
+      const statsY = panelTop + 54;
+      const statsLeft = panelX - panelWidth / 2 + 14;
+      this.add.bitmapText(statsLeft, statsY, 'clicker', 'REV', 12).setOrigin(0, 0.5).setTint(0xaaaacc);
+      this.revenueText = this.add.bitmapText(statsLeft + 38, statsY, 'clicker', 'Q0', 12).setOrigin(0, 0.5).setTint(Colors.HIGHLIGHT_YELLOW_BRIGHT);
+      this.add.bitmapText(panelX + 4, statsY, 'clicker', 'BONUS', 12).setOrigin(0, 0.5).setTint(0xaaaacc);
+      this.bonusText = this.add.bitmapText(panelX + 68, statsY, 'clicker', 'Q0', 12).setOrigin(0, 0.5).setTint(Colors.HIGHLIGHT_YELLOW);
+      const statsBarDivBot = this.add.graphics();
+      statsBarDivBot.lineStyle(1, Colors.BORDER_BLUE, 0.45);
+      statsBarDivBot.lineBetween(panelX - panelWidth / 2 + 8, panelTop + 66, panelX + panelWidth / 2 - 8, panelTop + 66);
+
       // Tabbed panel controls (right-hand vertical tabs)
       const tabWidth = 42;
       const tabHeight = 32;
@@ -71,14 +94,21 @@ export class Game extends Phaser.Scene {
         CATALOG: catalogContainer
       };
 
+      // Store panel geometry for order rebuilding
+      this.ordersPanelX = panelX;
+      this.ordersPanelWidth = panelWidth;
+      this.ordersPanelTop = panelTop;
+      this.ordersPanelHeight = panelHeight;
+
       // Generate and display current order
       const currentOrder = buildOrder(items);
-      this.fulfillmentSlots = this.buildOrderContent(this.ordersContainer, panelX, panelTop + 36, panelWidth - 20, panelHeight - 50, currentOrder);
+      this.currentOrder = currentOrder;
+      this.fulfillmentSlots = this.buildOrderContent(this.ordersContainer, panelX, panelTop + 62, panelWidth - 20, panelHeight - 76, currentOrder);
       this.fulfillmentImages = new Array(this.fulfillmentSlots.length).fill(null);
       this.fulfillmentOrderIconKeys = new Set(currentOrder.requirements.map(r => r.iconKey));
 
-      // Placeholder content for settings
-      this.buildSettingsContent(settingsContainer, panelX, panelTop + 36, panelWidth - 20, panelHeight - 50);
+      // Settings tab: button to launch DialCalibration scene
+      this.buildSettingsContent(settingsContainer, panelX, panelWidth);
       settingsContainer.setVisible(false);
       this.buildCatalogContent(catalogContainer, panelX, panelTop + 36, panelWidth - 20, panelHeight - 50, items);
       catalogContainer.setVisible(false);
@@ -145,14 +175,15 @@ export class Game extends Phaser.Scene {
             // Color the slot bg: green = correct position, yellow = wrong position but in order
             const isCorrect = slot.expectedIconKey === iconKey;
             const isPresent = this.fulfillmentOrderIconKeys.has(iconKey);
-            const bgFill  = isCorrect ? 0x003a1a : isPresent ? 0x3a3000 : Colors.PANEL_MEDIUM;
-            const bgStroke = isCorrect ? 0x00e84a : isPresent ? 0xffd700 : Colors.BORDER_BLUE;
+            const bgFill   = isCorrect ? 0x003a1a : isPresent ? 0x3a3000 : 0x3a0008;
+            const bgStroke = isCorrect ? 0x00e84a : isPresent ? 0xffd700 : 0xff2244;
             slot.slotBg.clear();
             slot.slotBg.fillStyle(bgFill, 0.85);
             slot.slotBg.fillRect(slot.x - slot.size / 2, slot.y - slot.size / 2, slot.size, slot.size);
             slot.slotBg.lineStyle(2, bgStroke, 0.95);
             slot.slotBg.strokeRect(slot.x - slot.size / 2, slot.y - slot.size / 2, slot.size, slot.size);
           }
+          this.checkOrderComplete();
         } else if (data.action === 'recall' && this.ordersContainer) {
           // Find the rightmost filled slot containing this icon and remove it
           let lastMatch = -1;
@@ -222,6 +253,16 @@ export class Game extends Phaser.Scene {
       const iconX = iconFrameSize / 2 + 10;
       const iconY = rowY;
 
+      // Draw icon frame background (all rows) then icon on top
+      if (row.isHeader) {
+        const frameBg = this.add.graphics();
+        frameBg.fillStyle(Colors.PANEL_MEDIUM, 1);
+        frameBg.fillRect(iconX - iconFrameSize / 2 + 2, iconY - iconFrameSize / 2 + 2, iconFrameSize - 4, iconFrameSize - 4);
+        frameBg.lineStyle(2, Colors.BORDER_BLUE, 0.9);
+        frameBg.strokeRect(iconX - iconFrameSize / 2 + 2, iconY - iconFrameSize / 2 + 2, iconFrameSize - 4, iconFrameSize - 4);
+        listContainer.add(frameBg);
+      }
+
       if (this.textures.exists(row.item.icon)) {
         const iconImage = this.add.image(iconX, iconY, row.item.icon).setScale(iconScale).setDepth(2);
         listContainer.add(iconImage);
@@ -259,146 +300,17 @@ export class Game extends Phaser.Scene {
     });
   }
 
-  private buildSettingsContent(container: Phaser.GameObjects.Container, x: number, y: number, width: number, height: number): void {
-    const settingsManager = SettingsManager.getInstance();
-    const currentSettings = settingsManager.getDialSettings();
-    
-    let dialX = currentSettings.offsetX;
-    let dialY = currentSettings.offsetY;
-    let showOutline = currentSettings.showOutline ?? false;
-
-    const contentX = x - width / 2 + 12;
-    const contentStartY = y;
-    const lineSpacing = 20;
-
-    // Section: Dial Position
-    const dialPosTitle = this.add.bitmapText(contentX, contentStartY, 'clicker', 'DIAL POSITION', 12)
-      .setOrigin(0, 0);
-    container.add(dialPosTitle);
-
-    // Horizontal controls
-    const hLabelY = contentStartY + lineSpacing * 1.5;
-    const hLabel = this.add.bitmapText(contentX, hLabelY, 'clicker', 'HORIZONTAL', 11)
-      .setOrigin(0, 0.5);
-    container.add(hLabel);
-
-    const hValueText = this.add.bitmapText(contentX + 110, hLabelY, 'clicker', `${dialX}`, 11)
-      .setOrigin(0, 0.5);
-    container.add(hValueText);
-
-    const hLeftBtn = this.add.rectangle(contentX + 80, hLabelY, 18, 16, Colors.PANEL_DARK, 0.8);
-    hLeftBtn.setStrokeStyle(1, Colors.BORDER_BLUE);
-    hLeftBtn.setInteractive();
-    hLeftBtn.on('pointerdown', () => {
-      dialX = Math.max(-400, dialX - 10);
-      hValueText.setText(`${dialX}`);
-    });
-    hLeftBtn.on('pointerover', () => hLeftBtn.setFillStyle(Colors.BUTTON_HOVER, 0.9));
-    hLeftBtn.on('pointerout', () => hLeftBtn.setFillStyle(Colors.PANEL_DARK, 0.8));
-    container.add(hLeftBtn);
-    container.add(this.add.bitmapText(contentX + 80, hLabelY, 'clicker', '◀', 8).setOrigin(0.5));
-
-    const hRightBtn = this.add.rectangle(contentX + 135, hLabelY, 18, 16, Colors.PANEL_DARK, 0.8);
-    hRightBtn.setStrokeStyle(1, Colors.BORDER_BLUE);
-    hRightBtn.setInteractive();
-    hRightBtn.on('pointerdown', () => {
-      dialX = Math.min(-50, dialX + 10);
-      hValueText.setText(`${dialX}`);
-    });
-    hRightBtn.on('pointerover', () => hRightBtn.setFillStyle(Colors.BUTTON_HOVER, 0.9));
-    hRightBtn.on('pointerout', () => hRightBtn.setFillStyle(Colors.PANEL_DARK, 0.8));
-    container.add(hRightBtn);
-    container.add(this.add.bitmapText(contentX + 135, hLabelY, 'clicker', '▶', 8).setOrigin(0.5));
-
-    // Vertical controls
-    const vLabelY = contentStartY + lineSpacing * 3;
-    const vLabel = this.add.bitmapText(contentX, vLabelY, 'clicker', 'VERTICAL', 11)
-      .setOrigin(0, 0.5);
-    container.add(vLabel);
-
-    const vValueText = this.add.bitmapText(contentX + 110, vLabelY, 'clicker', `${dialY}`, 11)
-      .setOrigin(0, 0.5);
-    container.add(vValueText);
-
-    const vUpBtn = this.add.rectangle(contentX + 80, vLabelY, 18, 16, Colors.PANEL_DARK, 0.8);
-    vUpBtn.setStrokeStyle(1, Colors.BORDER_BLUE);
-    vUpBtn.setInteractive();
-    vUpBtn.on('pointerdown', () => {
-      dialY = Math.max(-400, dialY - 10);
-      vValueText.setText(`${dialY}`);
-    });
-    vUpBtn.on('pointerover', () => vUpBtn.setFillStyle(Colors.BUTTON_HOVER, 0.9));
-    vUpBtn.on('pointerout', () => vUpBtn.setFillStyle(Colors.PANEL_DARK, 0.8));
-    container.add(vUpBtn);
-    container.add(this.add.bitmapText(contentX + 80, vLabelY, 'clicker', '▲', 8).setOrigin(0.5));
-
-    const vDnBtn = this.add.rectangle(contentX + 135, vLabelY, 18, 16, Colors.PANEL_DARK, 0.8);
-    vDnBtn.setStrokeStyle(1, Colors.BORDER_BLUE);
-    vDnBtn.setInteractive();
-    vDnBtn.on('pointerdown', () => {
-      dialY = Math.min(-50, dialY + 10);
-      vValueText.setText(`${dialY}`);
-    });
-    vDnBtn.on('pointerover', () => vDnBtn.setFillStyle(Colors.BUTTON_HOVER, 0.9));
-    vDnBtn.on('pointerout', () => vDnBtn.setFillStyle(Colors.PANEL_DARK, 0.8));
-    container.add(vDnBtn);
-    container.add(this.add.bitmapText(contentX + 135, vLabelY, 'clicker', '▼', 8).setOrigin(0.5));
-
-    // Show Outline toggle
-    const outlineLabelY = contentStartY + lineSpacing * 4.5;
-    const outlineLabel = this.add.bitmapText(contentX, outlineLabelY, 'clicker', 'SHOW OUTLINE', 11)
-      .setOrigin(0, 0.5);
-    container.add(outlineLabel);
-
-    const toggleBtn = this.add.rectangle(contentX + 110, outlineLabelY, 40, 14, showOutline ? Colors.SLICE_HIGHLIGHTED : Colors.PANEL_DARK, 0.8);
-    toggleBtn.setStrokeStyle(1, Colors.BORDER_BLUE);
-    toggleBtn.setInteractive();
-    const toggleText = this.add.bitmapText(contentX + 110, outlineLabelY, 'clicker', showOutline ? 'ON' : 'OFF', 9)
-      .setOrigin(0.5);
-    container.add(toggleBtn);
-    container.add(toggleText);
-
-    toggleBtn.on('pointerdown', () => {
-      showOutline = !showOutline;
-      toggleBtn.setFillStyle(showOutline ? Colors.SLICE_HIGHLIGHTED : Colors.PANEL_DARK, 0.8);
-      toggleText.setText(showOutline ? 'ON' : 'OFF');
-    });
-    toggleBtn.on('pointerover', () => toggleBtn.setFillStyle(showOutline ? Colors.SLICE_HIGHLIGHTED : Colors.BUTTON_HOVER, 0.9));
-    toggleBtn.on('pointerout', () => toggleBtn.setFillStyle(showOutline ? Colors.SLICE_HIGHLIGHTED : Colors.PANEL_DARK, 0.8));
-
-    // Action buttons
-    const buttonY = contentStartY + height - 24;
-    const resetBtn = this.add.rectangle(contentX + 20, buttonY, 50, 18, Colors.PANEL_DARK, 0.8);
-    resetBtn.setStrokeStyle(1, Colors.BORDER_BLUE);
-    resetBtn.setInteractive();
-    resetBtn.on('pointerdown', () => {
-      dialX = -200;
-      dialY = -150;
-      hValueText.setText(`${dialX}`);
-      vValueText.setText(`${dialY}`);
-    });
-    resetBtn.on('pointerover', () => resetBtn.setFillStyle(Colors.BUTTON_HOVER, 0.9));
-    resetBtn.on('pointerout', () => resetBtn.setFillStyle(Colors.PANEL_DARK, 0.8));
-    container.add(resetBtn);
-    container.add(this.add.bitmapText(contentX + 20, buttonY, 'clicker', 'RESET', 9).setOrigin(0.5));
-
-    const saveBtn = this.add.rectangle(contentX + 85, buttonY, 50, 18, Colors.PANEL_DARK, 0.8);
-    saveBtn.setStrokeStyle(1, Colors.BORDER_BLUE);
-    saveBtn.setInteractive();
-    saveBtn.on('pointerdown', () => {
-      settingsManager.updateDialPosition(dialX, dialY);
-      settingsManager.updateDialOutline(showOutline);
-      try {
-        const settings = settingsManager.getSettings();
-        localStorage.setItem('clicker-shipper-settings', JSON.stringify(settings));
-      } catch (error) {
-        console.error('Failed to save settings:', error);
-      }
-    });
-    saveBtn.on('pointerover', () => saveBtn.setFillStyle(Colors.BUTTON_HOVER, 0.9));
-    saveBtn.on('pointerout', () => saveBtn.setFillStyle(Colors.PANEL_DARK, 0.8));
-    container.add(saveBtn);
-    container.add(this.add.bitmapText(contentX + 85, buttonY, 'clicker', 'SAVE', 9).setOrigin(0.5));
+  private buildSettingsContent(container: Phaser.GameObjects.Container, panelX: number, panelWidth: number): void {
+    const btnY = 120;
+    const btnW = panelWidth - 60;
+    const btn = this.add.rectangle(panelX, btnY, btnW, 28, Colors.PANEL_DARK, 0.9);
+    btn.setStrokeStyle(2, Colors.BORDER_BLUE);
+    btn.setInteractive();
+    btn.on('pointerdown', () => this.scene.start('DialCalibration'));
+    btn.on('pointerover', () => btn.setFillStyle(Colors.BUTTON_HOVER, 0.95));
+    btn.on('pointerout', () => btn.setFillStyle(Colors.PANEL_DARK, 0.9));
+    const btnLabel = this.add.bitmapText(panelX, btnY, 'clicker', 'CALIBRATE DIAL', 11).setOrigin(0.5);
+    container.add([btn, btnLabel]);
   }
 
   private buildOrderContent(container: Phaser.GameObjects.Container, x: number, y: number, width: number, height: number, order: Order): Array<{ x: number; y: number; size: number; slotBg: Phaser.GameObjects.Graphics; expectedIconKey: string }> {
@@ -534,14 +446,101 @@ export class Game extends Phaser.Scene {
     // Update shift timer display
   }
 
-  onOrderComplete() {
-    // Validate order is within budget
-    // Load next order
-    // Reset dial to first level
-    if (this.radialDial) {
-      this.radialDial.reset();
+  private checkOrderComplete(): void {
+    // All slots must be filled
+    if (this.fulfillmentImages.some(s => s === null)) return;
+    // No slot may contain an item that doesn't belong in the order (no red slots)
+    for (const entry of this.fulfillmentImages) {
+      if (!entry || !this.fulfillmentOrderIconKeys.has(entry.iconKey)) return;
     }
-    // If no more orders, end shift
+    this.completeOrder();
+  }
+
+  private completeOrder(): void {
+    if (!this.currentOrder) return;
+    // Count green slots (correctly positioned)
+    let greenCount = 0;
+    for (let i = 0; i < this.fulfillmentSlots.length; i++) {
+      const entry = this.fulfillmentImages[i];
+      if (entry && entry.iconKey === this.fulfillmentSlots[i].expectedIconKey) greenCount++;
+    }
+    const revenue = this.currentOrder.budget;
+    const bonus = greenCount * Math.round(this.currentOrder.budget * 0.1);
+    this.shiftRevenue += revenue;
+    this.shiftBonus += bonus;
+    this.revenueText?.setText(`Q${this.shiftRevenue}`);
+    this.bonusText?.setText(`Q${this.shiftBonus}`);
+    this.flashAndTransition();
+  }
+
+  private flashAndTransition(): void {
+    const { ordersPanelX: px, ordersPanelWidth: pw, ordersPanelTop: pt, ordersPanelHeight: ph } = this;
+    // White flash overlay drawn over the content area
+    const flash = this.add.rectangle(px, pt + ph / 2 + 10, pw - 8, ph - 70, 0xffffff, 0);
+    flash.setDepth(50);
+    this.tweens.add({
+      targets: flash,
+      alpha: { from: 0, to: 0.3 },
+      duration: 120,
+      yoyo: true,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        // "ORDER ACCEPTED" label fades out over the panel
+        const acceptLabel = this.add.bitmapText(px, pt + ph / 2 - 10, 'clicker', 'ORDER ACCEPTED', 16)
+          .setOrigin(0.5)
+          .setTint(0x00ff88)
+          .setDepth(51);
+        this.tweens.add({
+          targets: acceptLabel,
+          alpha: { from: 1, to: 0 },
+          duration: 800,
+          delay: 350,
+          ease: 'Quad.easeIn',
+          onComplete: () => {
+            acceptLabel.destroy();
+            flash.destroy();
+            const gameManager = GameManager.getInstance();
+            this.loadNextOrder(gameManager.getItems());
+          }
+        });
+        // Pulse the revenue and bonus counters
+        [this.revenueText, this.bonusText].forEach(text => {
+          if (!text) return;
+          this.tweens.add({
+            targets: text,
+            scaleX: { from: 1, to: 1.4 },
+            scaleY: { from: 1, to: 1.4 },
+            duration: 180,
+            yoyo: true,
+            ease: 'Back.easeOut',
+          });
+        });
+      }
+    });
+  }
+
+  private loadNextOrder(items: any[]): void {
+    if (this.ordersContainer) {
+      this.ordersContainer.removeAll(true);
+    }
+    this.fulfillmentImages = [];
+    this.fulfillmentSlots = [];
+    this.fulfillmentOrderIconKeys.clear();
+    if (this.radialDial) this.radialDial.reset();
+    const nextOrder = buildOrder(items);
+    this.currentOrder = nextOrder;
+    const contentY = this.ordersPanelTop + 62;
+    const contentH = this.ordersPanelHeight - 76;
+    this.fulfillmentSlots = this.buildOrderContent(
+      this.ordersContainer!,
+      this.ordersPanelX,
+      contentY,
+      this.ordersPanelWidth - 20,
+      contentH,
+      nextOrder
+    );
+    this.fulfillmentImages = new Array(this.fulfillmentSlots.length).fill(null);
+    this.fulfillmentOrderIconKeys = new Set(nextOrder.requirements.map(r => r.iconKey));
   }
 
   endShift() {

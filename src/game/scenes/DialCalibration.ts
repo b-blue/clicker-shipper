@@ -2,7 +2,7 @@ import { Scene } from 'phaser';
 import { Colors } from '../constants/Colors';
 import { SettingsManager } from '../managers/SettingsManager';
 
-export class Settings extends Scene {
+export class DialCalibration extends Scene {
   private settingsManager: SettingsManager;
   private dialX: number = -200;
   private dialY: number = -150;
@@ -12,7 +12,7 @@ export class Settings extends Scene {
   private previewDial: Phaser.GameObjects.Graphics | null = null;
 
   constructor() {
-    super('Settings');
+    super('DialCalibration');
     this.settingsManager = SettingsManager.getInstance();
   }
 
@@ -32,7 +32,7 @@ export class Settings extends Scene {
       .setStrokeStyle(2, Colors.BORDER_BLUE);
 
     // Title
-    this.add.bitmapText(gameWidth / 2, gameHeight * 0.10, 'clicker', 'SETTINGS', 32)
+    this.add.bitmapText(gameWidth / 2, gameHeight * 0.10, 'clicker', 'CALIBRATE DIAL', 26)
       .setOrigin(0.5);
 
     // Load current settings
@@ -56,7 +56,7 @@ export class Settings extends Scene {
     this.createAdjustButton(
       gameWidth / 2 - 80,
       xLabelY,
-      '←',
+      'LT',
       () => this.adjustDialPosition(-10, 0)
     );
 
@@ -66,7 +66,7 @@ export class Settings extends Scene {
     this.createAdjustButton(
       gameWidth / 2 + 80,
       xLabelY,
-      '→',
+      'RT',
       () => this.adjustDialPosition(10, 0)
     );
 
@@ -78,7 +78,7 @@ export class Settings extends Scene {
     this.createAdjustButton(
       gameWidth / 2 - 80,
       yLabelY,
-      '↑',
+      'UP',
       () => this.adjustDialPosition(0, -10)
     );
 
@@ -88,7 +88,7 @@ export class Settings extends Scene {
     this.createAdjustButton(
       gameWidth / 2 + 80,
       yLabelY,
-      '↓',
+      'DN',
       () => this.adjustDialPosition(0, 10)
     );
 

@@ -34,7 +34,7 @@ export class MainMenu extends Phaser.Scene {
     this.createButton(gameWidth / 2, buttonY + buttonSpacing, 'ITEM CATALOG', () => this.openManual());
 
     // Settings button
-    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 2, 'SETTINGS', () => this.openSettings());
+    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 2, 'CALIBRATE DIAL', () => this.openSettings());
 
     // Exit button
     this.createButton(gameWidth / 2, buttonY + buttonSpacing * 3, 'EXIT', () => this.exitGame());
@@ -71,7 +71,7 @@ export class MainMenu extends Phaser.Scene {
     // Button text background
     this.add.rectangle(x, y, buttonWidth - 10, 28, Colors.PANEL_MEDIUM, 0.8);
     // Button text
-    this.add.bitmapText(x, y, 'clicker', text, 18)
+    this.add.bitmapText(x, y, 'clicker', text, 13)
       .setOrigin(0.5);
   }
 
@@ -87,7 +87,7 @@ export class MainMenu extends Phaser.Scene {
 
   openSettings() {
     // Transition to Settings scene
-    this.scene.start('Settings');
+    this.scene.start('DialCalibration');
   }
 
   exitGame() {

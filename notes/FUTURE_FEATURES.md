@@ -116,3 +116,40 @@ Simplify navigation by using different interaction patterns for categories vs. s
 
 ---
 
+### Tap-Based Dial Control Scheme (Alternative)
+Keep the radial dial layout but replace drag-to-center confirmation with direct tapping of slices, eliminating the drag gesture entirely.
+
+**Design considerations:**
+- Tapping a slice at Level 0 (category) navigates into it — same as current
+- Tapping a slice at Level 1 (item) immediately confirms the selection with no drag required
+- The center disc tap (go back) remains unchanged
+- Terminal action dial (send/recall/skill-up) uses the same tap model
+
+**Benefits:**
+- ✅ Faster workflow — no dragging required
+- ✅ Works well on small screens where drag distance is short
+- ✅ Simpler code path, single interaction model on all devices
+- ✅ Accessible to users who have difficulty with drag gestures
+
+**Trade-offs:**
+- ⚠️ Easy to accidentally confirm an item with a stray tap
+- ⚠️ Removes intentional "commitment" gesture from the UX
+- ⚠️ Less satisfying haptic/visual confirmation arc
+
+**Implementation approach:**
+1. Add `inputMode: 'drag' | 'tap'` to game settings (toggle in DialCalibration scene)
+2. In `RadialDial.handlePointerUp`: if `inputMode === 'tap'` and pointer is over a non-center slice, emit `dial:itemConfirmed` immediately without checking drag distance
+3. Suppress `showDropCue` and center-glow feedback when in tap mode
+4. Visual affordance on each slice (e.g. subtle pulsing border) to reinforce direct-tap interaction
+
+**Settings integration:**
+```json
+{
+  "input": {
+    "dialInputMode": "drag"
+  }
+}
+```
+
+---
+

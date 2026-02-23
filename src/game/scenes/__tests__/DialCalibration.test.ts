@@ -38,11 +38,13 @@ describe('DialCalibration scene', () => {
         offsetX: -200,
         offsetY: -150,
         showOutline: false,
+        radius: 150,
       })),
       updateDialPosition: jest.fn(),
       updateDialOutline: jest.fn(),
+      updateDialRadius: jest.fn(),
       getSettings: jest.fn(() => ({
-        dial: { offsetX: -200, offsetY: -150, showOutline: false },
+        dial: { offsetX: -200, offsetY: -150, showOutline: false, radius: 150 },
         ui: { hudStripY: 28, hudStripHeight: 40 },
       })),
     };
@@ -78,6 +80,8 @@ describe('DialCalibration scene', () => {
       lineStyle: jest.fn().mockReturnThis(),
       strokeCircle: jest.fn().mockReturnThis(),
       lineBetween: jest.fn().mockReturnThis(),
+      fillStyle: jest.fn().mockReturnThis(),
+      fillTriangle: jest.fn().mockReturnThis(),
       setDepth: jest.fn().mockReturnThis(),
       destroy: jest.fn(),
     }));
@@ -123,7 +127,7 @@ describe('DialCalibration scene', () => {
     expect(mockRectangle).toHaveBeenCalledWith(400, 300, 800, 600, Colors.BACKGROUND_DARK);
     
     // Panel
-    expect(mockRectangle).toHaveBeenCalledWith(400, 192, 600, 330, Colors.PANEL_DARK, 0.9);
+    expect(mockRectangle).toHaveBeenCalledWith(400, 210, 600, 390, Colors.PANEL_DARK, 0.9);
   });
 
   it('renders the title', async () => {
@@ -170,7 +174,7 @@ describe('DialCalibration scene', () => {
 
     scene.create();
 
-    const buttonY = 312;
+    const buttonY = 348;
     const buttonSpacing = 150;
 
     // Reset button (left)
@@ -272,7 +276,7 @@ describe('DialCalibration scene', () => {
     // Simulate cancel button click
     const rectangleCalls = (scene as any).add.rectangle.mock.calls;
     const cancelButtonCall = rectangleCalls.find(
-      (call: any) => call[0] === 400 && call[1] === 312 && call[2] === 120
+      (call: any) => call[0] === 400 && call[1] === 348 && call[2] === 120
     );
     
     expect(cancelButtonCall).toBeDefined();
@@ -347,9 +351,9 @@ describe('DialCalibration scene', () => {
     scene.create();
 
     // Check for "SHOW OUTLINE" label
-    expect(mockBitmapText).toHaveBeenCalledWith(expect.any(Number), 258, 'clicker', 'SHOW OUTLINE', 14);
+    expect(mockBitmapText).toHaveBeenCalledWith(expect.any(Number), 300, 'clicker', 'SHOW OUTLINE', 14);
 
     // Check for toggle button with OFF state
-    expect(mockBitmapText).toHaveBeenCalledWith(400, 258, 'clicker', 'OFF', 14);
+    expect(mockBitmapText).toHaveBeenCalledWith(400, 300, 'clicker', 'OFF', 14);
   });
 });

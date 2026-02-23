@@ -20,6 +20,7 @@ export class Game extends Phaser.Scene {
   private ordersPanelHeight: number = 0;
   private revenueText: Phaser.GameObjects.BitmapText | null = null;
   private bonusText: Phaser.GameObjects.BitmapText | null = null;
+  private switchToOrdersTab: (() => void) | null = null;
 
   constructor() {
     super('Game');
@@ -39,7 +40,7 @@ export class Game extends Phaser.Scene {
       const dialSettings = settingsManager.getDialSettings();
       const dialX = gameWidth + dialSettings.offsetX;
       const dialY = gameHeight + dialSettings.offsetY;
-      const dialRadius = 150;
+      const dialRadius = dialSettings.radius ?? 150;
 
       // Background
       this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, Colors.BACKGROUND_DARK);
@@ -127,6 +128,7 @@ export class Game extends Phaser.Scene {
           containers[key as typeof activeTab].setVisible(key === label);
         });
       };
+      this.switchToOrdersTab = () => updateTabDisplay('ORDERS');
 
       tabKeys.forEach((label, index) => {
         const tabY = tabStartY + index * (tabHeight + tabSpacing);
@@ -481,6 +483,8 @@ export class Game extends Phaser.Scene {
     for (const entry of this.fulfillmentImages) {
       if (!entry || !this.fulfillmentOrderIconKeys.has(entry.iconKey)) return;
     }
+    // Switch to ORDERS tab if the player was on a different tab
+    this.switchToOrdersTab?.();
     this.completeOrder();
   }
 

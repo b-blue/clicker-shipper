@@ -6,6 +6,7 @@ export class DialCalibration extends Scene {
   private settingsManager: SettingsManager;
   private dialX: number = -200;
   private dialY: number = -150;
+  private dialRadius: number = 150;
   private showOutline: boolean = false;
   private temporarilyShowOutline: boolean = false;
   private fadeOutTimer: Phaser.Time.TimerEvent | null = null;
@@ -20,8 +21,8 @@ export class DialCalibration extends Scene {
     const gameWidth = this.cameras.main.width;
     const gameHeight = this.cameras.main.height;
     const panelWidth = Math.min(gameWidth * 0.9, 600);
-    const panelHeight = Math.min(gameHeight * 0.55, 400);
-    const panelCenterY = gameHeight * 0.32;
+    const panelHeight = Math.min(gameHeight * 0.65, 480);
+    const panelCenterY = gameHeight * 0.35;
 
     // Background
     this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, Colors.BACKGROUND_DARK);
@@ -40,6 +41,7 @@ export class DialCalibration extends Scene {
     this.dialX = currentSettings.offsetX;
     this.dialY = currentSettings.offsetY;
     this.showOutline = currentSettings.showOutline ?? false;
+    this.dialRadius = currentSettings.radius ?? 150;
 
     // Dial Position Section
     this.add.bitmapText(gameWidth / 2, gameHeight * 0.18, 'clicker', 'DIAL POSITION', 16)
@@ -92,12 +94,35 @@ export class DialCalibration extends Scene {
       () => this.adjustDialPosition(0, 10)
     );
 
+    // Dial Size controls
+    const rLabelY = gameHeight * 0.43;
+    this.add.bitmapText(gameWidth / 2 - panelWidth / 2 + 40, rLabelY, 'clicker', 'DIAL SIZE', 14)
+      .setOrigin(0, 0.5);
+
+    this.createAdjustButton(
+      gameWidth / 2 - 80,
+      rLabelY,
+      'LT',
+      () => this.adjustDialRadius(-10)
+    );
+
+    const radiusValueText = this.add.bitmapText(gameWidth / 2, rLabelY, 'clicker', `${this.dialRadius}`, 14)
+      .setOrigin(0.5);
+
+    this.createAdjustButton(
+      gameWidth / 2 + 80,
+      rLabelY,
+      'RT',
+      () => this.adjustDialRadius(10)
+    );
+
     // Store references for updating
     this.data.set('xValueText', xValueText);
     this.data.set('yValueText', yValueText);
+    this.data.set('radiusValueText', radiusValueText);
 
     // Dial Outline Toggle
-    const toggleY = gameHeight * 0.43;
+    const toggleY = gameHeight * 0.50;
     this.add.bitmapText(gameWidth / 2 - panelWidth / 2 + 40, toggleY, 'clicker', 'SHOW OUTLINE', 14)
       .setOrigin(0, 0.5);
 
@@ -128,7 +153,7 @@ export class DialCalibration extends Scene {
     this.drawPreviewDial();
 
     // Action buttons in single row: Reset, Cancel, Save
-    const buttonY = gameHeight * 0.52;
+    const buttonY = gameHeight * 0.58;
     const buttonSpacing = 150;
     
     this.createButton(
@@ -154,6 +179,13 @@ export class DialCalibration extends Scene {
       () => this.saveAndClose(),
       120
     );
+  }
+
+  private adjustDialRadius(delta: number): void {
+    this.dialRadius = Math.max(80, Math.min(250, this.dialRadius + delta));
+    const radiusValueText = this.data.get('radiusValueText') as Phaser.GameObjects.BitmapText;
+    if (radiusValueText) radiusValueText.setText(`${this.dialRadius}`);
+    this.drawPreviewDial();
   }
 
   private adjustDialPosition(deltaX: number, deltaY: number): void {
@@ -192,8 +224,8 @@ export class DialCalibration extends Scene {
     const alpha = shouldShow ? 0.8 : 0;
     
     this.previewDial.lineStyle(2, Colors.HIGHLIGHT_YELLOW, alpha);
-    this.previewDial.strokeCircle(dialPreviewX, dialPreviewY, 150);
-    this.previewDial.strokeCircle(dialPreviewX, dialPreviewY, 50);
+    this.previewDial.strokeCircle(dialPreviewX, dialPreviewY, this.dialRadius);
+    this.previewDial.strokeCircle(dialPreviewX, dialPreviewY, Math.round(this.dialRadius / 3));
     
     // Draw crosshair at center
     this.previewDial.lineStyle(1, Colors.HIGHLIGHT_YELLOW, alpha * 0.75);
@@ -206,12 +238,15 @@ export class DialCalibration extends Scene {
   private resetToDefaults(): void {
     this.dialX = -200;
     this.dialY = -150;
+    this.dialRadius = 150;
 
     const xValueText = this.data.get('xValueText') as Phaser.GameObjects.BitmapText;
     const yValueText = this.data.get('yValueText') as Phaser.GameObjects.BitmapText;
+    const radiusValueText = this.data.get('radiusValueText') as Phaser.GameObjects.BitmapText;
     
     if (xValueText) xValueText.setText(`${this.dialX}`);
     if (yValueText) yValueText.setText(`${this.dialY}`);
+    if (radiusValueText) radiusValueText.setText(`${this.dialRadius}`);
 
     this.drawPreviewDial();
   }
@@ -220,6 +255,7 @@ export class DialCalibration extends Scene {
     // Update settings manager
     this.settingsManager.updateDialPosition(this.dialX, this.dialY);
     this.settingsManager.updateDialOutline(this.showOutline);
+    this.settingsManager.updateDialRadius(this.dialRadius);
     
     // Save to localStorage
     try {
@@ -233,39 +269,28 @@ export class DialCalibration extends Scene {
     this.scene.start('MainMenu');
   }
 
-  private createAdjustButton(x: number, y: number, text: string, callback: () => void): void {
+  private createAdjustButton(x: number, y: number, direction: 'LT' | 'RT' | 'UP' | 'DN', callback: () => void): void {
     const button = this.add.rectangle(x, y, 40, 40, Colors.PANEL_DARK, 0.8);
     button.setStrokeStyle(2, Colors.BORDER_BLUE);
     button.setInteractive();
 
     button.on('pointerdown', () => {
-      // Show outline temporarily
       this.temporarilyShowOutline = true;
       this.drawPreviewDial();
-      
-      // Clear any existing fade timer
-      if (this.fadeOutTimer) {
-        this.fadeOutTimer.remove();
-      }
-      
+      if (this.fadeOutTimer) this.fadeOutTimer.remove();
       callback();
     });
-    
+
     button.on('pointerup', () => {
-      // Start fade out timer
       this.fadeOutTimer = this.time.delayedCall(500, () => {
         this.temporarilyShowOutline = false;
         this.drawPreviewDial();
       });
     });
-    
-    button.on('pointerover', () => {
-      button.setFillStyle(Colors.BUTTON_HOVER, 0.9);
-    });
+
+    button.on('pointerover', () => { button.setFillStyle(Colors.BUTTON_HOVER, 0.9); });
     button.on('pointerout', () => {
       button.setFillStyle(Colors.PANEL_DARK, 0.8);
-      
-      // Also trigger fade out on pointer leaving button
       if (this.temporarilyShowOutline && this.fadeOutTimer) {
         this.fadeOutTimer.remove();
         this.fadeOutTimer = this.time.delayedCall(500, () => {
@@ -275,8 +300,19 @@ export class DialCalibration extends Scene {
       }
     });
 
-    this.add.bitmapText(x, y, 'clicker', text, 20)
-      .setOrigin(0.5);
+    // Yellow arrow triangle
+    const arrow = this.add.graphics();
+    arrow.fillStyle(Colors.HIGHLIGHT_YELLOW, 1);
+    const s = 7;
+    if (direction === 'LT') {
+      arrow.fillTriangle(x - s, y, x + s, y - s, x + s, y + s);
+    } else if (direction === 'RT') {
+      arrow.fillTriangle(x + s, y, x - s, y - s, x - s, y + s);
+    } else if (direction === 'UP') {
+      arrow.fillTriangle(x, y - s, x - s, y + s, x + s, y + s);
+    } else {
+      arrow.fillTriangle(x, y + s, x - s, y - s, x + s, y - s);
+    }
   }
 
   private createButton(x: number, y: number, text: string, callback: () => void, width: number = 200): void {

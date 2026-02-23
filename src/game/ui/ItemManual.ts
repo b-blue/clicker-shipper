@@ -102,11 +102,11 @@ export class ItemManual extends Phaser.Scene {
           const childName = this.add.bitmapText(nameX, rowY, 'clicker', nameText, 12)
             .setOrigin(0, 0.5)
             .setMaxWidth(maxNameWidth);
-          const childCost = this.add.bitmapText(rowWidth - 12, rowY, 'clicker', `${cost}Q`, 12)
+          const childCost = this.add.bitmapText(rowWidth - 12, rowY, 'clicker', `Q${cost}`, 12)
             .setOrigin(1, 0.5);
           listContainer.add([childName, childCost]);
         } else {
-          const childText = `| ${cost}Q | ${nameText}`;
+          const childText = `| Q${cost} | ${nameText}`;
           const childLabel = this.add.bitmapText(nameX, rowY, 'clicker', childText, 12)
             .setOrigin(0, 0.5)
             .setMaxWidth(rowWidth - iconFrameSize - 80);

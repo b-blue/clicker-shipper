@@ -242,6 +242,19 @@ export class RadialDial {
         }
       }
     } else if (!wasDrag && endDistance < this.centerRadius) {
+      // In terminal mode, tapping center goes back to the previous level (B-level)
+      if (this.terminalItem) {
+        this.terminalItem = null;
+        this.highlightedSliceIndex = -1;
+        this.selectedItem = null;
+        this.dragStartSliceIndex = -1;
+        this.showDropCue = false;
+        this.lastNonCenterSliceIndex = -1;
+        this.updateSliceCount();
+        this.redrawDial();
+        this.scene.events.emit('dial:goBack');
+        return;
+      }
       // Single tap on center (not drag) = go back
       if (this.navigationController.canGoBack()) {
         this.navigationController.goBack();
@@ -378,8 +391,8 @@ export class RadialDial {
       this.centerGraphic.strokeCircle(this.dialX, this.dialY, this.centerRadius + 6);
     }
 
-    // Update center display — terminal item takes priority over selected item
-    const centerDisplayItem = this.terminalItem ?? this.selectedItem;
+    // Update center display — selected item (hover/drag) takes priority, else default icon
+    const centerDisplayItem = this.selectedItem;
     if (centerDisplayItem) {
       const item = centerDisplayItem as any;
       const textureKey = item.icon || item.id;
@@ -391,7 +404,7 @@ export class RadialDial {
         this.centerImage.setVisible(false);
       }
     } else {
-      const defaultKey = this.navigationController.getDepth() > 0 ? 'skill-up' : 'skill-diagram';
+      const defaultKey = (this.terminalItem || this.navigationController.getDepth() > 0) ? 'skill-up' : 'skill-diagram';
       if (this.scene.textures.exists(defaultKey)) {
         this.centerImage.setTexture(defaultKey);
         this.centerImage.setPosition(this.dialX, this.dialY);

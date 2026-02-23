@@ -1,4 +1,4 @@
-import { getShippableItems, generateOrder, getRandomQuantity } from '../OrderUtils';
+import { getShippableItems, generateOrder, getRandomQuantity, getCatalogRows } from '../OrderUtils';
 import { MenuItem } from '../../types/GameTypes';
 
 // ─── Test fixtures ────────────────────────────────────────────────────────────
@@ -293,5 +293,112 @@ describe('getRandomQuantity', () => {
     for (let i = 0; i < 100; i++) {
       expect(Number.isInteger(getRandomQuantity())).toBe(true);
     }
+  });
+});
+
+// ─── getCatalogRows ───────────────────────────────────────────────────────────
+
+describe('getCatalogRows', () => {
+  describe('same source of truth as getShippableItems', () => {
+    it('the flat list of all catalog items equals getShippableItems', () => {
+      const items = makeMultiCategoryTree();
+      const catalogItems = getCatalogRows(items).flatMap(r => r.items);
+      const shippable = getShippableItems(items);
+      expect(catalogItems.map(i => i.id)).toEqual(shippable.map(i => i.id));
+    });
+
+    it('catalog items match getShippableItems for a tree with nav-down nodes', () => {
+      const items = makeTreeWithNavDown();
+      const catalogItems = getCatalogRows(items).flatMap(r => r.items);
+      const shippable = getShippableItems(items);
+      expect(catalogItems.map(i => i.id)).toEqual(shippable.map(i => i.id));
+    });
+
+    it('catalog items match getShippableItems for a deep-locked tree', () => {
+      const items = makeDeepTree();
+      const catalogItems = getCatalogRows(items).flatMap(r => r.items);
+      const shippable = getShippableItems(items);
+      expect(catalogItems.map(i => i.id)).toEqual(shippable.map(i => i.id));
+    });
+  });
+
+  describe('grouping', () => {
+    it('groups items under the correct A-level category', () => {
+      const rows = getCatalogRows(makeMultiCategoryTree());
+      expect(rows).toHaveLength(2);
+      expect(rows[0].category.id).toBe('cat_food');
+      expect(rows[0].items.map(i => i.id)).toEqual(['bread', 'fish']);
+      expect(rows[1].category.id).toBe('cat_tools');
+      expect(rows[1].items.map(i => i.id)).toEqual(['hammer', 'wrench']);
+    });
+
+    it('does not include the category header in its own items array', () => {
+      const rows = getCatalogRows(makeMultiCategoryTree());
+      rows.forEach(row => {
+        expect(row.items.map(i => i.id)).not.toContain(row.category.id);
+      });
+    });
+
+    it('each item object is the original MenuItem (same reference)', () => {
+      const items = makeSimpleTree();
+      const shippable = getShippableItems(items);
+      const catalogItems = getCatalogRows(items).flatMap(r => r.items);
+      catalogItems.forEach((catItem, i) => {
+        expect(catItem).toBe(shippable[i]);
+      });
+    });
+  });
+
+  describe('exclusions', () => {
+    it('never includes nav-down items in any category\'s items array', () => {
+      const rows = getCatalogRows(makeTreeWithNavDown());
+      rows.forEach(row => {
+        row.items.forEach(item => {
+          expect(item.icon).not.toBe('skill-down');
+          expect(item.id).not.toMatch(/_down_/);
+        });
+      });
+    });
+
+    it('never includes C-level children of locked nodes', () => {
+      const rows = getCatalogRows(makeDeepTree());
+      const allItemIds = rows.flatMap(r => r.items).map(i => i.id);
+      expect(allItemIds).not.toContain('drill');
+      expect(allItemIds).not.toContain('blaster');
+    });
+
+    it('excludes categories where all B-level children are nav-down', () => {
+      // A root whose only child is a nav-down node — should produce no catalog row
+      const navOnlyTree: MenuItem[] = [
+        {
+          id: 'cat_locked',
+          name: 'Locked Cat',
+          icon: 'skill-diagram',
+          children: [
+            { id: 'nav_locked_down_1', name: 'Deep…', icon: 'skill-down', children: [
+                { id: 'deep_item', name: 'Deep Item', icon: 'deep', cost: 99 },
+              ],
+            },
+          ],
+        },
+      ];
+      expect(getCatalogRows(navOnlyTree)).toHaveLength(0);
+    });
+
+    it('excludes categories where B-level items have no cost', () => {
+      const rows = getCatalogRows(makeTreeNoCostAtB());
+      expect(rows).toHaveLength(0);
+    });
+  });
+
+  describe('edge cases', () => {
+    it('returns an empty array for empty input', () => {
+      expect(getCatalogRows([])).toEqual([]);
+    });
+
+    it('returns an empty array when roots have no children', () => {
+      const rootOnly: MenuItem[] = [{ id: 'lone', name: 'Lone', icon: 'icon', children: [] }];
+      expect(getCatalogRows(rootOnly)).toEqual([]);
+    });
   });
 });

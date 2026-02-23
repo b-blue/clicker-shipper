@@ -18,7 +18,7 @@
       "children": [
         {
           "id": "item_resources_001",
-          "name": "resource1",
+          "name": "SCRAP ALLOY",
           "icon": "resource1",
           "type": "resources",
           "cost": 10
@@ -396,28 +396,28 @@
         },
         {
           "id": "item_resources_002",
-          "name": "resource2",
+          "name": "NEURAL SOLDER",
           "icon": "resource2",
           "type": "resources",
           "cost": 11
         },
         {
           "id": "item_resources_003",
-          "name": "resource3",
+          "name": "DATAPLAST",
           "icon": "resource3",
           "type": "resources",
           "cost": 12
         },
         {
           "id": "item_resources_004",
-          "name": "resource4",
+          "name": "CHROME FLUX",
           "icon": "resource4",
           "type": "resources",
           "cost": 13
         },
         {
           "id": "item_resources_005",
-          "name": "resource5",
+          "name": "VOLT RESIN",
           "icon": "resource5",
           "type": "resources",
           "cost": 14
@@ -442,7 +442,7 @@
       "children": [
         {
           "id": "item_armaments_001",
-          "name": "arm1",
+          "name": "PULSE CARBINE",
           "icon": "arm1",
           "type": "armaments",
           "cost": 24
@@ -820,28 +820,28 @@
         },
         {
           "id": "item_armaments_002",
-          "name": "arm2",
+          "name": "GRID STRIKER",
           "icon": "arm2",
           "type": "armaments",
           "cost": 25
         },
         {
           "id": "item_armaments_003",
-          "name": "arm3",
+          "name": "VOID PISTOL",
           "icon": "arm3",
           "type": "armaments",
           "cost": 26
         },
         {
           "id": "item_armaments_004",
-          "name": "arm4",
+          "name": "CHAIN REPEATER",
           "icon": "arm4",
           "type": "armaments",
           "cost": 27
         },
         {
           "id": "item_armaments_005",
-          "name": "arm5",
+          "name": "NEURORIFLE",
           "icon": "arm5",
           "type": "armaments",
           "cost": 28
@@ -866,7 +866,7 @@
       "children": [
         {
           "id": "item_melee_001",
-          "name": "melee1",
+          "name": "RAZORBLADE",
           "icon": "melee1",
           "type": "melee",
           "cost": 18
@@ -1244,28 +1244,28 @@
         },
         {
           "id": "item_melee_002",
-          "name": "melee2",
+          "name": "ARC BATON",
           "icon": "melee2",
           "type": "melee",
           "cost": 19
         },
         {
           "id": "item_melee_003",
-          "name": "melee3",
+          "name": "SPLICE HOOK",
           "icon": "melee3",
           "type": "melee",
           "cost": 20
         },
         {
           "id": "item_melee_004",
-          "name": "melee4",
+          "name": "MONO EDGE",
           "icon": "melee4",
           "type": "melee",
           "cost": 21
         },
         {
           "id": "item_melee_005",
-          "name": "melee5",
+          "name": "SHOCK KNUCKLE",
           "icon": "melee5",
           "type": "melee",
           "cost": 22
@@ -1290,7 +1290,7 @@
       "children": [
         {
           "id": "item_radioactive_001",
-          "name": "radioactive1",
+          "name": "ISOTOPE CORE",
           "icon": "radioactive1",
           "type": "radioactive",
           "cost": 32
@@ -1668,28 +1668,28 @@
         },
         {
           "id": "item_radioactive_002",
-          "name": "radioactive2",
+          "name": "RAD CANISTER",
           "icon": "radioactive2",
           "type": "radioactive",
           "cost": 33
         },
         {
           "id": "item_radioactive_003",
-          "name": "radioactive3",
+          "name": "GLITCH PELLET",
           "icon": "radioactive3",
           "type": "radioactive",
           "cost": 34
         },
         {
           "id": "item_radioactive_004",
-          "name": "radioactive4",
+          "name": "DECAY CHARGE",
           "icon": "radioactive4",
           "type": "radioactive",
           "cost": 35
         },
         {
           "id": "item_radioactive_005",
-          "name": "radioactive5",
+          "name": "REACTOR SHARD",
           "icon": "radioactive5",
           "type": "radioactive",
           "cost": 36
@@ -1714,7 +1714,7 @@
       "children": [
         {
           "id": "item_mining_001",
-          "name": "mining1",
+          "name": "DRILL BIT MK1",
           "icon": "mining1",
           "type": "mining",
           "cost": 15
@@ -2025,28 +2025,28 @@
         },
         {
           "id": "item_mining_002",
-          "name": "mining2",
+          "name": "BORE CHARGE",
           "icon": "mining2",
           "type": "mining",
           "cost": 16
         },
         {
           "id": "item_mining_003",
-          "name": "mining3",
+          "name": "FISSURE SPIKE",
           "icon": "mining3",
           "type": "mining",
           "cost": 17
         },
         {
           "id": "item_mining_004",
-          "name": "mining4",
+          "name": "ROCK LASER",
           "icon": "mining4",
           "type": "mining",
           "cost": 18
         },
         {
           "id": "item_mining_005",
-          "name": "mining5",
+          "name": "DEEP PROBE",
           "icon": "mining5",
           "type": "mining",
           "cost": 19
@@ -2071,7 +2071,7 @@
       "children": [
         {
           "id": "item_streetwear_001",
-          "name": "streetwear1",
+          "name": "NEON JACKET",
           "icon": "streetwear1",
           "type": "streetwear",
           "cost": 16
@@ -2449,28 +2449,28 @@
         },
         {
           "id": "item_streetwear_002",
-          "name": "streetwear2",
+          "name": "SPLICE HOOD",
           "icon": "streetwear2",
           "type": "streetwear",
           "cost": 17
         },
         {
           "id": "item_streetwear_003",
-          "name": "streetwear3",
+          "name": "WIRE VEST",
           "icon": "streetwear3",
           "type": "streetwear",
           "cost": 18
         },
         {
           "id": "item_streetwear_004",
-          "name": "streetwear4",
+          "name": "GHOST BOOTS",
           "icon": "streetwear4",
           "type": "streetwear",
           "cost": 19
         },
         {
           "id": "item_streetwear_005",
-          "name": "streetwear5",
+          "name": "MESH COAT",
           "icon": "streetwear5",
           "type": "streetwear",
           "cost": 20

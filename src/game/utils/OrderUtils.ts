@@ -2,6 +2,17 @@ import { MenuItem, Order, OrderRequirement } from '../types/GameTypes';
 import { normalizeItems } from './ItemAdapter';
 
 /**
+ * A catalog category groups an A-level root item with its directly accessible
+ * (B-level, non-locked) shippable children.  This matches exactly the items
+ * a player can currently reach and is used as the single source of truth for
+ * both order generation and the catalog display.
+ */
+export interface CatalogCategory {
+  category: MenuItem;
+  items: MenuItem[];
+}
+
+/**
  * Returns only the items that are currently accessible to the player and
  * eligible to appear in orders.
  *
@@ -33,6 +44,32 @@ export function getShippableItems(items: any[]): MenuItem[] {
   });
 
   return shippable;
+}
+
+/**
+ * Groups shippable B-level items under their A-level parent categories.
+ * Only categories that have at least one shippable item are included.
+ *
+ * Uses `getShippableItems` as the sole source of truth, keeping the catalog
+ * display and the order generator in sync: the catalog shows exactly what
+ * can appear in an order.
+ */
+export function getCatalogRows(items: any[]): CatalogCategory[] {
+  const normalized = normalizeItems(items);
+  const rows: CatalogCategory[] = [];
+
+  normalized.forEach(rootItem => {
+    if (!rootItem.children) return;
+    const shippable = rootItem.children.filter((child: MenuItem) => {
+      const isNavDown = child.icon === 'skill-down' || child.id.includes('_down_');
+      return !isNavDown && child.cost !== undefined;
+    });
+    if (shippable.length > 0) {
+      rows.push({ category: rootItem, items: shippable });
+    }
+  });
+
+  return rows;
 }
 
 /** Weighted random quantity: 60%=1, 25%=2, 10%=3, 4%=4, 1%=5 */

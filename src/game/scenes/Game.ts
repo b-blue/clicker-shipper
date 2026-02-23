@@ -2,8 +2,7 @@ import { RadialDial } from '../ui/RadialDial';
 import { GameManager } from '../managers/GameManager';
 import { SettingsManager } from '../managers/SettingsManager';
 import { Colors } from '../constants/Colors';
-import { normalizeItems } from '../utils/ItemAdapter';
-import { generateOrder as buildOrder } from '../utils/OrderUtils';
+import { generateOrder as buildOrder, getCatalogRows } from '../utils/OrderUtils';
 import { MenuItem, Order } from '../types/GameTypes';
 
 export class Game extends Phaser.Scene {
@@ -191,7 +190,7 @@ export class Game extends Phaser.Scene {
   }
 
   private buildCatalogContent(container: Phaser.GameObjects.Container, x: number, y: number, width: number, height: number, items: any): void {
-    const normalizedItems = normalizeItems(items).slice(0, 6);
+    const catalogCategories = getCatalogRows(items);
     const listLeft = x - width / 2;
     const listTop = y;
     const rowHeight = 60;
@@ -205,11 +204,12 @@ export class Game extends Phaser.Scene {
     listContainer.setMask(maskGraphic.createGeometryMask());
     maskGraphic.setVisible(false);
 
-    const rows: Array<{ item: MenuItem; isChild: boolean }> = [];
-    normalizedItems.forEach((item) => {
-      rows.push({ item, isChild: false });
-      const leaves = this.getLeafItems(item).filter(leaf => leaf.cost !== undefined);
-      leaves.forEach(leaf => rows.push({ item: leaf, isChild: true }));
+    // Flatten categories into display rows: header row then one row per item
+    type DisplayRow = { item: MenuItem; isHeader: boolean };
+    const rows: DisplayRow[] = [];
+    catalogCategories.forEach(({ category, items: catItems }) => {
+      rows.push({ item: category, isHeader: true });
+      catItems.forEach(item => rows.push({ item, isHeader: false }));
     });
 
     rows.forEach((row, index) => {
@@ -227,15 +227,15 @@ export class Game extends Phaser.Scene {
         listContainer.add(iconImage);
       }
 
-      if (row.isChild) {
+      if (!row.isHeader) {
         const cost = row.item.cost ?? 0;
         const nameText = row.item.name.toUpperCase();
         const nameX = iconX + iconFrameSize / 2 + 20;
-        
+
         const childName = this.add.bitmapText(nameX, rowY, 'clicker', nameText, 10)
           .setOrigin(0, 0.5)
           .setMaxWidth(width - iconFrameSize - 90);
-        const childCost = this.add.bitmapText(width - 12, rowY, 'clicker', `${cost}Q`, 10)
+        const childCost = this.add.bitmapText(width - 12, rowY, 'clicker', `Q${cost}`, 10)
           .setOrigin(1, 0.5);
         listContainer.add([childName, childCost]);
       } else {
@@ -257,13 +257,6 @@ export class Game extends Phaser.Scene {
       scrollOffset = Math.max(minOffset, Math.min(0, scrollOffset - dy * 0.4));
       listContainer.y = listTop + scrollOffset;
     });
-  }
-
-  private getLeafItems(item: MenuItem): MenuItem[] {
-    if (!item.children || item.children.length === 0) {
-      return [item];
-    }
-    return item.children.flatMap(child => this.getLeafItems(child));
   }
 
   private buildSettingsContent(container: Phaser.GameObjects.Container, x: number, y: number, width: number, height: number): void {
@@ -501,7 +494,7 @@ export class Game extends Phaser.Scene {
         .setTint(0xaaaacc);
       container.add(qtyText);
 
-      const itemCost = `${req.cost * req.quantity}Q`;
+      const itemCost = `Q${req.cost * req.quantity}`;
       const costText = this.add.bitmapText(rightEdge, detailY, 'clicker', itemCost, detailFontSize)
         .setOrigin(1, 0.5)
         .setTint(Colors.HIGHLIGHT_YELLOW);
@@ -529,7 +522,7 @@ export class Game extends Phaser.Scene {
       .setOrigin(0, 0.5);
     container.add(budgetLabel);
 
-    const budgetValue = this.add.bitmapText(rightEdge, budgetY + budgetLineHeight / 2, 'clicker', `${order.budget}Q`, fontSize + 1)
+    const budgetValue = this.add.bitmapText(rightEdge, budgetY + budgetLineHeight / 2, 'clicker', `Q${order.budget}`, fontSize + 1)
       .setOrigin(1, 0.5)
       .setTint(Colors.HIGHLIGHT_YELLOW_BRIGHT);
     container.add(budgetValue);

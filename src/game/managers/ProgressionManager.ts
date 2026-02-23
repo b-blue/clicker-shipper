@@ -77,11 +77,8 @@ export class ProgressionManager {
   }
 
   private deepCopyDefault(): ProgressionState {
-    return {
-      unlockedCategories: [{ categoryId: 'nav_resources_root', depth: 1 }],
-      quantaBank: 0,
-      shiftsCompleted: 0,
-    };
+    // JSON round-trip ensures a true deep copy (no shared references with DEFAULT_STATE)
+    return JSON.parse(JSON.stringify(DEFAULT_STATE)) as ProgressionState;
   }
 
   // ── Reads ──────────────────────────────────────────────────────────────────

@@ -89,8 +89,6 @@ export class Game extends Phaser.Scene {
       const tabX = panelX + panelWidth / 2 + tabGap + tabWidth / 2;
       const tabStartY = panelTop + tabHeight / 2 + 4;
       const tabKeys = ['ORDERS', 'SETTINGS', 'CATALOG'] as const;
-      let activeTab: typeof tabKeys[number] = 'ORDERS';
-
       // Content containers for each tab
       this.ordersContainer = this.add.container(0, 0);
       const settingsContainer = this.add.container(0, 0);
@@ -122,11 +120,10 @@ export class Game extends Phaser.Scene {
       catalogContainer.setVisible(false);
 
       const updateTabDisplay = (label: typeof tabKeys[number]) => {
-        activeTab = label;
         panelTitle.setText(label);
         statsContainer.setVisible(label === 'ORDERS');
         Object.keys(containers).forEach(key => {
-          containers[key as typeof activeTab].setVisible(key === label);
+          containers[key as typeof tabKeys[number]].setVisible(key === label);
         });
       };
       this.switchToOrdersTab = () => updateTabDisplay('ORDERS');

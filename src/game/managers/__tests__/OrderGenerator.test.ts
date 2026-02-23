@@ -1,5 +1,7 @@
 import { OrderGenerator } from '../OrderGenerator';
 import { Item, SubItem } from '../types/GameTypes';
+import { GameManager } from '../GameManager';
+import { ProgressionManager } from '../ProgressionManager';
 
 // Mock GameManager
 jest.mock('../GameManager', () => ({
@@ -192,13 +194,11 @@ describe('OrderGenerator — progression filtering', () => {
   function makeGenWith(
     unlocked: Array<{ categoryId: string; depth: number }>,
   ): OrderGenerator {
-    const { GameManager } = require('../GameManager');
-    GameManager.getInstance.mockReturnValue({
+    (GameManager.getInstance as jest.Mock).mockReturnValue({
       getItems: jest.fn(() => makeNavItems()),
     });
-    const { ProgressionManager } = require('../ProgressionManager');
     const depthMap = new Map(unlocked.map(c => [c.categoryId, c.depth]));
-    ProgressionManager.getInstance.mockReturnValue({
+    (ProgressionManager.getInstance as jest.Mock).mockReturnValue({
       getUnlockedCategories: jest.fn(() => unlocked),
       getUnlockedDepth: jest.fn((id: string) => depthMap.get(id) ?? 0),
     });

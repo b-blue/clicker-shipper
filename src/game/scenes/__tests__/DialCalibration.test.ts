@@ -1,5 +1,5 @@
 /** @jest-environment jsdom */
-import { Colors, toColorString } from '../../constants/Colors';
+import { Colors } from '../../constants/Colors';
 
 // Mock Phaser before any imports that use it
 jest.mock('phaser', () => ({

@@ -71,14 +71,14 @@ export class Game extends Phaser.Scene {
       const mainPanel = this.add.rectangle(panelX, panelY, panelWidth, panelHeight, Colors.PANEL_DARK, 0.85);
       mainPanel.setStrokeStyle(2, Colors.BORDER_BLUE, 0.8);
 
-      // Panel title
-      const titleY = panelTop + 16;
+      // Panel title — vertically centered in the header bar (panelTop → panelTop+42)
+      const titleY = panelTop + 21;
       const panelTitle = this.add.bitmapText(panelX, titleY, 'clicker', 'ORDERS', 14)
         .setOrigin(0.5);
 
-      // Shift timer arc (small clockwise-filling circle, right side of title bar)
+      // Shift timer arc — left side of the header bar, vertically centered with title
       const timerR = this.shiftTimerRadius;
-      const timerX = panelX + panelWidth / 2 - timerR - 8;
+      const timerX = panelX - panelWidth / 2 + timerR + 8;
       const timerY = titleY;
       this.shiftTimerX = timerX;
       this.shiftTimerY = timerY;

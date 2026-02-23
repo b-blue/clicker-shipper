@@ -45,6 +45,8 @@ export class RadialDial {
   private readonly minDragDistance: number = 20;
   private showDropCue: boolean = false;
   private pointerConsumed: boolean = false; // guard against duplicate pointerup (touch + synthesized mouse)
+  private lastTouchEndTime: number = 0;     // timestamp of last real touch-end, used to suppress synthesized mouse events
+  private readonly touchSynthesisWindow: number = 500; // ms within which mouse events after a touch are ignored
   private glowAngle: number = 0;
   private glowTimer: Phaser.Time.TimerEvent | null = null;
 
@@ -162,7 +164,15 @@ export class RadialDial {
     this.dragStartSliceIndex = -1;
     this.lastNonCenterSliceIndex = -1;
     this.showDropCue = false;
-    this.pointerConsumed = false; // new gesture starts — allow next pointerup to process
+
+    // Suppress synthesized mouse-down events the browser fires ~300ms after a real touch.
+    // Without this, the synthesized mousedown resets pointerConsumed and the subsequent
+    // mouseup fires a second action on the now-visible terminal dial.
+    if (!pointer.wasTouch && (Date.now() - this.lastTouchEndTime) < this.touchSynthesisWindow) {
+      return;
+    }
+
+    this.pointerConsumed = false; // genuine new gesture — allow next pointerup to process
 
     // Check if started on a slice
     if (distance < this.sliceRadius + 50 && distance > this.centerRadius + 5) {
@@ -185,6 +195,12 @@ export class RadialDial {
     // Ignore duplicate pointerup events from the same gesture (e.g. touch + synthesized mouse)
     if (this.pointerConsumed) return;
     this.pointerConsumed = true;
+
+    // Record when a real touch ends so handlePointerDown can suppress the
+    // synthesized mouse events the browser fires shortly after.
+    if (pointer.wasTouch) {
+      this.lastTouchEndTime = Date.now();
+    }
 
     const endX = pointer?.x ?? this.lastPointerX;
     const endY = pointer?.y ?? this.lastPointerY;

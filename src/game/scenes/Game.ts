@@ -44,8 +44,15 @@ export class Game extends Phaser.Scene {
       // Background
       this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, Colors.BACKGROUND_DARK);
 
+      // Tab dimensions — computed first so panel width can account for them
+      const tabWidth = 52;
+      const tabHeight = 40;
+      const tabSpacing = 6;
+      const tabGap = 8; // gap between panel right edge and tabs
+
       // Central display panel (tall, from top to above dial)
-      const panelWidth = Math.min(420, gameWidth - 40);
+      // Reserve space for tabs so they're never clipped on narrow screens
+      const panelWidth = Math.min(420, gameWidth - tabWidth - tabGap - 20);
       const panelTop = 20;
       const panelBottom = dialY - dialRadius - 20;
       const panelHeight = panelBottom - panelTop;
@@ -61,24 +68,23 @@ export class Game extends Phaser.Scene {
         .setOrigin(0.5);
 
       // Stats bar — persistent revenue & bonus tallies across orders
+      const statsContainer = this.add.container(0, 0);
       const statsBarDivTop = this.add.graphics();
       statsBarDivTop.lineStyle(1, Colors.BORDER_BLUE, 0.45);
       statsBarDivTop.lineBetween(panelX - panelWidth / 2 + 8, panelTop + 42, panelX + panelWidth / 2 - 8, panelTop + 42);
       const statsY = panelTop + 54;
       const statsLeft = panelX - panelWidth / 2 + 14;
-      this.add.bitmapText(statsLeft, statsY, 'clicker', 'REV', 12).setOrigin(0, 0.5).setTint(0xaaaacc);
+      const revLabel = this.add.bitmapText(statsLeft, statsY, 'clicker', 'REV', 12).setOrigin(0, 0.5).setTint(0xaaaacc);
       this.revenueText = this.add.bitmapText(statsLeft + 38, statsY, 'clicker', 'Q0', 12).setOrigin(0, 0.5).setTint(Colors.HIGHLIGHT_YELLOW_BRIGHT);
-      this.add.bitmapText(panelX + 4, statsY, 'clicker', 'BONUS', 12).setOrigin(0, 0.5).setTint(0xaaaacc);
+      const bonusLabel = this.add.bitmapText(panelX + 4, statsY, 'clicker', 'BONUS', 12).setOrigin(0, 0.5).setTint(0xaaaacc);
       this.bonusText = this.add.bitmapText(panelX + 68, statsY, 'clicker', 'Q0', 12).setOrigin(0, 0.5).setTint(Colors.HIGHLIGHT_YELLOW);
       const statsBarDivBot = this.add.graphics();
       statsBarDivBot.lineStyle(1, Colors.BORDER_BLUE, 0.45);
       statsBarDivBot.lineBetween(panelX - panelWidth / 2 + 8, panelTop + 66, panelX + panelWidth / 2 - 8, panelTop + 66);
+      statsContainer.add([statsBarDivTop, revLabel, this.revenueText, bonusLabel, this.bonusText, statsBarDivBot]);
 
       // Tabbed panel controls (right-hand vertical tabs)
-      const tabWidth = 42;
-      const tabHeight = 32;
-      const tabSpacing = 6;
-      const tabX = panelX + panelWidth / 2 + tabWidth / 2 + 6;
+      const tabX = panelX + panelWidth / 2 + tabGap + tabWidth / 2;
       const tabStartY = panelTop + tabHeight / 2 + 4;
       const tabKeys = ['ORDERS', 'SETTINGS', 'CATALOG'] as const;
       let activeTab: typeof tabKeys[number] = 'ORDERS';
@@ -116,6 +122,7 @@ export class Game extends Phaser.Scene {
       const updateTabDisplay = (label: typeof tabKeys[number]) => {
         activeTab = label;
         panelTitle.setText(label);
+        statsContainer.setVisible(label === 'ORDERS');
         Object.keys(containers).forEach(key => {
           containers[key as typeof activeTab].setVisible(key === label);
         });
@@ -130,7 +137,7 @@ export class Game extends Phaser.Scene {
         tabBg.on('pointerover', () => tabBg.setFillStyle(Colors.BUTTON_HOVER, 0.95));
         tabBg.on('pointerout', () => tabBg.setFillStyle(Colors.PANEL_DARK, 0.9));
 
-        const tabIcon = this.add.bitmapText(tabX, tabY, 'clicker', label[0], 14)
+        const tabIcon = this.add.bitmapText(tabX, tabY, 'clicker', label[0], 16)
           .setOrigin(0.5);
         tabIcon.setTint(Colors.HIGHLIGHT_YELLOW);
       });

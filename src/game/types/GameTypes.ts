@@ -58,7 +58,9 @@ export interface GameConfig {
 export interface OrderRequirement {
   itemId: string;
   itemName: string;
+  iconKey: string;
   quantity: number;
+  cost: number;
 }
 
 export interface Order {

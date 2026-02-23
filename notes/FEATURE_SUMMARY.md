@@ -217,6 +217,35 @@ GameManager.getInstance() (loads data)
 
 ---
 
+## Orders System Planning (Draft)
+
+### Big Picture
+- The player starts with only the top dial and a single level below it visible.
+- As lifetime orders are fulfilled, additional nested dial levels unlock.
+- Progression tracks lifetime orders fulfilled, not orders within a shift.
+
+### Order Generation Rules
+1. Identify all currently visible shippable items (including cost).
+2. Randomly select a subset of those items to form the order.
+3. Assign a budget equal to the sum of selected item costs.
+4. Display the order as a list of item names and quantities.
+
+### Order Display (Center HUD)
+- The order list appears above the topmost point of the dial, centered.
+- Each line uses the format: Item Name, xQuantity.
+- Example:
+  - Altairian Repeater Mk IV, x1
+  - Magnetic Coupling, x2
+  - Stella Polaris Digital SSD 256GB, x4
+
+### Open Questions
+- Minimum and maximum number of items per order.
+- Quantity distribution rules (uniform vs weighted by cost).
+- Unlock pacing: orders required per dial level.
+- Budget padding or modifiers beyond simple sum.
+
+---
+
 ## Performance Considerations
 
 ### Memory Efficiency

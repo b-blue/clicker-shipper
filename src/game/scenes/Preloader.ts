@@ -37,6 +37,14 @@ export class Preloader extends Phaser.Scene {
       // Load center default icons
       this.load.image('skill-up', 'assets/nav-items/skill-up.png');
       this.load.image('skill-diagram', 'assets/nav-items/skill-diagram.png');
+      this.load.image('skill-blocked', 'assets/nav-items/skill-blocked.png');
+      // Load terminal action icons
+      this.load.image('skill-send', 'assets/nav-items/skill-send.png');
+      this.load.image('skill-break', 'assets/nav-items/skill-break.png');
+      this.load.image('skill-nodes', 'assets/nav-items/skill-nodes.png');
+      
+      // Load bullet point icon
+      this.load.image('hash-sign', 'assets/punctuation/hash-sign.png');
       
       // Load item sprite assets
       AssetLoader.preloadItemAssets(this, items);

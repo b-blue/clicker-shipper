@@ -42,13 +42,14 @@ export class ItemManual extends Phaser.Scene {
       .setOrigin(0.5);
 
     // List layout
+    const isMobile = gameWidth <= 600;
     const listLeft = panelX - panelWidth / 2 + 30;
     const listTop = gameHeight * 0.14;
-    const rowHeight = 70;
+    const rowHeight = isMobile ? 60 : 70;
     const rowWidth = panelWidth - 60;
     const iconFrameSize = 54;
-    const iconScale = 1.5;
-    const indent = 24;
+    const iconScale = isMobile ? 1.3 : 1.5;
+    const indent = isMobile ? 18 : 24;
     const listBottom = panelY + panelHeight / 2 - 30;
     const listViewHeight = Math.max(140, listBottom - listTop);
 
@@ -93,18 +94,43 @@ export class ItemManual extends Phaser.Scene {
 
       if (row.isChild) {
         const cost = row.item.cost ?? 0;
-        const childText = `| ${cost}Q | ${row.item.name.toUpperCase()}`;
-        const childLabel = this.add.bitmapText(iconX + iconFrameSize / 2 + 20, rowY, 'clicker', childText, 12)
-          .setOrigin(0, 0.5)
-          .setMaxWidth(rowWidth - iconFrameSize - 80);
-        listContainer.add(childLabel);
+        const nameText = row.item.name.toUpperCase();
+        const nameX = iconX + iconFrameSize / 2 + 20;
+        const maxNameWidth = rowWidth - iconFrameSize - (isMobile ? 110 : 80);
+
+        if (isMobile) {
+          const childName = this.add.bitmapText(nameX, rowY, 'clicker', nameText, 12)
+            .setOrigin(0, 0.5)
+            .setMaxWidth(maxNameWidth);
+          const childCost = this.add.bitmapText(rowWidth - 12, rowY, 'clicker', `${cost}Q`, 12)
+            .setOrigin(1, 0.5);
+          listContainer.add([childName, childCost]);
+        } else {
+          const childText = `| ${cost}Q | ${nameText}`;
+          const childLabel = this.add.bitmapText(nameX, rowY, 'clicker', childText, 12)
+            .setOrigin(0, 0.5)
+            .setMaxWidth(rowWidth - iconFrameSize - 80);
+          listContainer.add(childLabel);
+        }
       } else {
         const description = row.item.description || 'NO DESCRIPTION AVAILABLE';
-        const title = this.add.bitmapText(iconX + iconFrameSize / 2 + 20, rowY - 12, 'clicker', row.item.name.toUpperCase(), 14)
+        const maxDescLength = isMobile ? 28 : 42;
+        const shortDescription = description.split('. ')[0].slice(0, maxDescLength).trim();
+        const displayDescription = shortDescription.length > maxDescLength - 2
+          ? `${shortDescription.slice(0, maxDescLength - 2)}...`
+          : shortDescription;
+        const titleSize = isMobile ? 12 : 14;
+        const descSize = isMobile ? 10 : 12;
+        const titleOffset = isMobile ? 10 : 12;
+        const descOffset = isMobile ? 10 : 12;
+        const textX = iconX + iconFrameSize / 2 + 20;
+        const maxTextWidth = rowWidth - iconFrameSize - (isMobile ? 90 : 80);
+
+        const title = this.add.bitmapText(textX, rowY - titleOffset, 'clicker', row.item.name.toUpperCase(), titleSize)
           .setOrigin(0, 0.5);
-        const desc = this.add.bitmapText(iconX + iconFrameSize / 2 + 20, rowY + 12, 'clicker', description.toUpperCase(), 12)
+        const desc = this.add.bitmapText(textX, rowY + descOffset, 'clicker', displayDescription.toUpperCase(), descSize)
           .setOrigin(0, 0.5)
-          .setMaxWidth(rowWidth - iconFrameSize - 80);
+          .setMaxWidth(maxTextWidth);
         listContainer.add([title, desc]);
       }
     });

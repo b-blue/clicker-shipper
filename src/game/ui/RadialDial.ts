@@ -18,14 +18,23 @@ export class RadialDial {
   private dialX: number;
   private dialY: number;
   private sliceGraphics: Phaser.GameObjects.Graphics[] = [];
-  private sliceTexts: Phaser.GameObjects.Text[] = [];
+  private sliceTexts: Phaser.GameObjects.BitmapText[] = [];
   private sliceImages: Phaser.GameObjects.Image[] = [];
   private sliceGlows: Phaser.GameObjects.Graphics[] = [];
   private dialFrameGraphic: Phaser.GameObjects.Graphics;
   private centerGraphic: Phaser.GameObjects.Graphics;
   private centerImage: Phaser.GameObjects.Image;
   private inputZone: Phaser.GameObjects.Zone;
-  
+  private allowDeepNavigation: boolean = false;
+  private readonly lockedNavItemIdPrefix: string = 'locked_';
+  private terminalItem: MenuItem | null = null;
+  private readonly ACTION_ITEMS: MenuItem[] = [
+    { id: 'action:send',    name: 'SEND',    icon: 'skill-send'    },
+    { id: 'action:break',   name: 'BREAK',   icon: 'skill-break'   },
+    { id: 'action:combine', name: 'COMBINE', icon: 'skill-nodes'   },
+    { id: 'action:recall',  name: 'RECALL',  icon: 'skill-blocked' },
+  ];
+
   // Drag-to-confirm properties
   private dragStartSliceIndex: number = -1; // Index of slice where drag started
   private dragStartX: number = 0;
@@ -191,11 +200,28 @@ export class RadialDial {
         ? this.lastNonCenterSliceIndex 
         : this.dragStartSliceIndex;
       
-      const displayItems = this.navigationController.getCurrentItems();
+      const displayItems = this.getDisplayItems();
       
       if (confirmedSliceIndex < displayItems.length) {
         const confirmedItem = displayItems[confirmedSliceIndex];
-        
+
+        // Terminal dial: an action (send/break/combine) is being confirmed
+        if (this.terminalItem) {
+          const action = confirmedItem.id.replace('action:', '');
+          const targetItem = this.terminalItem;
+          this.terminalItem = null;
+          this.scene.events.emit('dial:actionConfirmed', { action, item: targetItem });
+          this.reset(); // Returns dial to level A
+          return;
+        }
+
+        if (this.isLockedNavItem(confirmedItem)) {
+          this.selectedItem = null;
+          this.highlightedSliceIndex = -1;
+          this.redrawDial();
+          return;
+        }
+
         if (this.navigationController.isNavigable(confirmedItem)) {
           // Drill down to children
           this.navigationController.drillDown(confirmedItem);
@@ -239,8 +265,46 @@ export class RadialDial {
     this.lastNonCenterSliceIndex = -1;
   }
 
+  private shouldLockNavItem(item: MenuItem): boolean {
+    if (this.allowDeepNavigation || this.navigationController.getDepth() < 1) {
+      return false;
+    }
+    if (!item.children || item.children.length === 0) {
+      return false;
+    }
+    return item.icon === 'skill-down' || item.id.includes('_down_');
+  }
+
+  private createLockedNavItem(item: MenuItem): MenuItem {
+    return {
+      id: `${this.lockedNavItemIdPrefix}${item.id}`,
+      name: 'LOCKED',
+      icon: 'skill-blocked',
+      layers: [
+        { texture: 'skill-blocked', depth: 3 },
+        { texture: 'frame', depth: 2 }
+      ]
+    };
+  }
+
+  private isLockedNavItem(item: MenuItem): boolean {
+    return item.id.startsWith(this.lockedNavItemIdPrefix);
+  }
+
+  private getDisplayItems(): MenuItem[] {
+    if (this.terminalItem) {
+      return this.ACTION_ITEMS;
+    }
+    const items = this.navigationController.getCurrentItems();
+    if (this.allowDeepNavigation || this.navigationController.getDepth() < 1) {
+      return items;
+    }
+
+    return items.map(item => this.shouldLockNavItem(item) ? this.createLockedNavItem(item) : item);
+  }
+
   private updateSelectedItem(): void {
-    const displayItems = this.navigationController.getCurrentItems();
+    const displayItems = this.getDisplayItems();
     
     if (this.highlightedSliceIndex >= 0 && this.highlightedSliceIndex < displayItems.length) {
       this.selectedItem = displayItems[this.highlightedSliceIndex];
@@ -260,7 +324,7 @@ export class RadialDial {
 
     this.dialFrameGraphic.clear();
 
-    const displayItems = this.navigationController.getCurrentItems();
+    const displayItems = this.getDisplayItems();
     const sliceAngle = (Math.PI * 2) / this.sliceCount;
 
     // Draw glassy HUD frame
@@ -314,9 +378,10 @@ export class RadialDial {
       this.centerGraphic.strokeCircle(this.dialX, this.dialY, this.centerRadius + 6);
     }
 
-    // Update center display with selected item
-    if (this.selectedItem) {
-      const item = this.selectedItem as any;
+    // Update center display — terminal item takes priority over selected item
+    const centerDisplayItem = this.terminalItem ?? this.selectedItem;
+    if (centerDisplayItem) {
+      const item = centerDisplayItem as any;
       const textureKey = item.icon || item.id;
       if (this.scene.textures.exists(textureKey)) {
         this.centerImage.setTexture(textureKey);
@@ -508,8 +573,22 @@ export class RadialDial {
     this.redrawDial();
   }
 
+  public setDeepNavigationEnabled(enabled: boolean): void {
+    this.allowDeepNavigation = enabled;
+    this.updateSliceCount();
+    this.redrawDial();
+  }
+
+  public showTerminalDial(item: MenuItem): void {
+    this.terminalItem = item;
+    this.highlightedSliceIndex = -1;
+    this.selectedItem = null;
+    this.updateSliceCount();
+    this.redrawDial();
+  }
+
   private updateSliceCount(): void {
-    const displayItems = this.navigationController.getCurrentItems();
+    const displayItems = this.getDisplayItems();
     const itemCount = displayItems.length;
     
     this.sliceCount = Math.max(this.minSlices, Math.min(this.maxSlices, itemCount));

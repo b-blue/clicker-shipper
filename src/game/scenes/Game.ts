@@ -11,7 +11,7 @@ export class Game extends Phaser.Scene {
   private ordersContainer: Phaser.GameObjects.Container | null = null;
   private fulfillmentSlots: Array<{ x: number; y: number; size: number; slotBg: Phaser.GameObjects.Graphics; expectedIconKey: string }> = [];
   private fulfillmentImages: Array<{ img: Phaser.GameObjects.Image | null; iconKey: string } | null> = [];
-  private fulfillmentOrderIconKeys: Set<string> = new Set();
+  private fulfillmentOrderIconCounts: Map<string, number> = new Map();
   private shiftRevenue: number = 0;
   private shiftBonus: number = 0;
   private currentOrder: Order | null = null;
@@ -111,7 +111,10 @@ export class Game extends Phaser.Scene {
       this.currentOrder = currentOrder;
       this.fulfillmentSlots = this.buildOrderContent(this.ordersContainer, panelX, panelTop + 62, panelWidth - 20, panelHeight - 76, currentOrder);
       this.fulfillmentImages = new Array(this.fulfillmentSlots.length).fill(null);
-      this.fulfillmentOrderIconKeys = new Set(currentOrder.requirements.map(r => r.iconKey));
+      this.fulfillmentOrderIconCounts = new Map<string, number>();
+      currentOrder.requirements.forEach(r => {
+        this.fulfillmentOrderIconCounts.set(r.iconKey, (this.fulfillmentOrderIconCounts.get(r.iconKey) ?? 0) + r.quantity);
+      });
 
       // Settings tab: button to launch DialCalibration scene
       this.buildSettingsContent(settingsContainer, panelX, panelWidth);
@@ -207,7 +210,9 @@ export class Game extends Phaser.Scene {
             this.fulfillmentImages[slotIndex] = { img, iconKey };
             // Color the slot bg: green = correct position, yellow = wrong position but in order
             const isCorrect = slot.expectedIconKey === iconKey;
-            const isPresent = this.fulfillmentOrderIconKeys.has(iconKey);
+            // Count how many of this icon were already placed before this slot
+            const alreadySent = this.fulfillmentImages.filter((e, i) => i !== slotIndex && e?.iconKey === iconKey).length;
+            const isPresent = alreadySent < (this.fulfillmentOrderIconCounts.get(iconKey) ?? 0);
             const bgFill   = isCorrect ? 0x003a1a : isPresent ? 0x3a3000 : 0x3a0008;
             const bgStroke = isCorrect ? 0x00e84a : isPresent ? 0xffd700 : 0xff2244;
             slot.slotBg.clear();
@@ -538,9 +543,16 @@ export class Game extends Phaser.Scene {
   private checkOrderComplete(): void {
     // All slots must be filled
     if (this.fulfillmentImages.some(s => s === null)) return;
-    // No slot may contain an item that doesn't belong in the order (no red slots)
+    // Tally what was actually sent
+    const sentCounts = new Map<string, number>();
     for (const entry of this.fulfillmentImages) {
-      if (!entry || !this.fulfillmentOrderIconKeys.has(entry.iconKey)) return;
+      if (!entry) return;
+      sentCounts.set(entry.iconKey, (sentCounts.get(entry.iconKey) ?? 0) + 1);
+    }
+    // Sent counts must exactly match required counts — right items, right quantities
+    if (sentCounts.size !== this.fulfillmentOrderIconCounts.size) return;
+    for (const [iconKey, count] of this.fulfillmentOrderIconCounts) {
+      if (sentCounts.get(iconKey) !== count) return;
     }
     // Switch to ORDERS tab if the player was on a different tab
     this.switchToOrdersTab?.();
@@ -616,7 +628,7 @@ export class Game extends Phaser.Scene {
     }
     this.fulfillmentImages = [];
     this.fulfillmentSlots = [];
-    this.fulfillmentOrderIconKeys.clear();
+    this.fulfillmentOrderIconCounts = new Map<string, number>();
     if (this.radialDial) this.radialDial.reset();
     const nextOrder = buildOrder(items);
     this.currentOrder = nextOrder;
@@ -631,7 +643,9 @@ export class Game extends Phaser.Scene {
       nextOrder
     );
     this.fulfillmentImages = new Array(this.fulfillmentSlots.length).fill(null);
-    this.fulfillmentOrderIconKeys = new Set(nextOrder.requirements.map(r => r.iconKey));
+    nextOrder.requirements.forEach(r => {
+      this.fulfillmentOrderIconCounts.set(r.iconKey, (this.fulfillmentOrderIconCounts.get(r.iconKey) ?? 0) + r.quantity);
+    });
   }
 
   endShift() {

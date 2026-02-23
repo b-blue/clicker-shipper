@@ -151,15 +151,6 @@ export class RadialDial {
       return;
     }
 
-    // Block any new gesture that starts within the action debounce window.
-    // This catches the scenario where pointer events arrive in an unexpected order
-    // (e.g. synthesized-mouse fires first, action fires, then the real touch pointerdown
-    // arrives and resets pointerConsumed — which would let the following touch pointerup
-    // fire a second action).
-    if (Date.now() - this.lastActionTime < this.actionDebounceWindow) {
-      return;
-    }
-
     this.pointerConsumed = false; // genuine new gesture — allow next pointerup to process
 
     // Check if started on a slice

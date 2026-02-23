@@ -1,5 +1,17 @@
 import { Colors, toColorString } from '../constants/Colors';
 
+// Approximate character width ratio for the clicker bitmap font (uppercase only)
+const FONT_CHAR_RATIO = 0.6;
+
+/**
+ * Returns the largest integer font size that keeps `text` within `availableWidth` pixels,
+ * capped at `maxSize`. Minimum returned value is 8.
+ */
+export function fitFontSize(text: string, availableWidth: number, maxSize: number): number {
+  const maxByWidth = Math.floor(availableWidth / (text.length * FONT_CHAR_RATIO));
+  return Math.min(maxSize, Math.max(8, maxByWidth));
+}
+
 export class MainMenu extends Phaser.Scene {
   constructor() {
     super('MainMenu');
@@ -13,16 +25,21 @@ export class MainMenu extends Phaser.Scene {
     // Background
     this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, Colors.BACKGROUND_DARK);
 
+    const margin = 20;
+    const availableWidth = gameWidth - margin;
+
     // Title with background
-    const titleFontSize = Math.min(32, Math.floor(gameWidth / 14));
-    this.add.rectangle(gameWidth / 2, gameHeight * 0.15, Math.min(700, gameWidth - 20), 50, Colors.PANEL_MEDIUM, 0.9);
-    this.add.bitmapText(gameWidth / 2, gameHeight * 0.15, 'clicker', 'INTERGALACTIC SHIPPER', titleFontSize)
+    const titleText = 'INTERGALACTIC SHIPPER';
+    const titleFontSize = fitFontSize(titleText, availableWidth, 32);
+    this.add.rectangle(gameWidth / 2, gameHeight * 0.15, Math.min(700, gameWidth - margin), 50, Colors.PANEL_MEDIUM, 0.9);
+    this.add.bitmapText(gameWidth / 2, gameHeight * 0.15, 'clicker', titleText, titleFontSize)
       .setOrigin(0.5);
 
     // Subtitle with background
-    const subtitleFontSize = Math.min(16, Math.floor(gameWidth / 24));
-    this.add.rectangle(gameWidth / 2, gameHeight * 0.25, Math.min(500, gameWidth - 20), 30, Colors.PANEL_MEDIUM, 0.85);
-    this.add.bitmapText(gameWidth / 2, gameHeight * 0.25, 'clicker', 'ORDER FULFILLMENT TERMINAL', subtitleFontSize)
+    const subtitleText = 'ORDER FULFILLMENT TERMINAL';
+    const subtitleFontSize = fitFontSize(subtitleText, availableWidth, 16);
+    this.add.rectangle(gameWidth / 2, gameHeight * 0.25, Math.min(500, gameWidth - margin), 30, Colors.PANEL_MEDIUM, 0.85);
+    this.add.bitmapText(gameWidth / 2, gameHeight * 0.25, 'clicker', subtitleText, subtitleFontSize)
       .setOrigin(0.5);
 
     // Menu buttons
@@ -42,8 +59,10 @@ export class MainMenu extends Phaser.Scene {
     this.createButton(gameWidth / 2, buttonY + buttonSpacing * 3, 'EXIT', () => this.exitGame());
 
     // Footer with background
-    this.add.rectangle(gameWidth / 2, gameHeight * 0.9, Math.min(400, gameWidth - 20), 24, Colors.PANEL_MEDIUM, 0.85);
-    this.add.bitmapText(gameWidth / 2, gameHeight * 0.9, 'clicker', 'PRESS SPACE TO START SHIFT', 12)
+    const footerText = 'PRESS SPACE TO START SHIFT';
+    const footerFontSize = fitFontSize(footerText, availableWidth, 12);
+    this.add.rectangle(gameWidth / 2, gameHeight * 0.9, Math.min(400, gameWidth - margin), 24, Colors.PANEL_MEDIUM, 0.85);
+    this.add.bitmapText(gameWidth / 2, gameHeight * 0.9, 'clicker', footerText, footerFontSize)
       .setOrigin(0.5);
 
     // Keyboard shortcuts

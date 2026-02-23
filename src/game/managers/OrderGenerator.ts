@@ -1,4 +1,5 @@
 import { GameManager } from './GameManager';
+import { ProgressionManager } from './ProgressionManager';
 
 export interface OrderRequirement {
   itemId: string;
@@ -92,40 +93,67 @@ export class OrderGenerator {
 
   private getAllSubItems(): Array<{ id: string; name: string; cost: number }> {
     const items = this.gameManager.getItems();
+    const progression = ProgressionManager.getInstance();
+    const unlockedCategoryIds = new Set(progression.getUnlockedCategories().map(c => c.categoryId));
     const allLeafItems: Array<{ id: string; name: string; cost: number }> = [];
 
-    // Handle both legacy Item[] and hierarchical MenuItem[] formats
-    const collectLeafItems = (items: any[]) => {
-      items.forEach(item => {
-        // Check if this is a legacy Item with subItems
+    /**
+     * Parses a nav_*_down_* item ID and returns { categoryId, levelN } or null.
+     * e.g. "nav_resources_down_1" → { categoryId: "nav_resources_root", levelN: 1 }
+     */
+    const parseNavDownId = (id: string): { categoryId: string; levelN: number } | null => {
+      const match = id.match(/^nav_(.+)_down_(\d+)$/);
+      if (!match) return null;
+      return { categoryId: `nav_${match[1]}_root`, levelN: parseInt(match[2], 10) };
+    };
+
+    const collectLeafItems = (nodes: any[], currentCategoryId: string | null) => {
+      nodes.forEach(item => {
+        // Legacy Item format with subItems
         if ('subItems' in item && item.subItems) {
-          item.subItems.forEach((subItem: any) => {
-            if (subItem.cost !== undefined) {
-              allLeafItems.push({
-                id: subItem.id,
-                name: subItem.name,
-                cost: subItem.cost
-              });
+          if (!currentCategoryId || unlockedCategoryIds.has(item.id)) {
+            item.subItems.forEach((subItem: any) => {
+              if (subItem.cost !== undefined) {
+                allLeafItems.push({ id: subItem.id, name: subItem.name, cost: subItem.cost });
+              }
+            });
+          }
+          return;
+        }
+
+        if ('children' in item && item.children && item.children.length > 0) {
+          // Root-level category nodes — only recurse if unlocked
+          if (currentCategoryId === null) {
+            if (unlockedCategoryIds.has(item.id)) {
+              collectLeafItems(item.children, item.id);
             }
-          });
+            return;
+          }
+
+          // Sub-level nav_*_down_* nodes — check depth gate
+          const parsed = parseNavDownId(item.id);
+          if (parsed) {
+            const unlockedDepth = progression.getUnlockedDepth(parsed.categoryId);
+            // Allow recursing into nav_down_N only if N < unlockedDepth
+            if (parsed.levelN < unlockedDepth) {
+              collectLeafItems(item.children, currentCategoryId);
+            }
+            return;
+          }
+
+          // Any other navigable node — recurse normally
+          collectLeafItems(item.children, currentCategoryId);
+          return;
         }
-        // Check if this is a MenuItem with children
-        else if ('children' in item && item.children && item.children.length > 0) {
-          // Recursively collect from children
-          collectLeafItems(item.children);
-        }
-        // This is a leaf item (has cost, no children)
-        else if (item.cost !== undefined) {
-          allLeafItems.push({
-            id: item.id,
-            name: item.name,
-            cost: item.cost
-          });
+
+        // Leaf item (has cost, no children)
+        if (item.cost !== undefined) {
+          allLeafItems.push({ id: item.id, name: item.name, cost: item.cost });
         }
       });
     };
 
-    collectLeafItems(items);
+    collectLeafItems(items, null);
     return allLeafItems;
   }
 }

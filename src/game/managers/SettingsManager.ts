@@ -82,18 +82,31 @@ export class SettingsManager {
     if (this.settings) {
       this.settings.dial.offsetX = offsetX;
       this.settings.dial.offsetY = offsetY;
+      this.save();
     }
   }
 
   updateDialOutline(showOutline: boolean): void {
     if (this.settings) {
       this.settings.dial.showOutline = showOutline;
+      this.save();
     }
   }
 
   updateDialRadius(radius: number): void {
     if (this.settings) {
       this.settings.dial.radius = radius;
+      this.save();
+    }
+  }
+
+  save(): void {
+    if (this.settings) {
+      try {
+        localStorage.setItem('clicker-shipper-settings', JSON.stringify(this.settings));
+      } catch (e) {
+        console.warn('SettingsManager: failed to save to localStorage', e);
+      }
     }
   }
 }

@@ -68,3 +68,15 @@ export interface Order {
   budget: number;
   requirements: OrderRequirement[];
 }
+
+// Progression system
+export interface UnlockedCategory {
+  categoryId: string;
+  depth: number; // 1 = B-level items only, 2 = includes nav_down_1 subtree, etc.
+}
+
+export interface ProgressionState {
+  unlockedCategories: UnlockedCategory[]; // index 0 always nav_resources_root; append order = dial slot order
+  quantaBank: number;                     // persistent cross-shift spendable currency
+  shiftsCompleted: number;
+}

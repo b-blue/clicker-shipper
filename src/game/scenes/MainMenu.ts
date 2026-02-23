@@ -41,11 +41,14 @@ export class MainMenu extends Phaser.Scene {
     // Catalog button
     this.createButton(gameWidth / 2, buttonY + buttonSpacing, 'ITEM CATALOG', () => this.openManual());
 
+    // Upgrades button
+    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 2, 'UPGRADES', () => this.openUpgrades());
+
     // Settings button
-    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 2, 'CALIBRATE DIAL', () => this.openSettings());
+    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 3, 'CALIBRATE DIAL', () => this.openSettings());
 
     // Exit button
-    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 3, 'EXIT', () => this.exitGame());
+    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 4, 'EXIT', () => this.exitGame());
 
     // Footer with background
     const footerText = 'PRESS SPACE TO START SHIFT';
@@ -93,6 +96,11 @@ export class MainMenu extends Phaser.Scene {
   openManual() {
     // Launch ItemManual scene as overlay
     this.scene.launch('ItemManual');
+  }
+
+  openUpgrades() {
+    // Open upgrades screen (no shift data — just browsing/spending quanta)
+    this.scene.start('GameOver', { revenue: 0, bonus: 0 });
   }
 
   openSettings() {

@@ -1,6 +1,19 @@
 import { getShippableItems, generateOrder, getRandomQuantity, getCatalogRows } from '../OrderUtils';
 import { MenuItem } from '../../types/GameTypes';
 
+// Mock ProgressionManager so OrderUtils can import it without touching real localStorage.
+// Default: returns isUnlocked=false, getUnlockedDepth=1 for everything.
+// Existing tests are unaffected because they use `cat_*` IDs which bypass
+// progression filtering entirely in getCatalogRows (nav_*_root check).
+jest.mock('../../managers/ProgressionManager', () => ({
+  ProgressionManager: {
+    getInstance: jest.fn(() => ({
+      isUnlocked: jest.fn((_id: string) => false),
+      getUnlockedDepth: jest.fn((_id: string) => 1),
+    })),
+  },
+}));
+
 // ─── Test fixtures ────────────────────────────────────────────────────────────
 
 /** Minimal A-level root with two plain B-level shippable items. */
@@ -400,5 +413,184 @@ describe('getCatalogRows', () => {
       const rootOnly: MenuItem[] = [{ id: 'lone', name: 'Lone', icon: 'icon', children: [] }];
       expect(getCatalogRows(rootOnly)).toEqual([]);
     });
+  });
+});
+
+// ── getCatalogRows — counter-clockwise ordering ─────────────────────────────────────
+// These use `cat_*` IDs to bypass progression filtering, keeping the tests
+// focused purely on dial ordering.
+
+describe('getCatalogRows — counter-clockwise ordering', () => {
+  /** 5 items in clockwise array order: a=pos1, b=pos3, c=pos4, d=pos5, e=pos6 */
+  function make5ItemTree(): MenuItem[] {
+    return [{
+      id: 'cat_dial',
+      name: 'Dial',
+      icon: 'icon',
+      children: [
+        { id: 'a', name: 'A', icon: 'a', cost: 10 },
+        { id: 'b', name: 'B', icon: 'b', cost: 20 },
+        { id: 'c', name: 'C', icon: 'c', cost: 30 },
+        { id: 'd', name: 'D', icon: 'd', cost: 40 },
+        { id: 'e', name: 'E', icon: 'e', cost: 50 },
+      ],
+    }];
+  }
+
+  it('first item stays in first position', () => {
+    const rows = getCatalogRows(make5ItemTree());
+    expect(rows[0].items[0].id).toBe('a');
+  });
+
+  it('reverses items 2–5 so the catalog reads counter-clockwise', () => {
+    const rows = getCatalogRows(make5ItemTree());
+    // CCW from pos1: a, e, d, c, b
+    expect(rows[0].items.map(i => i.id)).toEqual(['a', 'e', 'd', 'c', 'b']);
+  });
+
+  it('a single-item page is returned as-is', () => {
+    const tree: MenuItem[] = [{
+      id: 'cat_single',
+      name: 'Single',
+      icon: 'icon',
+      children: [{ id: 'only', name: 'Only', icon: 'only', cost: 5 }],
+    }];
+    const rows = getCatalogRows(tree);
+    expect(rows[0].items.map(i => i.id)).toEqual(['only']);
+  });
+
+  it('a two-item page is returned as-is (CCW of 2 = same order)', () => {
+    const rows = getCatalogRows([{
+      id: 'cat_two',
+      name: 'Two',
+      icon: 'icon',
+      children: [
+        { id: 'first', name: 'First', icon: 'f', cost: 1 },
+        { id: 'second', name: 'Second', icon: 's', cost: 2 },
+      ],
+    }]);
+    expect(rows[0].items.map(i => i.id)).toEqual(['first', 'second']);
+  });
+
+  it('nav-down items are not themselves included in CCW output', () => {
+    const tree: MenuItem[] = [{
+      id: 'cat_mixed',
+      name: 'Mixed',
+      icon: 'icon',
+      children: [
+        { id: 'item_1',             name: 'I1',   icon: 'i1', cost: 10 },
+        { id: 'nav_mixed_down_1',   name: 'More', icon: 'skill-down', children: [] },
+        { id: 'item_2',             name: 'I2',   icon: 'i2', cost: 20 },
+        { id: 'item_3',             name: 'I3',   icon: 'i3', cost: 30 },
+      ],
+    }];
+    const rows = getCatalogRows(tree);
+    const ids = rows[0].items.map(i => i.id);
+    expect(ids).not.toContain('nav_mixed_down_1');
+    // CCW of [item_1, item_2, item_3]: [item_1, item_3, item_2]
+    expect(ids).toEqual(['item_1', 'item_3', 'item_2']);
+  });
+});
+
+// ── getCatalogRows — progression filtering ──────────────────────────────────────
+// These use `nav_*_root` IDs to exercise the actual progression gate.
+// The ProgressionManager is mocked per-test via jest.requireMock.
+
+describe('getCatalogRows — progression filtering', () => {
+  const { ProgressionManager } = jest.requireMock('../../managers/ProgressionManager') as {
+    ProgressionManager: { getInstance: jest.Mock };
+  };
+
+  /** A tree with two progression-managed categories. */
+  function makeNavTree(): MenuItem[] {
+    return [
+      {
+        id: 'nav_alpha_root',
+        name: 'Alpha',
+        icon: 'alpha',
+        children: [
+          { id: 'item_a1', name: 'A1', icon: 'a1', cost: 10 },
+          { id: 'item_a2', name: 'A2', icon: 'a2', cost: 20 },
+          {
+            id: 'nav_alpha_down_1',
+            name: 'Alpha Deep',
+            icon: 'skill-down',
+            children: [
+              { id: 'item_a3', name: 'A3', icon: 'a3', cost: 30 },
+              { id: 'item_a4', name: 'A4', icon: 'a4', cost: 40 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'nav_beta_root',
+        name: 'Beta',
+        icon: 'beta',
+        children: [
+          { id: 'item_b1', name: 'B1', icon: 'b1', cost: 50 },
+        ],
+      },
+    ];
+  }
+
+  it('shows only unlocked categories', () => {
+    ProgressionManager.getInstance.mockReturnValue({
+      isUnlocked: jest.fn((id: string) => id === 'nav_alpha_root'),
+      getUnlockedDepth: jest.fn((id: string) => id === 'nav_alpha_root' ? 1 : 0),
+    });
+    const rows = getCatalogRows(makeNavTree());
+    expect(rows).toHaveLength(1);
+    expect(rows[0].category.id).toBe('nav_alpha_root');
+  });
+
+  it('shows both categories when both are unlocked', () => {
+    ProgressionManager.getInstance.mockReturnValue({
+      isUnlocked: jest.fn(() => true),
+      getUnlockedDepth: jest.fn(() => 1),
+    });
+    const rows = getCatalogRows(makeNavTree());
+    expect(rows).toHaveLength(2);
+  });
+
+  it('hides all categories when none are unlocked', () => {
+    ProgressionManager.getInstance.mockReturnValue({
+      isUnlocked: jest.fn(() => false),
+      getUnlockedDepth: jest.fn(() => 0),
+    });
+    expect(getCatalogRows(makeNavTree())).toHaveLength(0);
+  });
+
+  it('at depth 1: shows only B-level items (no deeper items)', () => {
+    ProgressionManager.getInstance.mockReturnValue({
+      isUnlocked: jest.fn(() => true),
+      getUnlockedDepth: jest.fn(() => 1),
+    });
+    const rows = getCatalogRows(makeNavTree());
+    const alphaIds = rows.find(r => r.category.id === 'nav_alpha_root')!.items.map(i => i.id);
+    expect(alphaIds).not.toContain('item_a3');
+    expect(alphaIds).not.toContain('item_a4');
+  });
+
+  it('at depth 2: includes items from nav_*_down_1', () => {
+    ProgressionManager.getInstance.mockReturnValue({
+      isUnlocked: jest.fn(() => true),
+      getUnlockedDepth: jest.fn((id: string) => id === 'nav_alpha_root' ? 2 : 1),
+    });
+    const rows = getCatalogRows(makeNavTree());
+    const alphaIds = rows.find(r => r.category.id === 'nav_alpha_root')!.items.map(i => i.id);
+    expect(alphaIds).toContain('item_a3');
+    expect(alphaIds).toContain('item_a4');
+  });
+
+  it('B-level items at depth 2 are still CCW ordered', () => {
+    ProgressionManager.getInstance.mockReturnValue({
+      isUnlocked: jest.fn(() => true),
+      getUnlockedDepth: jest.fn(() => 2),
+    });
+    const rows = getCatalogRows(makeNavTree());
+    const alphaItems = rows.find(r => r.category.id === 'nav_alpha_root')!.items;
+    // B-level CCW: [item_a1, item_a2] → [item_a1, item_a2] (2-item page, no change)
+    // Then deeper page: [item_a3, item_a4] → [item_a3, item_a4] (2-item page)
+    expect(alphaItems.map(i => i.id)).toEqual(['item_a1', 'item_a2', 'item_a3', 'item_a4']);
   });
 });

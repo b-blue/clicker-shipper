@@ -1,5 +1,6 @@
 import { MenuItem, Order, OrderRequirement } from '../types/GameTypes';
 import { normalizeItems } from './ItemAdapter';
+import { ProgressionManager } from '../managers/ProgressionManager';
 
 /**
  * A catalog category groups an A-level root item with its directly accessible
@@ -47,25 +48,81 @@ export function getShippableItems(items: any[]): MenuItem[] {
 }
 
 /**
- * Groups shippable B-level items under their A-level parent categories.
- * Only categories that have at least one shippable item are included.
+ * Returns all accessible leaf items from a nav node, one dial page at a time,
+ * each page reordered counter-clockwise: [pos1, pos6, pos5, pos4, pos3] so
+ * the catalog reflects the CCW reading order of the radial dial.
  *
- * Uses `getShippableItems` as the sole source of truth, keeping the catalog
- * display and the order generator in sync: the catalog shows exactly what
- * can appear in an order.
+ * @param navNode       The nav node whose children we are scanning.
+ * @param unlockedDepth How many `_down_N` levels the player can access
+ *                      (nav_*_down_N is recursed when N < unlockedDepth).
+ */
+function collectDialPageItems(navNode: MenuItem, unlockedDepth: number): MenuItem[] {
+  if (!navNode.children) return [];
+
+  // Direct leaf children on this dial page (not nav-down nodes, must have cost)
+  const leaves: MenuItem[] = navNode.children.filter((c: MenuItem) => {
+    const isNavDown = c.icon === 'skill-down' || c.id.includes('_down_');
+    return !isNavDown && c.cost !== undefined;
+  });
+
+  // CCW reorder: keep slot-1 item first, then reverse the rest → [0, n-1, n-2, …, 1]
+  const ccw: MenuItem[] = leaves.length > 1
+    ? [leaves[0], ...leaves.slice(1).reverse()]
+    : [...leaves];
+
+  // Recurse into accessible nav_*_down_N children
+  const deeper: MenuItem[] = [];
+  navNode.children.forEach((child: MenuItem) => {
+    const match = child.id.match(/_down_(\d+)$/);
+    if (!match) return;                           // non-numeric nav suffix — skip
+    const levelN = parseInt(match[1], 10);
+    if (levelN < unlockedDepth) {
+      deeper.push(...collectDialPageItems(child, unlockedDepth));
+    }
+  });
+
+  return [...ccw, ...deeper];
+}
+
+/**
+ * Groups accessible items under their A-level parent categories for the
+ * catalog display.  Differs from `getShippableItems` in two ways:
+ *
+ * 1. **Progression-aware**: for categories that follow the `nav_*_root`
+ *    naming convention (the real game progression categories), only unlocked
+ *    categories are included, and items from deeper nav levels are shown
+ *    based on the player's unlocked depth.
+ *
+ * 2. **Counter-clockwise ordering**: within each dial page the items are
+ *    shown as [pos1, pos6, pos5, pos4, pos3] (CCW from the top slot).
  */
 export function getCatalogRows(items: any[]): CatalogCategory[] {
   const normalized = normalizeItems(items);
   const rows: CatalogCategory[] = [];
 
+  // Lazily obtain the progression manager; fall back gracefully if unavailable.
+  let pm: { isUnlocked: (id: string) => boolean; getUnlockedDepth: (id: string) => number } | null = null;
+  try { pm = ProgressionManager.getInstance(); } catch { /* unavailable */ }
+
   normalized.forEach(rootItem => {
     if (!rootItem.children) return;
-    const shippable = rootItem.children.filter((child: MenuItem) => {
-      const isNavDown = child.icon === 'skill-down' || child.id.includes('_down_');
-      return !isNavDown && child.cost !== undefined;
-    });
-    if (shippable.length > 0) {
-      rows.push({ category: rootItem, items: shippable });
+
+    // Determine whether this root item is a managed progression category.
+    // Convention: all game categories use ids like `nav_<slug>_root`.
+    const isProgressionCategory = rootItem.id.startsWith('nav_') && rootItem.id.endsWith('_root');
+
+    // Skip locked progression categories.
+    if (isProgressionCategory && pm && !pm.isUnlocked(rootItem.id)) return;
+
+    // Depth governs how many nav_*_down_N levels are accessible.
+    // Unknown / non-progression categories default to depth=1 (B-level only).
+    const unlockedDepth = (isProgressionCategory && pm)
+      ? pm.getUnlockedDepth(rootItem.id)
+      : 1;
+
+    const pageItems = collectDialPageItems(rootItem, unlockedDepth);
+    if (pageItems.length > 0) {
+      rows.push({ category: rootItem, items: pageItems });
     }
   });
 

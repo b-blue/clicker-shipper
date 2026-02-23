@@ -1,6 +1,7 @@
 import { RadialDial } from '../ui/RadialDial';
 import { GameManager } from '../managers/GameManager';
 import { SettingsManager } from '../managers/SettingsManager';
+import { ProgressionManager, ALL_CATEGORY_IDS } from '../managers/ProgressionManager';
 import { Colors } from '../constants/Colors';
 import { generateOrder as buildOrder, getCatalogRows } from '../utils/OrderUtils';
 import { MenuItem, Order } from '../types/GameTypes';
@@ -157,7 +158,31 @@ export class Game extends Phaser.Scene {
       menuBg.on('pointerout', () => menuBg.setFillStyle(Colors.PANEL_DARK, 0.9));
       this.add.bitmapText(menuX, menuY, 'clicker', 'MENU', 13)
         .setOrigin(0.5);
-      this.radialDial = new RadialDial(this, dialX, dialY, items);
+
+      // Build 6-slot A-level dial: unlocked categories in unlock order, padded with locked placeholders
+      const progression = ProgressionManager.getInstance();
+      const unlockedCats = progression.getUnlockedCategories();
+      const dialRootItems: MenuItem[] = unlockedCats.map(({ categoryId }) => {
+        const found = (items as any[]).find((it: any) => it.id === categoryId);
+        return found as MenuItem;
+      }).filter(Boolean) as MenuItem[];
+
+      // Pad remaining slots (up to 6) with locked placeholders
+      const totalDialSlots = ALL_CATEGORY_IDS.length;
+      const lockedSlotCount = totalDialSlots - dialRootItems.length;
+      for (let i = 0; i < lockedSlotCount; i++) {
+        dialRootItems.push({
+          id: `locked_slot_${i}`,
+          name: 'LOCKED',
+          icon: 'skill-blocked',
+          layers: [
+            { texture: 'skill-blocked', depth: 3 },
+            { texture: 'frame', depth: 2 }
+          ]
+        });
+      }
+
+      this.radialDial = new RadialDial(this, dialX, dialY, dialRootItems);
 
       // Listen for item confirmation — show terminal action dial
       this.events.on('dial:itemConfirmed', (data: { item: any }) => {
@@ -333,16 +358,51 @@ export class Game extends Phaser.Scene {
   }
 
   private buildSettingsContent(container: Phaser.GameObjects.Container, panelX: number, panelWidth: number): void {
-    const btnY = 120;
     const btnW = panelWidth - 60;
-    const btn = this.add.rectangle(panelX, btnY, btnW, 28, Colors.PANEL_DARK, 0.9);
+
+    // CALIBRATE DIAL button
+    const calibrateY = 120;
+    const btn = this.add.rectangle(panelX, calibrateY, btnW, 28, Colors.PANEL_DARK, 0.9);
     btn.setStrokeStyle(2, Colors.BORDER_BLUE);
     btn.setInteractive();
     btn.on('pointerdown', () => this.scene.start('DialCalibration'));
     btn.on('pointerover', () => btn.setFillStyle(Colors.BUTTON_HOVER, 0.95));
     btn.on('pointerout', () => btn.setFillStyle(Colors.PANEL_DARK, 0.9));
-    const btnLabel = this.add.bitmapText(panelX, btnY, 'clicker', 'CALIBRATE DIAL', 11).setOrigin(0.5);
-    container.add([btn, btnLabel]);
+    const btnLabel = this.add.bitmapText(panelX, calibrateY, 'clicker', 'CALIBRATE DIAL', 11).setOrigin(0.5);
+
+    // RESET PROGRESSION button (two-tap confirmation)
+    const resetY = calibrateY + 44;
+    const resetBtn = this.add.rectangle(panelX, resetY, btnW, 28, Colors.PANEL_DARK, 0.9);
+    resetBtn.setStrokeStyle(2, 0xff2244);
+    resetBtn.setInteractive();
+    const resetLabel = this.add.bitmapText(panelX, resetY, 'clicker', 'RESET PROGRESS', 11).setOrigin(0.5).setTint(0xff2244);
+    let resetPending = false;
+    let resetTimer: Phaser.Time.TimerEvent | null = null;
+    resetBtn.on('pointerdown', () => {
+      if (!resetPending) {
+        // First tap — enter confirmation state
+        resetPending = true;
+        resetLabel.setText('CONFIRM?');
+        resetBtn.setFillStyle(0x3a0008, 0.95);
+        resetTimer = this.time.addEvent({
+          delay: 3000,
+          callback: () => {
+            resetPending = false;
+            resetLabel.setText('RESET PROGRESS');
+            resetBtn.setFillStyle(Colors.PANEL_DARK, 0.9);
+          }
+        });
+      } else {
+        // Second tap — execute reset
+        resetTimer?.remove();
+        ProgressionManager.getInstance().reset();
+        this.scene.restart();
+      }
+    });
+    resetBtn.on('pointerover', () => resetBtn.setFillStyle(resetPending ? 0x5a0010 : 0x1a0008, 0.95));
+    resetBtn.on('pointerout', () => resetBtn.setFillStyle(resetPending ? 0x3a0008 : Colors.PANEL_DARK, 0.9));
+
+    container.add([btn, btnLabel, resetBtn, resetLabel]);
   }
 
   private buildOrderContent(container: Phaser.GameObjects.Container, x: number, y: number, width: number, height: number, order: Order): Array<{ x: number; y: number; size: number; slotBg: Phaser.GameObjects.Graphics; expectedIconKey: string }> {
@@ -578,7 +638,14 @@ export class Game extends Phaser.Scene {
   }
 
   endShift() {
-    // this.scene.start('GameOver', { stats });
+    const progression = ProgressionManager.getInstance();
+    progression.addQuanta(this.shiftBonus);
+    progression.recordShiftComplete();
+    this.scene.start('GameOver', {
+      revenue: this.shiftRevenue,
+      bonus: this.shiftBonus,
+      shiftsCompleted: progression.getShiftsCompleted()
+    });
   }
 
   shutdown() {

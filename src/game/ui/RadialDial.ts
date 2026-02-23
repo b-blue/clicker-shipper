@@ -3,6 +3,7 @@ import { MenuItem, Item } from '../types/GameTypes';
 import { Colors } from '../constants/Colors';
 import { NavigationController } from '../controllers/NavigationController';
 import { normalizeItems } from '../utils/ItemAdapter';
+import { ProgressionManager } from '../managers/ProgressionManager';
 
 export class RadialDial {
   private scene: Phaser.Scene;
@@ -25,7 +26,6 @@ export class RadialDial {
   private centerGraphic: Phaser.GameObjects.Graphics;
   private centerImage: Phaser.GameObjects.Image;
   private inputZone: Phaser.GameObjects.Zone;
-  private allowDeepNavigation: boolean = false;
   private readonly lockedNavItemIdPrefix: string = 'locked_';
   private terminalItem: MenuItem | null = null;
   private readonly ACTION_ITEMS: MenuItem[] = [
@@ -258,13 +258,16 @@ export class RadialDial {
   }
 
   private shouldLockNavItem(item: MenuItem): boolean {
-    if (this.allowDeepNavigation || this.navigationController.getDepth() < 1) {
-      return false;
-    }
-    if (!item.children || item.children.length === 0) {
-      return false;
-    }
-    return item.icon === 'skill-down' || item.id.includes('_down_');
+    // A-level locked placeholder slots are pre-built in Game.ts — nothing to transform here
+    if (this.navigationController.getDepth() < 1) return false;
+    // Only nav_*_down_* items can be progression-locked at sub-levels
+    const match = item.id.match(/^nav_(.+)_down_(\d+)$/);
+    if (!match) return false;
+    const categoryId = `nav_${match[1]}_root`;
+    const levelN = parseInt(match[2], 10);
+    // Lock this nav node if its level number meets or exceeds the unlocked depth
+    // e.g. unlockedDepth=1 → nav_*_down_1 (levelN=1) is locked; unlockedDepth=2 → nav_*_down_1 unlocked, nav_*_down_2 locked
+    return levelN >= ProgressionManager.getInstance().getUnlockedDepth(categoryId);
   }
 
   private createLockedNavItem(item: MenuItem): MenuItem {
@@ -288,10 +291,11 @@ export class RadialDial {
       return this.ACTION_ITEMS;
     }
     const items = this.navigationController.getCurrentItems();
-    if (this.allowDeepNavigation || this.navigationController.getDepth() < 1) {
+    // At A-level, locked placeholder slots are already in the items list (built in Game.ts)
+    if (this.navigationController.getDepth() < 1) {
       return items;
     }
-
+    // At sub-levels, transform nav_*_down_* items into locked placeholders based on progression
     return items.map(item => this.shouldLockNavItem(item) ? this.createLockedNavItem(item) : item);
   }
 
@@ -394,8 +398,12 @@ export class RadialDial {
       const startAngle = i * sliceAngle - Math.PI / 2;
       const endAngle = startAngle + sliceAngle;
       const isHighlighted = i === this.highlightedSliceIndex;
-      const color = isHighlighted ? Colors.SLICE_HIGHLIGHTED : Colors.SLICE_NORMAL;
-      const alpha = isHighlighted ? 0.9 : 0.8;
+      const sliceItem = displayItems[i];
+      const isLockedItem = sliceItem ? this.isLockedNavItem(sliceItem) : false;
+      // A-level locked placeholders get a darkened slice; sub-level locked nav gets normal slice
+      const isALevelLocked = isLockedItem && this.navigationController.getDepth() === 0;
+      const color = isHighlighted ? Colors.SLICE_HIGHLIGHTED : (isALevelLocked ? 0x11111a : Colors.SLICE_NORMAL);
+      const alpha = isHighlighted ? 0.9 : (isALevelLocked ? 0.5 : 0.8);
 
       // Draw glow for highlighted slice with exponential falloff
       if (isHighlighted) {
@@ -454,7 +462,7 @@ export class RadialDial {
       const textDistance = this.sliceRadius - 40;
       const textX = this.dialX + Math.cos(midAngle) * textDistance;
       const textY = this.dialY + Math.sin(midAngle) * textDistance;
-      const item = displayItems[i];
+      const item = sliceItem;
 
       // Skip rendering if no item at this slice (fewer items than slices)
       if (!item) {
@@ -465,6 +473,8 @@ export class RadialDial {
       if ('id' in item) {
         const itemId = item.id;
         const hasLayers = 'layers' in item && item.layers && item.layers.length > 0;
+        // Locked items render at reduced alpha so they look inactive
+        const lockedAlpha = isLockedItem ? 0.35 : 1;
         
         if (hasLayers) {
           // Render multi-layer image
@@ -476,13 +486,10 @@ export class RadialDial {
               const layerImage = this.scene.add.image(textX, textY, layer.texture);
               layerImage.setScale((layer.scale ?? 1) * baseScale);
               layerImage.setDepth(layer.depth ?? (baseDepth + index));
+              layerImage.setAlpha(layer.alpha ?? lockedAlpha);
               
               if (layer.tint !== undefined) {
                 layerImage.setTint(layer.tint);
-              }
-              
-              if (layer.alpha !== undefined) {
-                layerImage.setAlpha(layer.alpha);
               }
               
               this.sliceImages.push(layerImage);
@@ -495,6 +502,7 @@ export class RadialDial {
             const image = this.scene.add.image(textX, textY, textureKey);
             image.setScale(this.navigationController.getScaleForDepth());
             image.setDepth(2);
+            image.setAlpha(lockedAlpha);
             this.sliceImages.push(image);
           } else {
             // Icon texture not loaded, fall back to text
@@ -552,12 +560,6 @@ export class RadialDial {
     // Clean up glow graphics
     this.sliceGlows.forEach(g => g.destroy());
     this.sliceGlows = [];
-    this.updateSliceCount();
-    this.redrawDial();
-  }
-
-  public setDeepNavigationEnabled(enabled: boolean): void {
-    this.allowDeepNavigation = enabled;
     this.updateSliceCount();
     this.redrawDial();
   }

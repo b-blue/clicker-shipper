@@ -10,6 +10,18 @@ jest.mock('../GameManager', () => ({
   },
 }));
 
+// Mock ProgressionManager — default: everything unlocked at max depth so legacy tests are unaffected
+jest.mock('../ProgressionManager', () => ({
+  ProgressionManager: {
+    getInstance: jest.fn(() => ({
+      getUnlockedCategories: jest.fn(() => [
+        { categoryId: 'item_1', depth: 7 },
+      ]),
+      getUnlockedDepth: jest.fn((_id: string) => 7),
+    })),
+  },
+}));
+
 function createMockItems(): Item[] {
   const mockSubItems: SubItem[] = [
     { id: 'item_1_1', name: 'Item 1', icon: 'icon1', cost: 10 },
@@ -121,5 +133,124 @@ describe('OrderGenerator', () => {
       // Should be rare (5% or less)
       expect(duplicateCount).toBeLessThanOrEqual(10);
     });
+  });
+});
+
+// ── Progression-filtering tests ──────────────────────────────────────────────
+// Uses the same jest.mock registrations above, but overrides return values per
+// test group via mockReturnValue so we can isolate depth-gating behaviour.
+
+describe('OrderGenerator — progression filtering', () => {
+  // Tree-format items (nav_*_root → nav_*_down_N → leaves)
+  // alpha: down_1=[leaf_a, leaf_b], down_2=[leaf_c, leaf_d]
+  // beta:  down_1=[leaf_e]
+  function makeNavItems() {
+    return [
+      {
+        id: 'nav_alpha_root',
+        name: 'Alpha',
+        icon: 'alpha',
+        children: [
+          {
+            id: 'nav_alpha_down_1',
+            name: 'Alpha L1',
+            icon: 'alpha_l1',
+            children: [
+              { id: 'leaf_a', name: 'Leaf A', icon: 'la', cost: 10 },
+              { id: 'leaf_b', name: 'Leaf B', icon: 'lb', cost: 12 },
+            ],
+          },
+          {
+            id: 'nav_alpha_down_2',
+            name: 'Alpha L2',
+            icon: 'alpha_l2',
+            children: [
+              { id: 'leaf_c', name: 'Leaf C', icon: 'lc', cost: 14 },
+              { id: 'leaf_d', name: 'Leaf D', icon: 'ld', cost: 16 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'nav_beta_root',
+        name: 'Beta',
+        icon: 'beta',
+        children: [
+          {
+            id: 'nav_beta_down_1',
+            name: 'Beta L1',
+            icon: 'beta_l1',
+            children: [
+              { id: 'leaf_e', name: 'Leaf E', icon: 'le', cost: 18 },
+            ],
+          },
+        ],
+      },
+    ];
+  }
+
+  function makeGenWith(
+    unlocked: Array<{ categoryId: string; depth: number }>,
+  ): OrderGenerator {
+    const { GameManager } = require('../GameManager');
+    GameManager.getInstance.mockReturnValue({
+      getItems: jest.fn(() => makeNavItems()),
+    });
+    const { ProgressionManager } = require('../ProgressionManager');
+    const depthMap = new Map(unlocked.map(c => [c.categoryId, c.depth]));
+    ProgressionManager.getInstance.mockReturnValue({
+      getUnlockedCategories: jest.fn(() => unlocked),
+      getUnlockedDepth: jest.fn((id: string) => depthMap.get(id) ?? 0),
+    });
+    return new OrderGenerator();
+  }
+
+  it('excludes items from locked categories', () => {
+    const gen = makeGenWith([{ categoryId: 'nav_alpha_root', depth: 2 }]);
+    const ids = new Set<string>();
+    for (let i = 0; i < 50; i++) {
+      gen.generateOrder().requirements.forEach(r => ids.add(r.itemId));
+    }
+    expect(ids.has('leaf_e')).toBe(false);
+  });
+
+  it('depth 1 exposes no nav-tree leaf items (no down_N qualifies)', () => {
+    const gen = makeGenWith([{ categoryId: 'nav_alpha_root', depth: 1 }]);
+    const pool = (gen as any).getAllSubItems();
+    expect(pool.length).toBe(0);
+  });
+
+  it('depth 2 includes level-1 leaves, excludes level-2 leaves', () => {
+    const gen = makeGenWith([{ categoryId: 'nav_alpha_root', depth: 2 }]);
+    const ids = (gen as any).getAllSubItems().map((i: any) => i.id);
+    expect(ids).toContain('leaf_a');
+    expect(ids).toContain('leaf_b');
+    expect(ids).not.toContain('leaf_c');
+    expect(ids).not.toContain('leaf_d');
+  });
+
+  it('depth 3 includes both level-1 and level-2 leaves', () => {
+    const gen = makeGenWith([{ categoryId: 'nav_alpha_root', depth: 3 }]);
+    const ids = (gen as any).getAllSubItems().map((i: any) => i.id);
+    expect(ids).toContain('leaf_a');
+    expect(ids).toContain('leaf_b');
+    expect(ids).toContain('leaf_c');
+    expect(ids).toContain('leaf_d');
+  });
+
+  it('two unlocked categories → leaves from both appear in pool', () => {
+    const gen = makeGenWith([
+      { categoryId: 'nav_alpha_root', depth: 2 },
+      { categoryId: 'nav_beta_root', depth: 2 },
+    ]);
+    const ids = (gen as any).getAllSubItems().map((i: any) => i.id);
+    expect(ids).toContain('leaf_a');
+    expect(ids).toContain('leaf_e');
+  });
+
+  it('pool is empty when no categories are unlocked', () => {
+    const gen = makeGenWith([]);
+    const pool = (gen as any).getAllSubItems();
+    expect(pool.length).toBe(0);
   });
 });

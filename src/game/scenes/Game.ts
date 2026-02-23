@@ -755,5 +755,12 @@ export class Game extends Phaser.Scene {
     if (this.radialDial) {
       this.radialDial.destroy();
     }
+    // Remove dial event listeners added in create(). Phaser reuses the scene
+    // instance on restart, so without this each create() stacks another handler
+    // and actions fire N times on the Nth shift.
+    this.events.off('dial:itemConfirmed');
+    this.events.off('dial:actionConfirmed');
+    this.events.off('dial:levelChanged');
+    this.events.off('dial:goBack');
   }
 }

@@ -83,17 +83,11 @@ export class RadialDial {
   }
 
   private setUpInputHandlers(): void {
-    this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-      this.handleMouseMove(pointer);
-    });
-
-    this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      this.handlePointerDown(pointer);
-    });
-
-    this.scene.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
-      this.handlePointerUp(pointer);
-    });
+    // Use bound method references (not anonymous wrappers) so destroy() can
+    // pass the same fn + context to off() and reliably remove these listeners.
+    this.scene.input.on('pointermove', this.handleMouseMove, this);
+    this.scene.input.on('pointerdown', this.handlePointerDown, this);
+    this.scene.input.on('pointerup',   this.handlePointerUp,   this);
   }
 
   private handleMouseMove(pointer: Phaser.Input.Pointer): void {
@@ -606,6 +600,13 @@ export class RadialDial {
   }
 
   public destroy(): void {
+    // Remove scene-level input listeners registered in setUpInputHandlers().
+    // Without this, each new RadialDial stacks another set on top of the old
+    // ones, causing double-firing on the second shift.
+    this.scene.input.off('pointermove', this.handleMouseMove, this);
+    this.scene.input.off('pointerdown', this.handlePointerDown, this);
+    this.scene.input.off('pointerup',   this.handlePointerUp,   this);
+
     this.sliceGraphics.forEach(g => g.destroy());
     this.sliceTexts.forEach(t => t.destroy());
     this.sliceImages.forEach(i => i.destroy());

@@ -14,13 +14,15 @@ export class MainMenu extends Phaser.Scene {
     this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, Colors.BACKGROUND_DARK);
 
     // Title with background
-    this.add.rectangle(gameWidth / 2, gameHeight * 0.15, 700, 50, Colors.PANEL_MEDIUM, 0.9);
-    this.add.bitmapText(gameWidth / 2, gameHeight * 0.15, 'clicker', 'INTERGALACTIC SHIPPER', 32)
+    const titleFontSize = Math.min(32, Math.floor(gameWidth / 14));
+    this.add.rectangle(gameWidth / 2, gameHeight * 0.15, Math.min(700, gameWidth - 20), 50, Colors.PANEL_MEDIUM, 0.9);
+    this.add.bitmapText(gameWidth / 2, gameHeight * 0.15, 'clicker', 'INTERGALACTIC SHIPPER', titleFontSize)
       .setOrigin(0.5);
 
     // Subtitle with background
-    this.add.rectangle(gameWidth / 2, gameHeight * 0.25, 500, 30, Colors.PANEL_MEDIUM, 0.85);
-    this.add.bitmapText(gameWidth / 2, gameHeight * 0.25, 'clicker', 'ORDER FULFILLMENT TERMINAL', 16)
+    const subtitleFontSize = Math.min(16, Math.floor(gameWidth / 24));
+    this.add.rectangle(gameWidth / 2, gameHeight * 0.25, Math.min(500, gameWidth - 20), 30, Colors.PANEL_MEDIUM, 0.85);
+    this.add.bitmapText(gameWidth / 2, gameHeight * 0.25, 'clicker', 'ORDER FULFILLMENT TERMINAL', subtitleFontSize)
       .setOrigin(0.5);
 
     // Menu buttons
@@ -40,7 +42,7 @@ export class MainMenu extends Phaser.Scene {
     this.createButton(gameWidth / 2, buttonY + buttonSpacing * 3, 'EXIT', () => this.exitGame());
 
     // Footer with background
-    this.add.rectangle(gameWidth / 2, gameHeight * 0.9, 400, 24, Colors.PANEL_MEDIUM, 0.85);
+    this.add.rectangle(gameWidth / 2, gameHeight * 0.9, Math.min(400, gameWidth - 20), 24, Colors.PANEL_MEDIUM, 0.85);
     this.add.bitmapText(gameWidth / 2, gameHeight * 0.9, 'clicker', 'PRESS SPACE TO START SHIFT', 12)
       .setOrigin(0.5);
 

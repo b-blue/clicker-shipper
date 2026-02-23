@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 import { Colors } from '../../constants/Colors';
-import { fitFontSize } from '../MainMenu';
+import { fitFontSize } from '../../utils/UiUtils';
 
 describe('MainMenu scene', () => {
   beforeAll(() => {

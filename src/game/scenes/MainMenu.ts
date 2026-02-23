@@ -1,16 +1,5 @@
 import { Colors, toColorString } from '../constants/Colors';
-
-// Approximate character width ratio for the clicker bitmap font (uppercase only)
-const FONT_CHAR_RATIO = 0.6;
-
-/**
- * Returns the largest integer font size that keeps `text` within `availableWidth` pixels,
- * capped at `maxSize`. Minimum returned value is 8.
- */
-export function fitFontSize(text: string, availableWidth: number, maxSize: number): number {
-  const maxByWidth = Math.floor(availableWidth / (text.length * FONT_CHAR_RATIO));
-  return Math.min(maxSize, Math.max(8, maxByWidth));
-}
+import { fitFontSize } from '../utils/UiUtils';
 
 export class MainMenu extends Phaser.Scene {
   constructor() {

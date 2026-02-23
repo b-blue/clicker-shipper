@@ -56,7 +56,7 @@ export class Game extends Phaser.Scene {
       const panelTop = 20;
       const panelBottom = dialY - dialRadius - 20;
       const panelHeight = panelBottom - panelTop;
-      const panelX = gameWidth / 2;
+      const panelX = 10 + panelWidth / 2;  // left-align with menu button left edge
       const panelY = (panelTop + panelBottom) / 2;
       
       const mainPanel = this.add.rectangle(panelX, panelY, panelWidth, panelHeight, Colors.PANEL_DARK, 0.85);
@@ -300,11 +300,32 @@ export class Game extends Phaser.Scene {
     let scrollOffset = 0;
     const minOffset = Math.min(0, height - listContentHeight);
 
+    // Mouse wheel scroll
     this.input.on('wheel', (_pointer: Phaser.Input.Pointer, _go: any, _dx: number, dy: number) => {
-      if (listContentHeight <= height) return;
+      if (!container.visible || listContentHeight <= height) return;
       scrollOffset = Math.max(minOffset, Math.min(0, scrollOffset - dy * 0.4));
       listContainer.y = listTop + scrollOffset;
     });
+
+    // Touch / pointer drag scroll
+    let touchStartY = 0;
+    let isTouchScrolling = false;
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (!container.visible) return;
+      const px = pointer.x, py = pointer.y;
+      if (px >= listLeft && px <= listLeft + width && py >= listTop && py <= listTop + height) {
+        touchStartY = py;
+        isTouchScrolling = true;
+      }
+    });
+    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      if (!container.visible || !isTouchScrolling || listContentHeight <= height) return;
+      const dy = touchStartY - pointer.y;
+      touchStartY = pointer.y;
+      scrollOffset = Math.max(minOffset, Math.min(0, scrollOffset - dy));
+      listContainer.y = listTop + scrollOffset;
+    });
+    this.input.on('pointerup', () => { isTouchScrolling = false; });
   }
 
   private buildSettingsContent(container: Phaser.GameObjects.Container, panelX: number, panelWidth: number): void {

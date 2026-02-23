@@ -274,4 +274,266 @@ describe('RadialDial drag-to-center selection', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Phase 1 coverage tests — added before simplification work
+// ---------------------------------------------------------------------------
 
+describe('RadialDial — terminal dial action confirmation', () => {
+  const dialX = 100;
+  const dialY = 100;
+
+  it('emits dial:actionConfirmed with correct action and item when tapping a slice in terminal mode', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    // Drill to depth 1 to get a real MenuItem as terminalItem
+    const catStart = slicePoint(dialX, dialY, 6, 0, 120);
+    (dial as any).handlePointerDown(catStart);
+    (dial as any).handlePointerUp(catStart);
+
+    // Confirm one sub-item to get to the terminal dial (item confirmed event)
+    const subStart = slicePoint(dialX, dialY, 6, 1, 120);
+    (dial as any).handlePointerDown(subStart);
+    (dial as any).handlePointerUp(subStart);
+
+    // Manually put the dial in terminal mode (simulates Game scene calling showTerminalDial)
+    const fakeItem = { id: 'test-item', name: 'TEST', icon: 'test-icon' };
+    dial.showTerminalDial(fakeItem as any);
+
+    scene.events.emit.mockClear();
+
+    // Tap the first action slice (index 0 = 'send')
+    const actionStart = slicePoint(dialX, dialY, 4, 0, 120);
+    (dial as any).handlePointerDown(actionStart);
+    (dial as any).handlePointerUp(actionStart);
+
+    expect(scene.events.emit).toHaveBeenCalledWith('dial:actionConfirmed', {
+      action: 'send',
+      item: fakeItem,
+    });
+  });
+
+  it('clears terminalItem after action confirmation', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    const fakeItem = { id: 'test-item', name: 'TEST', icon: 'test-icon' };
+    dial.showTerminalDial(fakeItem as any);
+
+    const actionStart = slicePoint(dialX, dialY, 4, 0, 120);
+    (dial as any).handlePointerDown(actionStart);
+    (dial as any).handlePointerUp(actionStart);
+
+    expect((dial as any).terminalItem).toBeNull();
+  });
+});
+
+describe('RadialDial — center tap navigation', () => {
+  const dialX = 100;
+  const dialY = 100;
+  const center = { x: dialX, y: dialY }; // within centerRadius (50)
+
+  it('emits dial:goBack when tapping center at navigation depth > 0', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    // Drill into first category
+    const catStart = slicePoint(dialX, dialY, 6, 0, 120);
+    (dial as any).handlePointerDown(catStart);
+    (dial as any).handlePointerUp(catStart);
+
+    scene.events.emit.mockClear();
+
+    // Tap center — should go back
+    (dial as any).handlePointerDown(center);
+    (dial as any).handlePointerUp(center);
+
+    expect(scene.events.emit).toHaveBeenCalledWith('dial:goBack');
+  });
+
+  it('does not emit dial:goBack when tapping center at root depth', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    scene.events.emit.mockClear();
+
+    // Tap center at root — canGoBack() is false, nothing should emit
+    (dial as any).handlePointerDown(center);
+    (dial as any).handlePointerUp(center);
+
+    expect(scene.events.emit).not.toHaveBeenCalledWith('dial:goBack');
+  });
+});
+
+describe('RadialDial — center tap in terminal mode', () => {
+  const dialX = 100;
+  const dialY = 100;
+  const center = { x: dialX, y: dialY };
+
+  it('emits dial:goBack and clears terminalItem when tapping center in terminal mode', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    const fakeItem = { id: 'test-item', name: 'TEST', icon: 'test-icon' };
+    dial.showTerminalDial(fakeItem as any);
+
+    scene.events.emit.mockClear();
+
+    (dial as any).handlePointerDown(center);
+    (dial as any).handlePointerUp(center);
+
+    expect(scene.events.emit).toHaveBeenCalledWith('dial:goBack');
+    expect((dial as any).terminalItem).toBeNull();
+  });
+
+  it('resets all relevant state fields when center-tapping out of terminal mode', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    const fakeItem = { id: 'test-item', name: 'TEST', icon: 'test-icon' };
+    dial.showTerminalDial(fakeItem as any);
+
+    (dial as any).handlePointerDown(center);
+    (dial as any).handlePointerUp(center);
+
+    expect((dial as any).terminalItem).toBeNull();
+    expect((dial as any).dragStartSliceIndex).toBe(-1);
+    expect((dial as any).lastNonCenterSliceIndex).toBe(-1);
+    expect((dial as any).highlightedSliceIndex).toBe(-1);
+  });
+});
+
+describe('RadialDial — pointerConsumed deduplication', () => {
+  const dialX = 100;
+  const dialY = 100;
+
+  it('emits dial:itemConfirmed exactly once when pointerup fires twice for the same gesture', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    // Drill into first category so sub-items (leaves) are on the dial
+    const catStart = slicePoint(dialX, dialY, 6, 0, 120);
+    (dial as any).handlePointerDown(catStart);
+    (dial as any).handlePointerUp(catStart);
+
+    scene.events.emit.mockClear();
+
+    // Start a gesture on sub-item slice
+    const subStart = slicePoint(dialX, dialY, 6, 2, 120);
+    (dial as any).handlePointerDown(subStart);
+
+    // Fire pointerup twice (touch + synthesized mouse scenario)
+    (dial as any).handlePointerUp(subStart);
+    (dial as any).handlePointerUp(subStart);
+
+    const confirmCalls = (scene.events.emit as jest.Mock).mock.calls.filter(
+      ([evt]) => evt === 'dial:itemConfirmed'
+    );
+    expect(confirmCalls).toHaveLength(1);
+  });
+});
+
+describe('RadialDial — synthesized mouse suppression', () => {
+  const dialX = 100;
+  const dialY = 100;
+
+  it('ignores non-touch pointerdown fired within 500ms of a real touch end', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    // Drill to sub-items
+    const catStart = slicePoint(dialX, dialY, 6, 0, 120);
+    (dial as any).handlePointerDown(catStart);
+    (dial as any).handlePointerUp(catStart);
+
+    // Simulate a real touch gesture on a sub-item
+    const subStart = slicePoint(dialX, dialY, 6, 1, 120);
+    (dial as any).handlePointerDown({ ...subStart, wasTouch: true });
+    (dial as any).handlePointerUp({ ...subStart, wasTouch: true });
+
+    // Immediately fire synthesized mousedown (wasTouch: false) at same spot
+    (dial as any).handlePointerDown({ ...subStart, wasTouch: false });
+
+    // Synthesized mousedown should have been suppressed — dragStartSliceIndex stays -1
+    expect((dial as any).dragStartSliceIndex).toBe(-1);
+  });
+
+  it('allows non-touch pointerdown after the synthesis window expires', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    // Drill to sub-items
+    const catStart = slicePoint(dialX, dialY, 6, 0, 120);
+    (dial as any).handlePointerDown(catStart);
+    (dial as any).handlePointerUp(catStart);
+
+    // Set lastTouchEndTime well in the past (beyond the 500ms window)
+    (dial as any).lastTouchEndTime = Date.now() - 600;
+
+    const subStart = slicePoint(dialX, dialY, 6, 1, 120);
+    (dial as any).handlePointerDown({ ...subStart, wasTouch: false });
+
+    // Should not be suppressed — dragStartSliceIndex should be set
+    expect((dial as any).dragStartSliceIndex).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('RadialDial — confirmedSliceIndex baseline', () => {
+  const dialX = 100;
+  const dialY = 100;
+
+  it('sets lastNonCenterSliceIndex equal to dragStartSliceIndex on pointerdown with no subsequent move', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    // Drill to sub-items
+    const catStart = slicePoint(dialX, dialY, 6, 0, 120);
+    (dial as any).handlePointerDown(catStart);
+    (dial as any).handlePointerUp(catStart);
+
+    const subStart = slicePoint(dialX, dialY, 6, 2, 120);
+    (dial as any).handlePointerDown(subStart);
+
+    expect((dial as any).lastNonCenterSliceIndex).toBe((dial as any).dragStartSliceIndex);
+  });
+
+  it('confirms the item at the tapped slice when pointerdown and pointerup are at the same position', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    // Drill to sub-items (leaves)
+    const catStart = slicePoint(dialX, dialY, 6, 0, 120);
+    (dial as any).handlePointerDown(catStart);
+    (dial as any).handlePointerUp(catStart);
+
+    scene.events.emit.mockClear();
+
+    const subStart = slicePoint(dialX, dialY, 6, 3, 120);
+    (dial as any).handlePointerDown(subStart);
+    (dial as any).handlePointerUp(subStart);
+
+    expect(scene.events.emit).toHaveBeenCalledWith('dial:itemConfirmed', expect.anything());
+  });
+});

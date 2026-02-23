@@ -153,3 +153,111 @@ Keep the radial dial layout but replace drag-to-center confirmation with direct 
 
 ---
 
+### Context-Sensitive Item Catalog
+The catalog panel should adapt its contents based on which dial level is active when the player opens it.
+
+**Behavior:**
+- When the player opens the catalog tab while the dial is at the **A-level** (root), the full catalog of all unlocked items is shown as a single scrollable list (current behavior).
+- When the dial is at the **B-level** for a specific item type (e.g. the player has tapped the "Resources" icon and is viewing the resource sub-items), a new contextual **quick-catalog button** appears at the upper-right vertex of the dial square (see Dial Corner Buttons feature). Tapping this button opens the catalog panel filtered to show only items of that item type.
+- Selecting the **Catalog tab** from the central panel always shows the full unlocked catalog regardless of dial state; only the corner shortcut applies the type filter.
+
+**Design considerations:**
+- Filter state is transient — switching away from the B-level dial or tapping the full Catalog tab clears the filter.
+- A visible label or pill above the filtered list indicates which type is active (e.g. "RESOURCES").
+- The filtered view uses the same scrollable row layout as the full catalog.
+
+**Technical requirements:**
+- Track the current navigation depth and the active category item in `RadialDial` / `Game` scene.
+- Pass the active category context to `buildCatalogContent` when triggered from the corner button.
+- `buildCatalogContent` accepts an optional `filterCategory` parameter; when set, only rows for that category are rendered.
+- The corner button is conditionally created/destroyed as `dial:levelChanged` and `dial:goBack` events fire.
+
+---
+
+### Progressive Unlock System
+New players should be eased into the game by starting with a minimal item set and expanding it over time through earned bonus quanta.
+
+#### Starting state
+- Only the **Resources** icon is visible on the A-level dial. All other category slots are hidden (or rendered grayed-out as locked indicators).
+- Orders are generated exclusively from items visible on the **B-level dial face for Resources** — i.e. the immediate sub-items of the Resources category.
+- This keeps the initial learning surface small: players familiarise themselves with a handful of item names and icons before new types are introduced.
+
+#### Unlock progression
+After a shift ends, any accumulated **bonus quanta** (from correctly-positioned items) can be spent to unlock one of two advancement options presented to the player:
+
+| Option | Effect | Unlock condition |
+|--------|--------|-----------------|
+| **Deepen existing type** (e.g. "Resource Systems L2") | In future shifts the C-level dial face for the unlocked type becomes accessible, exposing additional items of that type | Player has used the type for at least one shift |
+| **Unlock new item type** (next clockwise on A-level dial) | The next category icon appears on the A-level dial; its B-level items become eligible in future orders | Player has completed at least one full shift |
+
+Both options expand the pool of items eligible for order generation. The upgrade choice is presented on the **Game Over / Shift End** screen before returning to the main menu.
+
+#### Unlock persistence
+- Unlock state is stored in `settings.json` alongside dial settings (new `progression` key).
+- `OrderGenerator` reads the current unlock state to constrain which items may appear in orders.
+- `NavigationController` consults unlock state to hide/lock category icons that have not yet been unlocked.
+
+#### Catalog visibility
+- The item catalog defaults to showing **only unlocked items**. A locked-item row (greyed out, padlock icon) may appear to hint at what can be earned, but shows no cost or detail.
+- When the player eventually reaches the full unlock state the catalog reverts to the standard view.
+
+**Technical requirements:**
+- New `ProgressionManager` (or extend `SettingsManager`) to store and expose unlock state.
+- `OrderGenerator` updated to filter the item pool by progression state.
+- `Game` scene: show/hide category slots based on unlock state on `NavigationController` setup.
+- `GameOver` / shift-end screen: display earned bonus, present two unlock options, persist choice.
+- `buildCatalogContent`: filter rows by unlock state; render placeholder rows for locked items.
+
+---
+
+### Dial Corner Buttons
+Two small contextual buttons occupy the upper-right and lower-right vertices of the imaginary square that bounds the dial circle. These provide at-a-glance state information and quick actions without cluttering the main dial or central panel.
+
+#### Lower-right corner — Dial Level Indicator (always visible)
+A compact badge shows:
+- The **icon** of the currently active category (or the default center icon at A-level).
+- A **level letter** ("A", "B", "C", …) indicating the current navigation depth.
+
+Examples:
+- At A-level (root): default `skill-diagram` icon + label **A**
+- After tapping Resources at B-level: Resources category icon + label **B**
+
+This gives a persistent orientation cue so players always know where they are in the hierarchy.
+
+#### Upper-right corner — Quick Catalog (conditional)
+Appears **only** when the player is at a B-level dial face for a specific item type (depth = 1, non-terminal). Tapping it opens the catalog panel pre-filtered to show only items of the active type (see Context-Sensitive Item Catalog above).
+
+The button is hidden at A-level, in terminal mode, and at C-level or deeper.
+
+**Technical requirements:**
+- Corner button positions are derived from `dialX + dialRadius + margin` and `dialY ± dialRadius + margin` — update dynamically if `dialRadius` is adjusted in DialCalibration.
+- Buttons are created as small `Graphics` + `Image` Phaser objects managed by the `Game` scene, updated on `dial:levelChanged` and `dial:goBack` events.
+- Lower-right badge redraws on every level change.
+- Upper-right button visibility toggled on level change events; tapping it calls the filtered catalog path described above.
+
+---
+
+### New Player Tutorial System
+First-time players should be guided through core game concepts via contextual overlays that appear at the right moment and can be dismissed without interrupting play.
+
+**Trigger moments:**
+1. **First launch** — brief overlay introduces the dial, the central panel, and the order list.
+2. **First item selection** — tooltip points to the terminal action dial and labels SEND / RECALL.
+3. **First completed order** — highlight the REV and BONUS counters; explain bonus quanta.
+4. **First dial level reached** — explain the center-tap go-back gesture.
+5. **First unlock opportunity** (shift end) — explain the unlock choice presented on the end screen.
+
+**Design:**
+- Each tutorial step is a semi-transparent overlay panel with a short uppercase bitmap-font message and an arrow or highlight ring pointing at the relevant UI element.
+- A single "GOT IT" dismiss button advances or closes the overlay.
+- Steps are shown once per install (progress stored in `settings.json` under `tutorial.completedSteps[]`).
+- Players can re-enable the tutorial from the Settings tab.
+- Tutorial overlays sit at a high Phaser depth so they appear above all game UI but can be layered below a future pause menu.
+
+**Technical requirements:**
+- New `TutorialManager` class (non-Phaser, plain TS) that holds step definitions and tracks completion state via `SettingsManager`.
+- `Game` scene emits named tutorial trigger events (e.g. `tutorial:itemSelected`); `TutorialManager` subscribes and decides whether to show the relevant step.
+- Overlay rendering done in a dedicated `TutorialOverlay` Phaser `Container` created on demand and destroyed on dismiss.
+- All tutorial text must be uppercase and compatible with the `clicker` bitmap font.
+
+---

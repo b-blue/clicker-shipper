@@ -35,15 +35,11 @@ export class RadialDial {
     { id: 'action:recall',  name: 'RECALL',  icon: 'skill-blocked' },
   ];
 
-  // Drag-to-confirm properties
-  private dragStartSliceIndex: number = -1; // Index of slice where drag started
-  private dragStartX: number = 0;
-  private dragStartY: number = 0;
+  // Tap-to-confirm properties
+  private dragStartSliceIndex: number = -1; // Index of slice where tap started
   private lastPointerX: number = 0;
   private lastPointerY: number = 0;
   private lastNonCenterSliceIndex: number = -1;
-  private readonly minDragDistance: number = 20;
-  private showDropCue: boolean = false;
   private pointerConsumed: boolean = false; // guard against duplicate pointerup (touch + synthesized mouse)
   private lastTouchEndTime: number = 0;     // timestamp of last real touch-end, used to suppress synthesized mouse events
   private readonly touchSynthesisWindow: number = 500; // ms within which mouse events after a touch are ignored
@@ -103,21 +99,6 @@ export class RadialDial {
     const dx = pointer.x - this.dialX;
     const dy = pointer.y - this.dialY;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    const dragDx = pointer.x - this.dragStartX;
-    const dragDy = pointer.y - this.dragStartY;
-    const dragDistance = Math.sqrt(dragDx * dragDx + dragDy * dragDy);
-
-    if (this.dragStartSliceIndex >= 0 && dragDistance >= this.minDragDistance) {
-      if (distance < this.centerRadius) {
-        this.showDropCue = true;
-        if (this.highlightedSliceIndex !== -999) {
-          this.highlightedSliceIndex = -999;
-          this.redrawDial();
-        }
-        return;
-      }
-      this.showDropCue = false;
-    }
 
     // Check if pointer is in center
     if (distance < this.centerRadius) {
@@ -145,7 +126,6 @@ export class RadialDial {
       if (this.highlightedSliceIndex !== -1 && this.highlightedSliceIndex !== -999) {
         this.highlightedSliceIndex = -1;
         this.selectedItem = null;
-        this.showDropCue = false;
         this.redrawDial();
       }
     }
@@ -158,12 +138,9 @@ export class RadialDial {
     const dy = pointer.y - this.dialY;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // Record drag start position and slice
-    this.dragStartX = pointer.x;
-    this.dragStartY = pointer.y;
+    // Reset gesture state
     this.dragStartSliceIndex = -1;
     this.lastNonCenterSliceIndex = -1;
-    this.showDropCue = false;
 
     // Suppress synthesized mouse-down events the browser fires ~300ms after a real touch.
     // Without this, the synthesized mousedown resets pointerConsumed and the subsequent
@@ -202,24 +179,15 @@ export class RadialDial {
       this.lastTouchEndTime = Date.now();
     }
 
-    const endX = pointer?.x ?? this.lastPointerX;
-    const endY = pointer?.y ?? this.lastPointerY;
+    const endX = pointer.x;
+    const endY = pointer.y;
     const endDx = endX - this.dialX;
     const endDy = endY - this.dialY;
     const endDistance = Math.sqrt(endDx * endDx + endDy * endDy);
-    const dragDx = endX - this.dragStartX;
-    const dragDy = endY - this.dragStartY;
-    const dragDistance = Math.sqrt(dragDx * dragDx + dragDy * dragDy);
 
-    // Tap scheme: any pointerup that started on a slice confirms it immediately.
-    // wasDrag/endDistance are only retained for the center-tap (go back) check.
-    const wasDrag = dragDistance >= this.minDragDistance;
-
-    // Tapping or dragging a slice confirms it — no drag-to-center required
+    // Tap scheme: any pointerup that started on a slice confirms it immediately
     if (this.dragStartSliceIndex >= 0) {
-      const confirmedSliceIndex = this.lastNonCenterSliceIndex >= 0 
-        ? this.lastNonCenterSliceIndex 
-        : this.dragStartSliceIndex;
+      const confirmedSliceIndex = this.lastNonCenterSliceIndex;
       
       const displayItems = this.getDisplayItems();
       
@@ -262,15 +230,12 @@ export class RadialDial {
           this.redrawDial();
         }
       }
-    } else if (endDistance < this.centerRadius && !wasDrag) {
+    } else if (endDistance < this.centerRadius) {
       // In terminal mode, tapping center goes back to the previous level (B-level)
       if (this.terminalItem) {
         this.terminalItem = null;
         this.highlightedSliceIndex = -1;
         this.selectedItem = null;
-        this.dragStartSliceIndex = -1;
-        this.showDropCue = false;
-        this.lastNonCenterSliceIndex = -1;
         this.updateSliceCount();
         this.redrawDial();
         this.scene.events.emit('dial:goBack');
@@ -287,9 +252,8 @@ export class RadialDial {
       }
     }
 
-    // Reset drag state and selection
+    // Reset gesture state
     this.dragStartSliceIndex = -1;
-    this.showDropCue = false;
     this.lastNonCenterSliceIndex = -1;
   }
 
@@ -385,26 +349,18 @@ export class RadialDial {
     this.centerGraphic.fillStyle(Colors.PANEL_DARK, 0.35);
     this.centerGraphic.fillCircle(this.dialX, this.dialY, this.centerRadius - 2);
 
-    const ringColor = this.showDropCue
+    const ringColor = this.highlightedSliceIndex === -999 && this.navigationController.getDepth() > 0
       ? Colors.HIGHLIGHT_YELLOW
-      : this.highlightedSliceIndex === -999 && this.navigationController.getDepth() > 0
-        ? Colors.HIGHLIGHT_YELLOW
-        : Colors.LIGHT_BLUE;
-    const ringAlpha = this.showDropCue ? 1 : 0.7;
-    this.centerGraphic.lineStyle(3, ringColor, ringAlpha);
+      : Colors.LIGHT_BLUE;
+    this.centerGraphic.lineStyle(3, ringColor, 0.7);
     this.centerGraphic.strokeCircle(this.dialX, this.dialY, this.centerRadius);
 
     const glowStart = this.glowAngle;
     const glowEnd = glowStart + Math.PI / 3;
-    this.centerGraphic.lineStyle(4, Colors.HIGHLIGHT_YELLOW_BRIGHT, this.showDropCue ? 1 : 0.6);
+    this.centerGraphic.lineStyle(4, Colors.HIGHLIGHT_YELLOW_BRIGHT, 0.6);
     this.centerGraphic.beginPath();
     this.centerGraphic.arc(this.dialX, this.dialY, this.centerRadius + 2, glowStart, glowEnd);
     this.centerGraphic.strokePath();
-
-    if (this.showDropCue) {
-      this.centerGraphic.lineStyle(2, Colors.HIGHLIGHT_YELLOW, 0.6);
-      this.centerGraphic.strokeCircle(this.dialX, this.dialY, this.centerRadius + 6);
-    }
 
     // Update center display — selected item (hover/drag) takes priority, else default icon
     const centerDisplayItem = this.selectedItem;
@@ -592,7 +548,6 @@ export class RadialDial {
     this.highlightedSliceIndex = -1;
     this.selectedItem = null;
     this.dragStartSliceIndex = -1;
-    this.showDropCue = false;
     this.lastNonCenterSliceIndex = -1;
     // Clean up glow graphics
     this.sliceGlows.forEach(g => g.destroy());

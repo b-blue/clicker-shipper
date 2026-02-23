@@ -43,6 +43,8 @@ export class RadialDial {
   private pointerConsumed: boolean = false; // guard against duplicate pointerup (touch + synthesized mouse)
   private lastTouchEndTime: number = 0;     // timestamp of last real touch-end, used to suppress synthesized mouse events
   private readonly touchSynthesisWindow: number = 500; // ms within which mouse events after a touch are ignored
+  private lastActionTime: number = 0;       // timestamp of last confirmed terminal action, used to debounce rapid double-sends
+  private readonly actionDebounceWindow: number = 300; // ms to block a second terminal action after the first
   private glowAngle: number = 0;
   private glowTimer: Phaser.Time.TimerEvent | null = null;
 
@@ -149,6 +151,15 @@ export class RadialDial {
       return;
     }
 
+    // Block any new gesture that starts within the action debounce window.
+    // This catches the scenario where pointer events arrive in an unexpected order
+    // (e.g. synthesized-mouse fires first, action fires, then the real touch pointerdown
+    // arrives and resets pointerConsumed — which would let the following touch pointerup
+    // fire a second action).
+    if (Date.now() - this.lastActionTime < this.actionDebounceWindow) {
+      return;
+    }
+
     this.pointerConsumed = false; // genuine new gesture — allow next pointerup to process
 
     // Check if started on a slice
@@ -196,9 +207,18 @@ export class RadialDial {
 
         // Terminal dial: an action (send/break/combine) is being confirmed
         if (this.terminalItem) {
+          // Debounce: ignore rapid double-taps within the action window
+          if (Date.now() - this.lastActionTime < this.actionDebounceWindow) {
+            this.dragStartSliceIndex = -1;
+            this.lastNonCenterSliceIndex = -1;
+            return;
+          }
           const action = confirmedItem.id.replace('action:', '');
           const targetItem = this.terminalItem;
           this.terminalItem = null;
+          this.lastActionTime = Date.now();
+          this.dragStartSliceIndex = -1;
+          this.lastNonCenterSliceIndex = -1;
           this.scene.events.emit('dial:actionConfirmed', { action, item: targetItem });
           this.reset(); // Returns dial to level A
           return;

@@ -191,6 +191,74 @@ describe('getShippableItems', () => {
       });
     });
   });
+
+  describe('progression-category filtering', () => {
+    const { ProgressionManager } = jest.requireMock('../../managers/ProgressionManager') as {
+      ProgressionManager: { getInstance: jest.Mock };
+    };
+
+    /** Two nav_*_root categories; only alpha unlocked. */
+    function makeNavRootTree(): MenuItem[] {
+      return [
+        {
+          id: 'nav_alpha_root',
+          name: 'Alpha',
+          icon: 'alpha',
+          children: [
+            { id: 'alpha_item_1', name: 'Alpha 1', icon: 'a1', cost: 10 },
+            { id: 'alpha_item_2', name: 'Alpha 2', icon: 'a2', cost: 20 },
+          ],
+        },
+        {
+          id: 'nav_beta_root',
+          name: 'Beta',
+          icon: 'beta',
+          children: [
+            { id: 'beta_item_1', name: 'Beta 1', icon: 'b1', cost: 30 },
+          ],
+        },
+      ];
+    }
+
+    it('excludes items from locked nav_*_root categories', () => {
+      ProgressionManager.getInstance.mockReturnValue({
+        isUnlocked: jest.fn((id: string) => id === 'nav_alpha_root'),
+        getUnlockedDepth: jest.fn(() => 1),
+      });
+      const result = getShippableItems(makeNavRootTree());
+      const ids = result.map(i => i.id);
+      expect(ids).toContain('alpha_item_1');
+      expect(ids).toContain('alpha_item_2');
+      expect(ids).not.toContain('beta_item_1');
+    });
+
+    it('returns an empty array when all nav_*_root categories are locked', () => {
+      ProgressionManager.getInstance.mockReturnValue({
+        isUnlocked: jest.fn(() => false),
+        getUnlockedDepth: jest.fn(() => 0),
+      });
+      expect(getShippableItems(makeNavRootTree())).toHaveLength(0);
+    });
+
+    it('includes items from all unlocked categories', () => {
+      ProgressionManager.getInstance.mockReturnValue({
+        isUnlocked: jest.fn(() => true),
+        getUnlockedDepth: jest.fn(() => 1),
+      });
+      const result = getShippableItems(makeNavRootTree());
+      expect(result.map(i => i.id)).toEqual(['alpha_item_1', 'alpha_item_2', 'beta_item_1']);
+    });
+
+    it('non-progression cat_* IDs are always included regardless of ProgressionManager', () => {
+      ProgressionManager.getInstance.mockReturnValue({
+        isUnlocked: jest.fn(() => false),
+        getUnlockedDepth: jest.fn(() => 0),
+      });
+      // makeSimpleTree uses 'cat_resources' — not a progression category
+      const result = getShippableItems(makeSimpleTree());
+      expect(result.map(i => i.id)).toEqual(['iron_ore', 'coal']);
+    });
+  });
 });
 
 // ─── generateOrder ────────────────────────────────────────────────────────────

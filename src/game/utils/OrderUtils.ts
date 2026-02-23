@@ -18,24 +18,34 @@ export interface CatalogCategory {
  * eligible to appear in orders.
  *
  * An item is "shippable" if:
- *   1. It is a direct child of a root (A-level) menu item  — i.e. it lives
- *      on the B-level dial that is shown when the player drills into any
- *      A-level category.
- *   2. It is NOT a navigation-down item (icon === 'skill-down' or id
- *      contains '_down_'). Those items expand into a deeper (locked) dial
- *      and are therefore not directly selectable by the player yet.
- *   3. It has a defined `cost` field — items without a cost are metadata
- *      nodes, not shippable goods.
+ *   1. Its parent root (A-level) category is unlocked per ProgressionManager.
+ *      Categories that follow the `nav_*_root` naming convention are checked;
+ *      others (legacy / test fixtures without that pattern) are included as-is.
+ *   2. It is a direct child of an A-level menu item — i.e. it lives on the
+ *      B-level dial shown when the player drills into a category.
+ *   3. It is NOT a navigation-down item (icon === 'skill-down' or id contains
+ *      '_down_'). Those expand into deeper dials not yet selectable.
+ *   4. It has a defined `cost` field — items without a cost are metadata nodes.
  *
- * This intentionally mirrors the locking logic in RadialDial.shouldLockNavItem
- * so that orders are always composed of items the player can actually reach.
+ * This mirrors the locking logic in RadialDial.shouldLockNavItem and
+ * getCatalogRows so that orders are always composed of items the player can
+ * actually reach on the dial.
  */
 export function getShippableItems(items: any[]): MenuItem[] {
   const normalized = normalizeItems(items);
   const shippable: MenuItem[] = [];
 
+  // Obtain progression state; fall back gracefully when unavailable (e.g. tests).
+  let pm: { isUnlocked: (id: string) => boolean } | null = null;
+  try { pm = ProgressionManager.getInstance(); } catch { /* unavailable */ }
+
   normalized.forEach(rootItem => {
     if (!rootItem.children) return;
+
+    // Skip locked progression categories.
+    const isProgressionCategory = rootItem.id.startsWith('nav_') && rootItem.id.endsWith('_root');
+    if (isProgressionCategory && pm && !pm.isUnlocked(rootItem.id)) return;
+
     rootItem.children.forEach((child: MenuItem) => {
       const isNavDown = child.icon === 'skill-down' || child.id.includes('_down_');
       if (!isNavDown && child.cost !== undefined) {

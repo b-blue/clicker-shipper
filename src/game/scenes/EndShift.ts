@@ -1,27 +1,26 @@
 import { Colors } from '../constants/Colors';
 import {
   ProgressionManager,
-  ALL_CATEGORY_IDS,
   CATEGORY_DISPLAY_NAMES,
 } from '../managers/ProgressionManager';
 
-interface GameOverData {
+interface EndShiftData {
   revenue?: number;
   bonus?: number;
   shiftsCompleted?: number;
 }
 
-export class GameOver extends Phaser.Scene {
+export class EndShift extends Phaser.Scene {
   private upgradesContainer: Phaser.GameObjects.Container | null = null;
   private upgradesContainerY: number = 0;
   private upgradesAreaHeight: number = 0;
   private quantaBankText: Phaser.GameObjects.BitmapText | null = null;
 
   constructor() {
-    super('GameOver');
+    super('EndShift');
   }
 
-  create(data: GameOverData) {
+  create(data: EndShiftData) {
     const progression = ProgressionManager.getInstance();
     const revenue = data?.revenue ?? 0;
     const bonus = data?.bonus ?? 0;
@@ -87,15 +86,28 @@ export class GameOver extends Phaser.Scene {
 
     this.buildUpgradesPanel(W, cx);
 
-    // ── DONE button ──────────────────────────────────────────────────────────
-    const doneY = H - doneH / 2 - 10;
-    const doneBg = this.add.rectangle(cx, doneY, W - 40, doneH - 10, Colors.PANEL_DARK, 0.9)
+    // ── Action buttons (PLAY AGAIN / MAIN MENU) ─────────────────────────────
+    const btnAreaY = H - doneH / 2 - 10;
+    const halfW = (W - 52) / 2;
+    const playX = cx - halfW / 2 - 4;
+    const menuBtnX = cx + halfW / 2 + 4;
+
+    const playBg = this.add.rectangle(playX, btnAreaY, halfW, doneH - 10, Colors.PANEL_DARK, 0.9)
+      .setStrokeStyle(2, Colors.NEON_BLUE);
+    playBg.setInteractive();
+    playBg.on('pointerover', () => playBg.setFillStyle(Colors.BUTTON_HOVER, 0.95));
+    playBg.on('pointerout', () => playBg.setFillStyle(Colors.PANEL_DARK, 0.9));
+    playBg.on('pointerdown', () => this.scene.start('Game'));
+    this.add.bitmapText(playX, btnAreaY, 'clicker', 'PLAY AGAIN', 14)
+      .setOrigin(0.5).setTint(Colors.NEON_BLUE);
+
+    const menuBg = this.add.rectangle(menuBtnX, btnAreaY, halfW, doneH - 10, Colors.PANEL_DARK, 0.9)
       .setStrokeStyle(2, Colors.HIGHLIGHT_YELLOW);
-    doneBg.setInteractive();
-    doneBg.on('pointerover', () => doneBg.setFillStyle(Colors.BUTTON_HOVER, 0.95));
-    doneBg.on('pointerout', () => doneBg.setFillStyle(Colors.PANEL_DARK, 0.9));
-    doneBg.on('pointerdown', () => this.scene.start('MainMenu'));
-    this.add.bitmapText(cx, doneY, 'clicker', 'DONE', 18)
+    menuBg.setInteractive();
+    menuBg.on('pointerover', () => menuBg.setFillStyle(Colors.BUTTON_HOVER, 0.95));
+    menuBg.on('pointerout', () => menuBg.setFillStyle(Colors.PANEL_DARK, 0.9));
+    menuBg.on('pointerdown', () => this.scene.start('MainMenu'));
+    this.add.bitmapText(menuBtnX, btnAreaY, 'clicker', 'MAIN MENU', 14)
       .setOrigin(0.5).setTint(Colors.HIGHLIGHT_YELLOW);
   }
 
@@ -259,5 +271,3 @@ export class GameOver extends Phaser.Scene {
   }
 }
 
-// Re-export ALL_CATEGORY_IDS so callers can reference available categories
-export { ALL_CATEGORY_IDS };

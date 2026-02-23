@@ -100,7 +100,7 @@ export class MainMenu extends Phaser.Scene {
 
   openUpgrades() {
     // Open upgrades screen (no shift data — just browsing/spending quanta)
-    this.scene.start('GameOver', { revenue: 0, bonus: 0 });
+    this.scene.start('EndShift', { revenue: 0, bonus: 0 });
   }
 
   openSettings() {

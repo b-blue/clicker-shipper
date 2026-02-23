@@ -22,6 +22,13 @@ export class Game extends Phaser.Scene {
   private revenueText: Phaser.GameObjects.BitmapText | null = null;
   private bonusText: Phaser.GameObjects.BitmapText | null = null;
   private switchToOrdersTab: (() => void) | null = null;
+  private shiftArcGraphic: Phaser.GameObjects.Graphics | null = null;
+  private shiftTimerEvent: Phaser.Time.TimerEvent | null = null;
+  private shiftStartTime: number = 0;
+  private shiftDurationMs: number = 300000;
+  private shiftTimerX: number = 0;
+  private shiftTimerY: number = 0;
+  private readonly shiftTimerRadius: number = 12;
 
   constructor() {
     super('Game');
@@ -68,6 +75,26 @@ export class Game extends Phaser.Scene {
       const titleY = panelTop + 16;
       const panelTitle = this.add.bitmapText(panelX, titleY, 'clicker', 'ORDERS', 14)
         .setOrigin(0.5);
+
+      // Shift timer arc (small clockwise-filling circle, right side of title bar)
+      const timerR = this.shiftTimerRadius;
+      const timerX = panelX + panelWidth / 2 - timerR - 8;
+      const timerY = titleY;
+      this.shiftTimerX = timerX;
+      this.shiftTimerY = timerY;
+      this.shiftDurationMs = settingsManager.getShiftDurationMs();
+      const timerBg = this.add.graphics();
+      timerBg.fillStyle(Colors.PANEL_MEDIUM, 1);
+      timerBg.fillCircle(timerX, timerY, timerR);
+      timerBg.lineStyle(1, Colors.BORDER_BLUE, 0.7);
+      timerBg.strokeCircle(timerX, timerY, timerR);
+      this.shiftArcGraphic = this.add.graphics();
+      this.shiftStartTime = this.time.now;
+      this.shiftTimerEvent = this.time.addEvent({
+        delay: this.shiftDurationMs,
+        callback: this.endShift,
+        callbackScope: this,
+      });
 
       // Stats bar — persistent revenue & bonus tallies across orders
       const statsContainer = this.add.container(0, 0);
@@ -258,6 +285,24 @@ export class Game extends Phaser.Scene {
     }
   }
 
+  update(): void {
+    if (!this.shiftArcGraphic || this.shiftDurationMs <= 0) return;
+    const elapsed = this.time.now - this.shiftStartTime;
+    const fraction = Math.min(1, elapsed / this.shiftDurationMs);
+    const r = this.shiftTimerRadius;
+    this.shiftArcGraphic.clear();
+    if (fraction > 0) {
+      this.shiftArcGraphic.fillStyle(0x00e84a, 0.85);
+      this.shiftArcGraphic.slice(
+        this.shiftTimerX, this.shiftTimerY, r,
+        -Math.PI / 2,
+        -Math.PI / 2 + Math.PI * 2 * fraction,
+        false
+      );
+      this.shiftArcGraphic.fillPath();
+    }
+  }
+
   private buildCatalogContent(container: Phaser.GameObjects.Container, x: number, y: number, width: number, height: number, items: any): void {
     const catalogCategories = getCatalogRows(items);
     const listLeft = x - width / 2;
@@ -404,7 +449,57 @@ export class Game extends Phaser.Scene {
     resetBtn.on('pointerover', () => resetBtn.setFillStyle(resetPending ? 0x5a0010 : 0x1a0008, 0.95));
     resetBtn.on('pointerout', () => resetBtn.setFillStyle(resetPending ? 0x3a0008 : Colors.PANEL_DARK, 0.9));
 
-    container.add([btn, btnLabel, resetBtn, resetLabel]);
+    // Shift duration presets
+    const sm = SettingsManager.getInstance();
+    const durationLabelY = resetY + 52;
+    const durationLbl = this.add.bitmapText(panelX - btnW / 2, durationLabelY, 'clicker', 'SHIFT DURATION', 10)
+      .setOrigin(0, 0.5).setTint(0xaaaacc);
+    const durationPresets = [
+      { label: '1 MIN', ms: 60000 },
+      { label: '2 MIN', ms: 120000 },
+      { label: '5 MIN', ms: 300000 },
+      { label: '10 MIN', ms: 600000 },
+    ];
+    const presetBtnW = (btnW - 12) / 4;
+    const presetY = durationLabelY + 28;
+    const presetBgRefs: Array<{ bg: Phaser.GameObjects.Rectangle; ms: number }> = [];
+
+    const refreshPresetStyles = () => {
+      const cur = sm.getShiftDurationMs();
+      for (const p of presetBgRefs) {
+        const active = p.ms === cur;
+        p.bg.setStrokeStyle(2, active ? Colors.NEON_BLUE : Colors.BORDER_BLUE, active ? 1 : 0.5);
+        p.bg.setFillStyle(active ? 0x0a1f3a : Colors.PANEL_DARK, 0.9);
+      }
+    };
+
+    durationPresets.forEach((preset, i) => {
+      const bx = panelX - btnW / 2 + i * (presetBtnW + 4) + presetBtnW / 2;
+      const isActive = preset.ms === sm.getShiftDurationMs();
+      const presetBg = this.add.rectangle(bx, presetY, presetBtnW, 26, isActive ? 0x0a1f3a : Colors.PANEL_DARK, 0.9);
+      presetBg.setStrokeStyle(2, isActive ? Colors.NEON_BLUE : Colors.BORDER_BLUE, isActive ? 1 : 0.5);
+      presetBg.setInteractive();
+      presetBg.on('pointerdown', () => {
+        sm.updateShiftDuration(preset.ms);
+        this.shiftDurationMs = preset.ms;
+        // Restart the running timer from now with the new duration
+        this.shiftTimerEvent?.remove();
+        this.shiftStartTime = this.time.now;
+        this.shiftTimerEvent = this.time.addEvent({
+          delay: this.shiftDurationMs,
+          callback: this.endShift,
+          callbackScope: this,
+        });
+        refreshPresetStyles();
+      });
+      presetBg.on('pointerover', () => { if (preset.ms !== sm.getShiftDurationMs()) presetBg.setFillStyle(Colors.BUTTON_HOVER, 0.6); });
+      presetBg.on('pointerout', () => refreshPresetStyles());
+      const presetLbl = this.add.bitmapText(bx, presetY, 'clicker', preset.label, 9).setOrigin(0.5);
+      presetBgRefs.push({ bg: presetBg, ms: preset.ms });
+      container.add([presetBg, presetLbl]);
+    });
+
+    container.add([btn, btnLabel, resetBtn, resetLabel, durationLbl]);
   }
 
   private buildOrderContent(container: Phaser.GameObjects.Container, x: number, y: number, width: number, height: number, order: Order): Array<{ x: number; y: number; size: number; slotBg: Phaser.GameObjects.Graphics; expectedIconKey: string }> {
@@ -536,10 +631,6 @@ export class Game extends Phaser.Scene {
     return slots;
   }
 
-  update(_time: number, _delta: number) {
-    // Update shift timer display
-  }
-
   private checkOrderComplete(): void {
     // All slots must be filled
     if (this.fulfillmentImages.some(s => s === null)) return;
@@ -652,7 +743,7 @@ export class Game extends Phaser.Scene {
     const progression = ProgressionManager.getInstance();
     progression.addQuanta(this.shiftBonus);
     progression.recordShiftComplete();
-    this.scene.start('GameOver', {
+    this.scene.start('EndShift', {
       revenue: this.shiftRevenue,
       bonus: this.shiftBonus,
       shiftsCompleted: progression.getShiftsCompleted()
@@ -660,6 +751,7 @@ export class Game extends Phaser.Scene {
   }
 
   shutdown() {
+    this.shiftTimerEvent?.remove();
     if (this.radialDial) {
       this.radialDial.destroy();
     }

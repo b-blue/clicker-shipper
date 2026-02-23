@@ -77,66 +77,64 @@ function makeMockScene() {
   };
 }
 
-describe('GameOver scene', () => {
+describe('EndShift scene', () => {
   beforeAll(() => {
     (global as any).Phaser = { Scene: class {} };
   });
 
   it('creates without throwing', async () => {
-    const { GameOver } = await import('../GameOver');
-    const scene = new GameOver();
+    const { EndShift } = await import('../EndShift');
+    const scene = new EndShift();
     const mock = makeMockScene();
     Object.assign(scene, mock);
     expect(() => scene.create({})).not.toThrow();
   });
 
   it('displays SHIFT COMPLETE header text', async () => {
-    const { GameOver } = await import('../GameOver');
-    const scene = new GameOver();
+    const { EndShift } = await import('../EndShift');
+    const scene = new EndShift();
     const mock = makeMockScene();
     Object.assign(scene, mock);
     scene.create({ revenue: 100, bonus: 20, shiftsCompleted: 5 });
-
     const calls: string[] = (mock.add.bitmapText as jest.Mock).mock.calls.map(c => c[3]);
     expect(calls).toContain('SHIFT COMPLETE');
   });
 
   it('shows quanta bank balance', async () => {
-    const { GameOver } = await import('../GameOver');
-    const scene = new GameOver();
+    const { EndShift } = await import('../EndShift');
+    const scene = new EndShift();
     const mock = makeMockScene();
     Object.assign(scene, mock);
     scene.create({ revenue: 50, bonus: 10 });
-
     const calls: string[] = (mock.add.bitmapText as jest.Mock).mock.calls.map(c => c[3]);
     expect(calls.some(t => t.includes('150'))).toBe(true);
   });
 
-  it('shows DONE button', async () => {
-    const { GameOver } = await import('../GameOver');
-    const scene = new GameOver();
+  it('shows PLAY AGAIN and MAIN MENU buttons', async () => {
+    const { EndShift } = await import('../EndShift');
+    const scene = new EndShift();
     const mock = makeMockScene();
     Object.assign(scene, mock);
     scene.create({});
-
     const calls: string[] = (mock.add.bitmapText as jest.Mock).mock.calls.map(c => c[3]);
-    expect(calls).toContain('DONE');
+    expect(calls).toContain('PLAY AGAIN');
+    expect(calls).toContain('MAIN MENU');
   });
 
-  it('navigates to MainMenu when DONE is pressed', async () => {
-    const { GameOver } = await import('../GameOver');
-    const scene = new GameOver();
+  it('navigates to Game when PLAY AGAIN is pressed', async () => {
+    const { EndShift } = await import('../EndShift');
+    const scene = new EndShift();
     const mock = makeMockScene();
     Object.assign(scene, mock);
 
-    let doneCallback: (() => void) | undefined;
+    const pointerdownCallbacks: Array<() => void> = [];
     (mock.add.rectangle as jest.Mock).mockImplementation(() => {
       const obj = {
         setStrokeStyle: jest.fn().mockReturnThis(),
         setInteractive: jest.fn().mockReturnThis(),
         setFillStyle: jest.fn().mockReturnThis(),
         on: jest.fn().mockImplementation((event: string, cb: () => void) => {
-          if (event === 'pointerdown') doneCallback = cb;
+          if (event === 'pointerdown') pointerdownCallbacks.push(cb);
           return obj;
         }),
         setMask: jest.fn().mockReturnThis(),
@@ -147,7 +145,37 @@ describe('GameOver scene', () => {
     });
 
     scene.create({});
-    doneCallback?.();
+    const cbSnapshot = [...pointerdownCallbacks];
+    for (const cb of cbSnapshot) cb();
+    expect(mock.scene.start).toHaveBeenCalledWith('Game');
+  });
+
+  it('navigates to MainMenu when MAIN MENU is pressed', async () => {
+    const { EndShift } = await import('../EndShift');
+    const scene = new EndShift();
+    const mock = makeMockScene();
+    Object.assign(scene, mock);
+
+    const pointerdownCallbacks: Array<() => void> = [];
+    (mock.add.rectangle as jest.Mock).mockImplementation(() => {
+      const obj = {
+        setStrokeStyle: jest.fn().mockReturnThis(),
+        setInteractive: jest.fn().mockReturnThis(),
+        setFillStyle: jest.fn().mockReturnThis(),
+        on: jest.fn().mockImplementation((event: string, cb: () => void) => {
+          if (event === 'pointerdown') pointerdownCallbacks.push(cb);
+          return obj;
+        }),
+        setMask: jest.fn().mockReturnThis(),
+        setVisible: jest.fn().mockReturnThis(),
+        destroy: jest.fn(),
+      };
+      return obj;
+    });
+
+    scene.create({});
+    const cbSnapshot = [...pointerdownCallbacks];
+    for (const cb of cbSnapshot) cb();
     expect(mock.scene.start).toHaveBeenCalledWith('MainMenu');
   });
 });

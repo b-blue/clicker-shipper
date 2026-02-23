@@ -9,6 +9,7 @@ export interface DialSettings {
 export interface UISettings {
   hudStripY: number;
   hudStripHeight: number;
+  shiftDurationMs?: number;
 }
 
 export interface GameSettings {
@@ -76,6 +77,14 @@ export class SettingsManager {
 
   getUISettings(): UISettings {
     return this.getSettings().ui;
+  }
+
+  getShiftDurationMs(): number {
+    return this.getSettings().ui.shiftDurationMs ?? 300000;
+  }
+
+  updateShiftDuration(ms: number): void {
+    if (this.settings) { this.settings.ui.shiftDurationMs = ms; this.save(); }
   }
 
   updateDialPosition(offsetX: number, offsetY: number): void {

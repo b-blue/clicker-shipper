@@ -44,6 +44,7 @@ export class RadialDial {
   private lastNonCenterSliceIndex: number = -1;
   private readonly minDragDistance: number = 20;
   private showDropCue: boolean = false;
+  private pointerConsumed: boolean = false; // guard against duplicate pointerup (touch + synthesized mouse)
   private glowAngle: number = 0;
   private glowTimer: Phaser.Time.TimerEvent | null = null;
 
@@ -161,6 +162,7 @@ export class RadialDial {
     this.dragStartSliceIndex = -1;
     this.lastNonCenterSliceIndex = -1;
     this.showDropCue = false;
+    this.pointerConsumed = false; // new gesture starts — allow next pointerup to process
 
     // Check if started on a slice
     if (distance < this.sliceRadius + 50 && distance > this.centerRadius + 5) {
@@ -180,6 +182,10 @@ export class RadialDial {
   }
 
   private handlePointerUp(pointer: Phaser.Input.Pointer): void {
+    // Ignore duplicate pointerup events from the same gesture (e.g. touch + synthesized mouse)
+    if (this.pointerConsumed) return;
+    this.pointerConsumed = true;
+
     const endX = pointer?.x ?? this.lastPointerX;
     const endY = pointer?.y ?? this.lastPointerY;
     const endDx = endX - this.dialX;
@@ -189,13 +195,12 @@ export class RadialDial {
     const dragDy = endY - this.dragStartY;
     const dragDistance = Math.sqrt(dragDx * dragDx + dragDy * dragDy);
 
-    // Check if this was a drag (minimum distance required)
+    // Tap scheme: any pointerup that started on a slice confirms it immediately.
+    // wasDrag/endDistance are only retained for the center-tap (go back) check.
     const wasDrag = dragDistance >= this.minDragDistance;
 
-    // If we started on a valid slice and dragged to center, confirm selection
-    if (this.dragStartSliceIndex >= 0 && wasDrag && endDistance < this.centerRadius) {
-      // Use lastNonCenterSliceIndex if available (the last slice highlighted during drag)
-      // Otherwise fall back to dragStartSliceIndex
+    // Tapping or dragging a slice confirms it — no drag-to-center required
+    if (this.dragStartSliceIndex >= 0) {
       const confirmedSliceIndex = this.lastNonCenterSliceIndex >= 0 
         ? this.lastNonCenterSliceIndex 
         : this.dragStartSliceIndex;
@@ -241,7 +246,7 @@ export class RadialDial {
           this.redrawDial();
         }
       }
-    } else if (!wasDrag && endDistance < this.centerRadius) {
+    } else if (endDistance < this.centerRadius && !wasDrag) {
       // In terminal mode, tapping center goes back to the previous level (B-level)
       if (this.terminalItem) {
         this.terminalItem = null;
@@ -264,12 +269,6 @@ export class RadialDial {
         this.redrawDial();
         this.scene.events.emit('dial:goBack');
       }
-    } else if (this.dragStartSliceIndex >= 0 && wasDrag) {
-      // Drag ended but not in center - clear selection
-      this.selectedItem = null;
-      this.highlightedSliceIndex = -1;
-      this.showDropCue = false;
-      this.redrawDial();
     }
 
     // Reset drag state and selection

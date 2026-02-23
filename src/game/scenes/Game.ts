@@ -9,7 +9,7 @@ export class Game extends Phaser.Scene {
   private radialDial: RadialDial | null = null;
   private ordersContainer: Phaser.GameObjects.Container | null = null;
   private fulfillmentSlots: Array<{ x: number; y: number; size: number; slotBg: Phaser.GameObjects.Graphics; expectedIconKey: string }> = [];
-  private fulfillmentImages: Array<{ img: Phaser.GameObjects.Image; iconKey: string } | null> = [];
+  private fulfillmentImages: Array<{ img: Phaser.GameObjects.Image | null; iconKey: string } | null> = [];
   private fulfillmentOrderIconKeys: Set<string> = new Set();
   private shiftRevenue: number = 0;
   private shiftBonus: number = 0;
@@ -175,12 +175,14 @@ export class Game extends Phaser.Scene {
           const slotIndex = this.fulfillmentImages.findIndex(s => s === null);
           if (slotIndex !== -1) {
             const slot = this.fulfillmentSlots[slotIndex];
+            let img: Phaser.GameObjects.Image | null = null;
             if (this.textures.exists(iconKey)) {
-              const img = this.add.image(slot.x, slot.y, iconKey);
+              img = this.add.image(slot.x, slot.y, iconKey);
               img.setDisplaySize(slot.size - 6, slot.size - 6);
               this.ordersContainer.add(img);
-              this.fulfillmentImages[slotIndex] = { img, iconKey };
             }
+            // Always record the slot as occupied so the next send picks the next slot
+            this.fulfillmentImages[slotIndex] = { img, iconKey };
             // Color the slot bg: green = correct position, yellow = wrong position but in order
             const isCorrect = slot.expectedIconKey === iconKey;
             const isPresent = this.fulfillmentOrderIconKeys.has(iconKey);
@@ -200,7 +202,7 @@ export class Game extends Phaser.Scene {
             if (this.fulfillmentImages[i]?.iconKey === iconKey) { lastMatch = i; break; }
           }
           if (lastMatch !== -1) {
-            this.fulfillmentImages[lastMatch]?.img.destroy();
+            this.fulfillmentImages[lastMatch]?.img?.destroy();
             this.fulfillmentImages[lastMatch] = null;
             // Revert slot bg to neutral
             const slot = this.fulfillmentSlots[lastMatch];

@@ -166,7 +166,7 @@ describe('RadialDial drag-to-center selection', () => {
     expect(scene.events.emit).toHaveBeenCalledWith('dial:itemConfirmed', expect.anything());
   });
 
-  it('reverts selection when lifting outside center', () => {
+  it('confirms the last highlighted slice when lifting anywhere on the dial', () => {
     const scene = createMockScene();
     const items = createMockItems();
     scene.textures.exists.mockReturnValue(true);
@@ -180,15 +180,16 @@ describe('RadialDial drag-to-center selection', () => {
 
     (scene.events.emit as jest.Mock).mockClear();
 
+    // Tap down on slice 2, move to slice 3, lift at slice 3 — should confirm slice 3
     const start = slicePoint(dialX, dialY, 6, 2, 120);
-    const move = slicePoint(dialX, dialY, 6, 3, 120);
+    const move  = slicePoint(dialX, dialY, 6, 3, 120);
 
     (dial as any).handlePointerDown(start);
     (dial as any).handleMouseMove(move);
     (dial as any).handlePointerUp(move);
 
     expect((dial as any).selectedItem).toBeNull();
-    expect(scene.events.emit).not.toHaveBeenCalledWith('dial:itemConfirmed', expect.anything());
+    expect(scene.events.emit).toHaveBeenCalledWith('dial:itemConfirmed', expect.anything());
   });
 
   it('doubles center icon scale to 1.2', () => {

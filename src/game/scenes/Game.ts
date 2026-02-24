@@ -14,21 +14,25 @@ import {
 } from "../utils/OrderUtils";
 import { MenuItem, Order } from "../types/GameTypes";
 
+/** A single order-fulfillment slot (one per distinct item type in an order). */
+interface OrderSlot {
+  iconKey: string;
+  requiredQty: number;
+  fulfilledQty: number;
+  x: number;
+  y: number;
+  size: number;
+  slotBg: Phaser.GameObjects.Graphics;
+  slotIcon: Phaser.GameObjects.Image | null;
+  badgeGraphic: Phaser.GameObjects.Graphics | null;
+  badgeText: Phaser.GameObjects.BitmapText | null;
+}
+
 export class Game extends Phaser.Scene {
   private radialDial: RadialDial | null = null;
   private ordersContainer: Phaser.GameObjects.Container | null = null;
-  private fulfillmentSlots: Array<{
-    x: number;
-    y: number;
-    size: number;
-    slotBg: Phaser.GameObjects.Graphics;
-    expectedIconKey: string;
-  }> = [];
-  private fulfillmentImages: Array<{
-    img: Phaser.GameObjects.Image | null;
-    iconKey: string;
-  } | null> = [];
-  private fulfillmentOrderIconCounts: Map<string, number> = new Map();
+  private orderSlots: OrderSlot[] = [];
+
   private shiftRevenue: number = 0;
   private shiftBonus: number = 0;
   private currentOrder: Order | null = null;
@@ -215,7 +219,7 @@ export class Game extends Phaser.Scene {
     // Generate and display current order
     const currentOrder = buildOrder(items);
     this.currentOrder = currentOrder;
-    this.fulfillmentSlots = this.buildOrderContent(
+    this.orderSlots = this.buildOrderContent(
       this.ordersContainer,
       panelX,
       panelTop + 62,
@@ -223,14 +227,6 @@ export class Game extends Phaser.Scene {
       panelHeight - 76,
       currentOrder,
     );
-    this.fulfillmentImages = new Array(this.fulfillmentSlots.length).fill(null);
-    this.fulfillmentOrderIconCounts = new Map<string, number>();
-    currentOrder.requirements.forEach((r) => {
-      this.fulfillmentOrderIconCounts.set(
-        r.iconKey,
-        (this.fulfillmentOrderIconCounts.get(r.iconKey) ?? 0) + r.quantity,
-      );
-    });
 
     // Settings tab: button to launch DialCalibration scene
     this.buildSettingsContent(settingsContainer, panelX, panelWidth);
@@ -317,23 +313,21 @@ export class Game extends Phaser.Scene {
     // across scene restarts, so we clear before re-registering to keep exactly
     // one handler per event regardless of restart count.
     this.events.removeAllListeners("dial:itemConfirmed");
-    this.events.removeAllListeners("dial:actionConfirmed");
+    this.events.removeAllListeners("dial:quantityConfirmed");
     this.events.removeAllListeners("dial:levelChanged");
     this.events.removeAllListeners("dial:goBack");
 
     this.events.on("dial:itemConfirmed", (data: { item: any }) => {
-      if (this.radialDial) this.radialDial.showTerminalDial(data.item);
+      const iconKey: string = data.item.icon || data.item.id;
+      const existingQty = this.getCurrentFulfilledQty(iconKey);
+      if (this.radialDial) this.radialDial.showTerminalDial(data.item, existingQty);
       this.cornerHUD?.onItemConfirmed();
     });
 
-    this.events.on("dial:actionConfirmed", (data: { action: string; item: any }) => {
+    this.events.on("dial:quantityConfirmed", (data: { item: any; quantity: number }) => {
       const iconKey: string = data.item.icon || data.item.id;
-      if (data.action === "send") {
-        this.onSendItem(iconKey);
-      } else if (data.action === "recall") {
-        this.onRecallItem(iconKey);
-      }
-      this.cornerHUD?.onActionConfirmed();
+      this.setItemQuantity(iconKey, data.quantity);
+      this.cornerHUD?.onQuantityConfirmed();
     });
 
     this.events.on(
@@ -344,60 +338,61 @@ export class Game extends Phaser.Scene {
     this.events.on("dial:goBack", () => this.cornerHUD?.onGoBack());
   }
 
-  /** Place an item icon in the first empty fulfillment slot. */
-  private onSendItem(iconKey: string): void {
+  /** Return how many units of iconKey are currently fulfilled. */
+  private getCurrentFulfilledQty(iconKey: string): number {
+    return this.orderSlots.find((s) => s.iconKey === iconKey)?.fulfilledQty ?? 0;
+  }
+
+  /**
+   * Set the fulfilled quantity for a given item type.
+   * targetQty = 0 means remove the item from the order.
+   * Clamps to [0, slot.requiredQty].
+   */
+  private setItemQuantity(iconKey: string, targetQty: number): void {
     if (!this.ordersContainer) return;
-    const slotIndex = this.fulfillmentImages.findIndex((s) => s === null);
-    if (slotIndex === -1) return;
+    const slot = this.orderSlots.find((s) => s.iconKey === iconKey);
+    if (!slot) return;
 
-    const slot = this.fulfillmentSlots[slotIndex];
-    let img: Phaser.GameObjects.Image | null = null;
-    if (AssetLoader.textureExists(this, iconKey)) {
-      img = AssetLoader.createImage(this, slot.x, slot.y, iconKey);
-      img.setDisplaySize(slot.size - 6, slot.size - 6);
-      this.ordersContainer.add(img);
-    }
-    this.fulfillmentImages[slotIndex] = { img, iconKey };
+    const clamped = Math.max(0, Math.min(slot.requiredQty, targetQty));
+    slot.fulfilledQty = clamped;
 
-    // Color the slot bg: green = correct, yellow = present but wrong position, red = not in order
-    const isCorrect = slot.expectedIconKey === iconKey;
-    const alreadySent = this.fulfillmentImages.filter(
-      (e, i) => i !== slotIndex && e?.iconKey === iconKey,
-    ).length;
-    const isPresent = alreadySent < (this.fulfillmentOrderIconCounts.get(iconKey) ?? 0);
-    const bgFill = isCorrect ? 0x003a1a : isPresent ? 0x3a3000 : 0x3a0008;
-    const bgStroke = isCorrect ? 0x00e84a : isPresent ? 0xffd700 : 0xff2244;
-
+    // Redraw slot background based on fulfillment state
     slot.slotBg.clear();
+    const isFull = clamped >= slot.requiredQty;
+    const bgFill = isFull ? 0x003a1a : clamped > 0 ? 0x0a1f3a : Colors.PANEL_MEDIUM;
+    const bgStroke = isFull ? 0x00e84a : clamped > 0 ? Colors.NEON_BLUE : Colors.BORDER_BLUE;
+    const strokeAlpha = isFull || clamped > 0 ? 0.95 : 0.7;
     slot.slotBg.fillStyle(bgFill, 0.85);
     slot.slotBg.fillRect(slot.x - slot.size / 2, slot.y - slot.size / 2, slot.size, slot.size);
-    slot.slotBg.lineStyle(2, bgStroke, 0.95);
+    slot.slotBg.lineStyle(2, bgStroke, strokeAlpha);
     slot.slotBg.strokeRect(slot.x - slot.size / 2, slot.y - slot.size / 2, slot.size, slot.size);
 
-    // Always bring the order view into focus so the player can see the placed item.
-    this.switchToOrdersTab?.();
+    // Update or hide the quantity badge
+    if (slot.badgeGraphic) { slot.badgeGraphic.destroy(); slot.badgeGraphic = null; }
+    if (slot.badgeText) { slot.badgeText.destroy(); slot.badgeText = null; }
 
+    if (clamped > 0) {
+      const badgeG = this.add.graphics();
+      const badgeR = 9;
+      const badgeX = slot.x + slot.size / 2 - badgeR + 2;
+      const badgeY = slot.y - slot.size / 2 + badgeR - 2;
+      badgeG.fillStyle(isFull ? 0x00e84a : Colors.NEON_BLUE, 1);
+      badgeG.fillCircle(badgeX, badgeY, badgeR);
+      this.ordersContainer.add(badgeG);
+      const badgeTxt = this.add.bitmapText(badgeX, badgeY, "clicker", String(clamped), 10)
+        .setOrigin(0.5)
+        .setTint(isFull ? 0x002200 : 0x000033)
+        .setDepth(5);
+      this.ordersContainer.add(badgeTxt);
+      slot.badgeGraphic = badgeG;
+      slot.badgeText = badgeTxt;
+    }
+
+    // Switch to ORDERS tab so the player can see the updated slot
+    this.switchToOrdersTab?.();
     this.checkOrderComplete();
   }
 
-  /** Remove the rightmost fulfillment slot occupied by the given icon. */
-  private onRecallItem(iconKey: string): void {
-    if (!this.ordersContainer) return;
-    let lastMatch = -1;
-    for (let i = this.fulfillmentImages.length - 1; i >= 0; i--) {
-      if (this.fulfillmentImages[i]?.iconKey === iconKey) { lastMatch = i; break; }
-    }
-    if (lastMatch === -1) return;
-
-    this.fulfillmentImages[lastMatch]?.img?.destroy();
-    this.fulfillmentImages[lastMatch] = null;
-    const slot = this.fulfillmentSlots[lastMatch];
-    slot.slotBg.clear();
-    slot.slotBg.fillStyle(Colors.PANEL_MEDIUM, 0.8);
-    slot.slotBg.fillRect(slot.x - slot.size / 2, slot.y - slot.size / 2, slot.size, slot.size);
-    slot.slotBg.lineStyle(1, Colors.BORDER_BLUE, 0.7);
-    slot.slotBg.strokeRect(slot.x - slot.size / 2, slot.y - slot.size / 2, slot.size, slot.size);
-  }
 
   update(): void {
     if (!this.shiftArcGraphic || this.shiftDurationMs <= 0) return;
@@ -744,39 +739,35 @@ export class Game extends Phaser.Scene {
     width: number,
     height: number,
     order: Order,
-  ): Array<{ x: number; y: number; size: number; slotBg: Phaser.GameObjects.Graphics; expectedIconKey: string }> {
+  ): OrderSlot[] {
     const contentX = x - width / 2 + 12;
     const rightEdge = x + width / 2 - 12;
     const contentBottom = y + height;
 
-    // Expand requirements into a flat slot sequence
-    const expectedSequence: string[] = [];
-    order.requirements.forEach((req) => {
-      for (let i = 0; i < req.quantity; i++) expectedSequence.push(req.iconKey);
-    });
-    const totalQty = order.requirements.reduce((sum, req) => sum + req.quantity, 0);
-
-    const { slots, boxRowTop } = this.buildFulfillmentBoxRow(
-      container, x, width, contentBottom, totalQty, expectedSequence,
+    const { slots, boxRowTop } = this.buildFulfillmentSlotRow(
+      container, x, width, contentBottom, order.requirements,
     );
     this.buildOrderRequirementRows(container, x, width, boxRowTop, order, contentX, rightEdge);
 
     return slots;
   }
 
-  /** Renders the bottom strip of drop boxes (one per required item unit). */
-  private buildFulfillmentBoxRow(
+  /**
+   * Renders the bottom strip of fulfillment slots — one per distinct item type.
+   * Each slot shows the item icon and a quantity badge when fulfilled > 0.
+   */
+  private buildFulfillmentSlotRow(
     container: Phaser.GameObjects.Container,
     x: number,
     width: number,
     contentBottom: number,
-    totalQty: number,
-    expectedSequence: string[],
-  ): { slots: Array<{ x: number; y: number; size: number; slotBg: Phaser.GameObjects.Graphics; expectedIconKey: string }>; boxRowTop: number } {
-    const boxRowHeight = 52;
-    const boxGap = 5;
-    const boxSize = Math.min(40, Math.floor((width - 16 - (totalQty - 1) * boxGap) / totalQty));
-    const rowTotalWidth = totalQty * boxSize + (totalQty - 1) * boxGap;
+    requirements: Order["requirements"],
+  ): { slots: OrderSlot[]; boxRowTop: number } {
+    const totalSlots = requirements.length;
+    const boxRowHeight = 64;
+    const boxGap = 6;
+    const boxSize = Math.min(48, Math.floor((width - 16 - (Math.max(1, totalSlots) - 1) * boxGap) / Math.max(1, totalSlots)));
+    const rowTotalWidth = totalSlots * boxSize + (totalSlots - 1) * boxGap;
     const boxRowTop = contentBottom - boxRowHeight;
     const boxRowCenterY = boxRowTop + boxRowHeight / 2;
     const boxStartX = x - rowTotalWidth / 2;
@@ -789,18 +780,57 @@ export class Game extends Phaser.Scene {
     rowStripBg.strokeRect(x - width / 2 + 4, boxRowTop, width - 8, boxRowHeight);
     container.add(rowStripBg);
 
-    // One drop box per total quantity unit
-    const slots: Array<{ x: number; y: number; size: number; slotBg: Phaser.GameObjects.Graphics; expectedIconKey: string }> = [];
-    for (let i = 0; i < totalQty; i++) {
+    const slots: OrderSlot[] = [];
+    requirements.forEach((req, i) => {
       const bx = boxStartX + i * (boxSize + boxGap) + boxSize / 2;
+      const by = boxRowCenterY;
+
+      // Slot background
       const boxBg = this.add.graphics();
       boxBg.fillStyle(Colors.PANEL_MEDIUM, 0.8);
-      boxBg.fillRect(bx - boxSize / 2, boxRowCenterY - boxSize / 2, boxSize, boxSize);
+      boxBg.fillRect(bx - boxSize / 2, by - boxSize / 2, boxSize, boxSize);
       boxBg.lineStyle(1, Colors.BORDER_BLUE, 0.7);
-      boxBg.strokeRect(bx - boxSize / 2, boxRowCenterY - boxSize / 2, boxSize, boxSize);
+      boxBg.strokeRect(bx - boxSize / 2, by - boxSize / 2, boxSize, boxSize);
       container.add(boxBg);
-      slots.push({ x: bx, y: boxRowCenterY, size: boxSize, slotBg: boxBg, expectedIconKey: expectedSequence[i] ?? "" });
-    }
+
+      // Item icon centred in slot
+      let slotIcon: Phaser.GameObjects.Image | null = null;
+      if (AssetLoader.textureExists(this, req.iconKey)) {
+        slotIcon = AssetLoader.createImage(this, bx, by, req.iconKey);
+        slotIcon.setDisplaySize(boxSize - 8, boxSize - 8);
+        slotIcon.setAlpha(0.4); // dim until fulfilled
+        container.add(slotIcon);
+      }
+
+      // Required quantity badge (top-right corner, shown only when qty > 1)
+      let badgeGraphic: Phaser.GameObjects.Graphics | null = null;
+      let badgeText: Phaser.GameObjects.BitmapText | null = null;
+      if (req.quantity > 1) {
+        const badgeR = 9;
+        const badgeX = bx + boxSize / 2 - badgeR + 2;
+        const badgeY = by - boxSize / 2 + badgeR - 2;
+        badgeGraphic = this.add.graphics();
+        badgeGraphic.fillStyle(0x334466, 1);
+        badgeGraphic.fillCircle(badgeX, badgeY, badgeR);
+        container.add(badgeGraphic);
+        badgeText = this.add.bitmapText(badgeX, badgeY, "clicker", `x${req.quantity}`, 9)
+          .setOrigin(0.5).setTint(0xaaaacc).setDepth(5);
+        container.add(badgeText);
+      }
+
+      slots.push({
+        iconKey: req.iconKey,
+        requiredQty: req.quantity,
+        fulfilledQty: 0,
+        x: bx,
+        y: by,
+        size: boxSize,
+        slotBg: boxBg,
+        slotIcon,
+        badgeGraphic,
+        badgeText,
+      });
+    });
 
     // Separator above box row
     const aboveBoxSep = this.add.graphics();
@@ -890,37 +920,15 @@ export class Game extends Phaser.Scene {
   }
 
   private checkOrderComplete(): void {
-    // All slots must be filled
-    if (this.fulfillmentImages.some((s) => s === null)) return;
-    // Tally what was actually sent
-    const sentCounts = new Map<string, number>();
-    for (const entry of this.fulfillmentImages) {
-      if (!entry) return;
-      sentCounts.set(entry.iconKey, (sentCounts.get(entry.iconKey) ?? 0) + 1);
-    }
-    // Sent counts must exactly match required counts — right items, right quantities
-    if (sentCounts.size !== this.fulfillmentOrderIconCounts.size) return;
-    for (const [iconKey, count] of this.fulfillmentOrderIconCounts) {
-      if (sentCounts.get(iconKey) !== count) return;
-    }
-    // Switch to ORDERS tab if the player was on a different tab
+    if (!this.orderSlots.every((s) => s.fulfilledQty >= s.requiredQty)) return;
     this.switchToOrdersTab?.();
     this.completeOrder();
   }
 
   private completeOrder(): void {
     if (!this.currentOrder) return;
-    // Count green slots (correctly positioned)
-    let greenCount = 0;
-    for (let i = 0; i < this.fulfillmentSlots.length; i++) {
-      const entry = this.fulfillmentImages[i];
-      if (entry && entry.iconKey === this.fulfillmentSlots[i].expectedIconKey)
-        greenCount++;
-    }
     const revenue = this.currentOrder.budget;
-    const bonus = greenCount;
     this.shiftRevenue += revenue;
-    this.shiftBonus += bonus;
     this.revenueText?.setText(`Q${this.shiftRevenue}`);
     this.bonusText?.setText(`Q${this.shiftBonus}`);
     this.flashAndTransition();
@@ -989,15 +997,13 @@ export class Game extends Phaser.Scene {
     if (this.ordersContainer) {
       this.ordersContainer.removeAll(true);
     }
-    this.fulfillmentImages = [];
-    this.fulfillmentSlots = [];
-    this.fulfillmentOrderIconCounts = new Map<string, number>();
+    this.orderSlots = [];
     if (this.radialDial) this.radialDial.reset();
     const nextOrder = buildOrder(items);
     this.currentOrder = nextOrder;
     const contentY = this.ordersPanelTop + 62;
     const contentH = this.ordersPanelHeight - 76;
-    this.fulfillmentSlots = this.buildOrderContent(
+    this.orderSlots = this.buildOrderContent(
       this.ordersContainer!,
       this.ordersPanelX,
       contentY,
@@ -1005,13 +1011,6 @@ export class Game extends Phaser.Scene {
       contentH,
       nextOrder,
     );
-    this.fulfillmentImages = new Array(this.fulfillmentSlots.length).fill(null);
-    nextOrder.requirements.forEach((r) => {
-      this.fulfillmentOrderIconCounts.set(
-        r.iconKey,
-        (this.fulfillmentOrderIconCounts.get(r.iconKey) ?? 0) + r.quantity,
-      );
-    });
   }
 
   endShift() {

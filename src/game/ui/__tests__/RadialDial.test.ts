@@ -96,6 +96,8 @@ const createMockScene = (): MockScene => {
         setDepth: jest.fn(function () { return this; }),
         setTint: jest.fn(function () { return this; }),
         setMaxWidth: jest.fn(function () { return this; }),
+        setText: jest.fn(function () { return this; }),
+        setPosition: jest.fn(function () { return this; }),
         destroy: jest.fn(),
       })),
       zone: jest.fn(() => ({
@@ -286,44 +288,100 @@ describe('RadialDial drag-to-center selection', () => {
 // Phase 1 coverage tests — added before simplification work
 // ---------------------------------------------------------------------------
 
-describe('RadialDial — terminal dial action confirmation', () => {
+describe('RadialDial — quantity-selector mode', () => {
+  // Dial center (100, 100), centerRadius=50, sliceRadius=150
+  // arcRadius = (50+150)/2 = 100
+  // With existingQty=0 (fresh), startQty=1, arcProgress=(1-0.5)/3=1/6
+  // triggerAngle = π/2 - (1/6)*π = π/3
+  // triggerX = dialX + cos(π/3)*100 = 100 + 50 = 150
+  // triggerY = dialY + sin(π/3)*100 = 100 + 86.6 ≈ 187
   const dialX = 100;
   const dialY = 100;
+  const trigger = { x: 150, y: 187 }; // zone-1 midpoint trigger position for fresh dial
 
-  it('emits dial:actionConfirmed with correct action and item when tapping a slice in terminal mode', () => {
+  it('emits dial:quantityConfirmed with quantity 1 on trigger press + immediate release', () => {
     const scene = createMockScene();
     const items = createMockItems();
     scene.textures.exists.mockReturnValue(true);
     const dial = new RadialDial(scene as any, dialX, dialY, items);
 
-    // Drill to depth 1 to get a real MenuItem as terminalItem
-    const catStart = slicePoint(dialX, dialY, 6, 0, 120);
-    (dial as any).handlePointerDown(catStart);
-    (dial as any).handlePointerUp(catStart);
-
-    // Confirm one sub-item to get to the terminal dial (item confirmed event)
-    const subStart = slicePoint(dialX, dialY, 6, 1, 120);
-    (dial as any).handlePointerDown(subStart);
-    (dial as any).handlePointerUp(subStart);
-
-    // Manually put the dial in terminal mode (simulates Game scene calling showTerminalDial)
     const fakeItem = { id: 'test-item', name: 'TEST', icon: 'test-icon' };
     dial.showTerminalDial(fakeItem as any);
-
     scene.events.emit.mockClear();
 
-    // Tap the first action slice (index 0 = 'send')
-    const actionStart = slicePoint(dialX, dialY, 4, 0, 120);
-    (dial as any).handlePointerDown(actionStart);
-    (dial as any).handlePointerUp(actionStart);
+    // Press trigger, release immediately without moving
+    (dial as any).handlePointerDown(trigger);
+    (dial as any).handlePointerUp(trigger);
 
-    expect(scene.events.emit).toHaveBeenCalledWith('dial:actionConfirmed', {
-      action: 'send',
+    expect(scene.events.emit).toHaveBeenCalledWith('dial:quantityConfirmed', {
       item: fakeItem,
+      quantity: 1,
     });
   });
 
-  it('clears terminalItem after action confirmation', () => {
+  it('emits dial:quantityConfirmed with quantity 2 when finger moves to 3 o’clock (zone 2)', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    const fakeItem = { id: 'test-item', name: 'TEST', icon: 'test-icon' };
+    dial.showTerminalDial(fakeItem as any);
+    scene.events.emit.mockClear();
+
+    // Press trigger, move to 3 o'clock (angle = 0, arcProgress = 0.5 → qty 2)
+    (dial as any).handlePointerDown(trigger);
+    (dial as any).handleMouseMove({ x: dialX + 100, y: dialY }); // 3 o'clock on arcRadius
+    (dial as any).handlePointerUp({ x: dialX + 150, y: dialY });
+
+    expect(scene.events.emit).toHaveBeenCalledWith('dial:quantityConfirmed', {
+      item: fakeItem,
+      quantity: 2,
+    });
+  });
+
+  it('emits dial:quantityConfirmed with quantity 3 when finger moves to 12 o’clock (zone 3)', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    const fakeItem = { id: 'test-item', name: 'TEST', icon: 'test-icon' };
+    dial.showTerminalDial(fakeItem as any);
+    scene.events.emit.mockClear();
+
+    // Press trigger, move to 12 o'clock (angle = -π/2, arcProgress = 1.0 → qty 3)
+    (dial as any).handlePointerDown(trigger);
+    (dial as any).handleMouseMove({ x: dialX, y: dialY - 100 }); // 12 o'clock on arcRadius
+    (dial as any).handlePointerUp({ x: dialX, y: dialY - 100 });
+
+    expect(scene.events.emit).toHaveBeenCalledWith('dial:quantityConfirmed', {
+      item: fakeItem,
+      quantity: 3,
+    });
+  });
+
+  it('does not emit dial:quantityConfirmed when pointer released without pressing trigger', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    const fakeItem = { id: 'test-item', name: 'TEST', icon: 'test-icon' };
+    dial.showTerminalDial(fakeItem as any);
+    scene.events.emit.mockClear();
+
+    // Move and release without pressing trigger (not near trigger pos)
+    (dial as any).handlePointerDown({ x: dialX + 100, y: dialY });
+    (dial as any).handlePointerUp({ x: dialX + 100, y: dialY });
+
+    expect(scene.events.emit).not.toHaveBeenCalledWith(
+      'dial:quantityConfirmed',
+      expect.anything(),
+    );
+  });
+
+  it('clears terminalItem and resets quantity state after quantityConfirmed', () => {
     const scene = createMockScene();
     const items = createMockItems();
     scene.textures.exists.mockReturnValue(true);
@@ -332,11 +390,53 @@ describe('RadialDial — terminal dial action confirmation', () => {
     const fakeItem = { id: 'test-item', name: 'TEST', icon: 'test-icon' };
     dial.showTerminalDial(fakeItem as any);
 
-    const actionStart = slicePoint(dialX, dialY, 4, 0, 120);
-    (dial as any).handlePointerDown(actionStart);
-    (dial as any).handlePointerUp(actionStart);
+    (dial as any).handlePointerDown(trigger);
+    (dial as any).handlePointerUp(trigger);
 
     expect((dial as any).terminalItem).toBeNull();
+    expect((dial as any).isTriggerActive).toBe(false);
+    expect((dial as any).arcProgress).toBe(0);
+    expect((dial as any).currentQuantity).toBe(1);
+  });
+
+  it("emits dial:quantityConfirmed with quantity 0 when dragging CW past 6 o'clock (removal zone)", () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    const fakeItem = { id: 'test-item', name: 'TEST', icon: 'test-icon' };
+    // Open with existingQty=1 so there is something to remove
+    dial.showTerminalDial(fakeItem as any, 1);
+    scene.events.emit.mockClear();
+
+    // Activate the trigger directly (bypassing hit-test precision concerns)
+    (dial as any).isTriggerActive = true;
+
+    // Drag CW past 6 o'clock: dx=-20, dy=100 → angle ≈ 1.77 (just past π/2) → removal zone
+    (dial as any).handleMouseMove({ x: dialX - 20, y: dialY + 100 });
+    (dial as any).handlePointerUp({ x: dialX - 20, y: dialY + 100 });
+
+    expect(scene.events.emit).toHaveBeenCalledWith('dial:quantityConfirmed', {
+      item: fakeItem,
+      quantity: 0,
+    });
+  });
+
+  it('pre-positions trigger at the correct arc angle for existingQty=2', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    const fakeItem = { id: 'test-item', name: 'TEST', icon: 'test-icon' };
+    dial.showTerminalDial(fakeItem as any, 2);
+
+    // arcProgress = (2-0.5)/3 = 0.5, triggerAngle = π/2 - 0.5*π = 0 (3 o'clock)
+    // trigger should be at (dialX + arcRadius, dialY) = (200, 100)
+    const expectedArcProgress = (2 - 0.5) / 3; // 0.5
+    expect((dial as any).arcProgress).toBeCloseTo(expectedArcProgress, 5);
+    expect((dial as any).currentQuantity).toBe(2);
   });
 });
 

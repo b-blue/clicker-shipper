@@ -59,7 +59,8 @@ export interface OrderRequirement {
   itemId: string;
   itemName: string;
   iconKey: string;
-  quantity: number;
+  quantity: number;   // required count (1–3)
+  fulfilled: number;  // currently sent (0..quantity)
   cost: number;
 }
 

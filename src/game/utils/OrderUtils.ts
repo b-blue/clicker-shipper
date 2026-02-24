@@ -202,6 +202,7 @@ export function generateOrder(
     itemName: item.name,
     iconKey: item.icon,
     quantity: Math.min(qtyFn(), MAX_ITEM_QTY),
+    fulfilled: 0,
     cost: item.cost ?? 0,
   }));
 

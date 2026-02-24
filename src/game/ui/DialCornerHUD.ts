@@ -132,7 +132,7 @@ export class DialCornerHUD {
     this.redraw();
   }
 
-  onActionConfirmed(): void {
+  onQuantityConfirmed(): void {
     this.currentDepth = 0;
     this.isTerminal = false;
     this.activeCategoryItem = null;

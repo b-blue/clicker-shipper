@@ -9,7 +9,7 @@
  * stacks a new handler unless we explicitly clear stale ones.
  *
  * These tests verify that create() can be called multiple times without
- * accumulating duplicate dial:actionConfirmed / dial:itemConfirmed handlers.
+ * accumulating duplicate dial:quantityConfirmed / dial:itemConfirmed handlers.
  */
 
 import { EventEmitter } from 'eventemitter3';
@@ -25,11 +25,11 @@ describe('Game scene — dial event handler idempotency across restarts', () => 
 
     // Simulate create() called 3 times WITHOUT cleanup (old buggy behaviour)
     for (let i = 0; i < 3; i++) {
-      events.on('dial:actionConfirmed', () => { fires++; });
+      events.on('dial:quantityConfirmed', () => { fires++; });
     }
 
     fires = 0;
-    events.emit('dial:actionConfirmed', {});
+    events.emit('dial:quantityConfirmed', {});
 
     // Bug: 3 handlers → 3 fires per emit
     expect(fires).toBe(3);
@@ -39,11 +39,11 @@ describe('Game scene — dial event handler idempotency across restarts', () => 
     const events = new EventEmitter();
     let fires = 0;
 
-    events.removeAllListeners('dial:actionConfirmed');
-    events.on('dial:actionConfirmed', () => { fires++; });
+    events.removeAllListeners('dial:quantityConfirmed');
+    events.on('dial:quantityConfirmed', () => { fires++; });
 
     fires = 0;
-    events.emit('dial:actionConfirmed', {});
+    events.emit('dial:quantityConfirmed', {});
     expect(fires).toBe(1);
   });
 
@@ -52,15 +52,15 @@ describe('Game scene — dial event handler idempotency across restarts', () => 
     let fires = 0;
 
     // First create()
-    events.removeAllListeners('dial:actionConfirmed');
-    events.on('dial:actionConfirmed', () => { fires++; });
+    events.removeAllListeners('dial:quantityConfirmed');
+    events.on('dial:quantityConfirmed', () => { fires++; });
 
     // Scene restarts: Phaser does NOT reset scene.events, so we must purge
-    events.removeAllListeners('dial:actionConfirmed');
-    events.on('dial:actionConfirmed', () => { fires++; });
+    events.removeAllListeners('dial:quantityConfirmed');
+    events.on('dial:quantityConfirmed', () => { fires++; });
 
     fires = 0;
-    events.emit('dial:actionConfirmed', {});
+    events.emit('dial:quantityConfirmed', {});
     expect(fires).toBe(1);
   });
 
@@ -69,12 +69,12 @@ describe('Game scene — dial event handler idempotency across restarts', () => 
     let fires = 0;
 
     for (let i = 0; i < 3; i++) {
-      events.removeAllListeners('dial:actionConfirmed');
-      events.on('dial:actionConfirmed', () => { fires++; });
+      events.removeAllListeners('dial:quantityConfirmed');
+      events.on('dial:quantityConfirmed', () => { fires++; });
     }
 
     fires = 0;
-    events.emit('dial:actionConfirmed', {});
+    events.emit('dial:quantityConfirmed', {});
     expect(fires).toBe(1);
   });
 
@@ -99,12 +99,12 @@ describe('Game scene — dial event handler idempotency across restarts', () => 
     let fires = 0;
 
     // Shift 1
-    sharedEvents.on('dial:actionConfirmed', () => { fires++; });
+    sharedEvents.on('dial:quantityConfirmed', () => { fires++; });
     // Shift 2 (no cleanup — buggy)
-    sharedEvents.on('dial:actionConfirmed', () => { fires++; });
+    sharedEvents.on('dial:quantityConfirmed', () => { fires++; });
 
     fires = 0;
-    sharedEvents.emit('dial:actionConfirmed', {});
+    sharedEvents.emit('dial:quantityConfirmed', {});
     expect(fires).toBe(2); // confirms the accumulation
   });
 });

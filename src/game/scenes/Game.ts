@@ -392,6 +392,9 @@ export class Game extends Phaser.Scene {
     slot.slotBg.lineStyle(2, bgStroke, 0.95);
     slot.slotBg.strokeRect(slot.x - slot.size / 2, slot.y - slot.size / 2, slot.size, slot.size);
 
+    // Always bring the order view into focus so the player can see the placed item.
+    this.switchToOrdersTab?.();
+
     this.checkOrderComplete();
   }
 

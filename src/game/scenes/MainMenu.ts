@@ -18,11 +18,13 @@ export class MainMenu extends Phaser.Scene {
     const availableWidth = gameWidth - margin;
 
     // Title with background
-    const titleText = 'INTERGALACTIC SHIPPER';
-    const titleFontSize = fitFontSize(titleText, availableWidth, 32);
-    this.add.rectangle(gameWidth / 2, gameHeight * 0.15, Math.min(700, gameWidth - margin), 50, Colors.PANEL_MEDIUM, 0.9);
+    const titleText = 'CHIBA CITY SHIPPER';
+    const titleMaxWidth = gameWidth - margin * 2;
+    const titleFontSize = fitFontSize(titleText, titleMaxWidth, 32);
+    this.add.rectangle(gameWidth / 2, gameHeight * 0.15, titleMaxWidth, 50, Colors.PANEL_MEDIUM, 0.9);
     this.add.bitmapText(gameWidth / 2, gameHeight * 0.15, 'clicker', titleText, titleFontSize)
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setMaxWidth(titleMaxWidth);
 
     // Subtitle with background
     const subtitleText = 'ORDER FULFILLMENT TERMINAL';

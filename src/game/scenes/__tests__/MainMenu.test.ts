@@ -61,7 +61,7 @@ describe('MainMenu scene', () => {
 
     expect(rectangle).toHaveBeenCalledWith(400, 300, 800, 600, Colors.BACKGROUND_DARK);
     // At 800px width the title should use full max size (32)
-    expect(bitmapText).toHaveBeenCalledWith(400, expect.any(Number), 'clicker', 'INTERGALACTIC SHIPPER', 32);
+    expect(bitmapText).toHaveBeenCalledWith(400, expect.any(Number), 'clicker', 'CHIBA CITY SHIPPER', expect.any(Number));
   });
 
   it('wires keyboard shortcuts', async () => {
@@ -88,7 +88,7 @@ describe('fitFontSize', () => {
     const availableWidth = 800 - 20; // 780
 
     it('uses full max size for title when viewport is wide enough', () => {
-      const size = fitFontSize('INTERGALACTIC SHIPPER', availableWidth, 32);
+      const size = fitFontSize('CHIBA CITY SHIPPER', availableWidth, 32);
       expect(size).toBe(32);
     });
 
@@ -107,7 +107,7 @@ describe('fitFontSize', () => {
     const availableWidth = 375 - 20; // 355
 
     it('title fits within mobile viewport', () => {
-      const text = 'INTERGALACTIC SHIPPER';
+      const text = 'CHIBA CITY SHIPPER';
       const size = fitFontSize(text, availableWidth, 32);
       expect(size * text.length * CHAR_RATIO).toBeLessThanOrEqual(availableWidth);
     });
@@ -125,8 +125,8 @@ describe('fitFontSize', () => {
     });
 
     it('title font size is smaller than desktop', () => {
-      const mobile = fitFontSize('INTERGALACTIC SHIPPER', 375 - 20, 32);
-      const desktop = fitFontSize('INTERGALACTIC SHIPPER', 800 - 20, 32);
+      const mobile = fitFontSize('CHIBA CITY SHIPPER', 375 - 40, 32);
+      const desktop = fitFontSize('CHIBA CITY SHIPPER', 800 - 40, 32);
       expect(mobile).toBeLessThan(desktop);
     });
   });

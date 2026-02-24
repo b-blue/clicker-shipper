@@ -935,7 +935,7 @@ export class Game extends Phaser.Scene {
         greenCount++;
     }
     const revenue = this.currentOrder.budget;
-    const bonus = greenCount * Math.round(this.currentOrder.budget * 0.1);
+    const bonus = greenCount;
     this.shiftRevenue += revenue;
     this.shiftBonus += bonus;
     this.revenueText?.setText(`Q${this.shiftRevenue}`);

@@ -1,4 +1,5 @@
 import { RadialDial } from "../ui/RadialDial";
+import { DialCornerHUD } from "../ui/DialCornerHUD";
 import { GameManager } from "../managers/GameManager";
 import { SettingsManager } from "../managers/SettingsManager";
 import {
@@ -47,18 +48,8 @@ export class Game extends Phaser.Scene {
   private shiftTimerY: number = 0;
   private readonly shiftTimerRadius: number = 12;
 
-  // Corner button state
-  private cornerCurrentDepth: number = 0;
-  private cornerIsTerminal: boolean = false;
-  private cornerActiveCategoryItem: any = null;
-  // Corner badge (lower-right): level indicator
-  private cornerLevelBg: Phaser.GameObjects.Graphics | null = null;
-  private cornerLevelIcon: Phaser.GameObjects.Image | null = null;
-  private cornerLevelLabel: Phaser.GameObjects.BitmapText | null = null;
-  // Corner catalog button (upper-right)
-  private cornerCatalogBg: Phaser.GameObjects.Graphics | null = null;
-  private cornerCatalogIcon: Phaser.GameObjects.Image | null = null;
-  private cornerCatalogOpen: boolean = false;
+  // Corner HUD (level badge + catalog shortcut anchored to the dial)
+  private cornerHUD: DialCornerHUD | null = null;
   // Catalog scroll state (populated inside buildCatalogContent)
   private catalogListContainer: Phaser.GameObjects.Container | null = null;
   private catalogListTop: number = 0;
@@ -75,424 +66,352 @@ export class Game extends Phaser.Scene {
     try {
       const gameManager = GameManager.getInstance();
       const items = gameManager.getItems();
-
-      // Calculate dial position based on viewport (responsive)
-      const gameWidth = this.cameras.main.width;
-      const gameHeight = this.cameras.main.height;
-
-      // Load dial position from settings
+      const { width: gameWidth, height: gameHeight } = this.cameras.main;
       const settingsManager = SettingsManager.getInstance();
       const dialSettings = settingsManager.getDialSettings();
       const dialX = gameWidth + dialSettings.offsetX;
       const dialY = gameHeight + dialSettings.offsetY;
       const dialRadius = dialSettings.radius ?? 150;
 
-      // Background
-      this.add.rectangle(
-        gameWidth / 2,
-        gameHeight / 2,
-        gameWidth,
-        gameHeight,
-        Colors.BACKGROUND_DARK,
-      );
-
-      // Tab dimensions — computed first so panel width can account for them
-      const tabWidth = 52;
-      const tabHeight = 40;
-      const tabSpacing = 6;
-      const tabGap = 8; // gap between panel right edge and tabs
-
-      // Central display panel (tall, from top to above dial)
-      // Reserve space for tabs so they're never clipped on narrow screens
-      const panelWidth = Math.min(420, gameWidth - tabWidth - tabGap - 20);
-      const panelTop = 20;
-      const panelBottom = dialY - dialRadius - 20;
-      const panelHeight = panelBottom - panelTop;
-      const panelX = 10 + panelWidth / 2; // left-align with menu button left edge
-      const panelY = (panelTop + panelBottom) / 2;
-
-      const mainPanel = this.add.rectangle(
-        panelX,
-        panelY,
-        panelWidth,
-        panelHeight,
-        Colors.PANEL_DARK,
-        0.85,
-      );
-      mainPanel.setStrokeStyle(2, Colors.BORDER_BLUE, 0.8);
-
-      // Panel title — vertically centered in the header bar (panelTop → panelTop+42)
-      const titleY = panelTop + 21;
-      const panelTitle = this.add
-        .bitmapText(panelX, titleY, "clicker", "ORDERS", 14)
-        .setOrigin(0.5);
-
-      // Shift timer arc — left side of the header bar, vertically centered with title
-      const timerR = this.shiftTimerRadius;
-      const timerX = panelX - panelWidth / 2 + timerR + 8;
-      const timerY = titleY;
-      this.shiftTimerX = timerX;
-      this.shiftTimerY = timerY;
-      this.shiftDurationMs = settingsManager.getShiftDurationMs();
-      const timerBg = this.add.graphics();
-      timerBg.fillStyle(Colors.PANEL_MEDIUM, 1);
-      timerBg.fillCircle(timerX, timerY, timerR);
-      timerBg.lineStyle(1, Colors.BORDER_BLUE, 0.7);
-      timerBg.strokeCircle(timerX, timerY, timerR);
-      this.shiftArcGraphic = this.add.graphics();
-      this.shiftStartTime = Date.now();
-      this.shiftTimerEvent = this.time.addEvent({
-        delay: this.shiftDurationMs,
-        callback: this.endShift,
-        callbackScope: this,
-      });
-
-      // Stats bar — persistent revenue & bonus tallies across orders
-      const statsContainer = this.add.container(0, 0);
-      const statsBarDivTop = this.add.graphics();
-      statsBarDivTop.lineStyle(1, Colors.BORDER_BLUE, 0.45);
-      statsBarDivTop.lineBetween(
-        panelX - panelWidth / 2 + 8,
-        panelTop + 42,
-        panelX + panelWidth / 2 - 8,
-        panelTop + 42,
-      );
-      const statsY = panelTop + 54;
-      const statsLeft = panelX - panelWidth / 2 + 14;
-      const revLabel = this.add
-        .bitmapText(statsLeft, statsY, "clicker", "REV", 12)
-        .setOrigin(0, 0.5)
-        .setTint(0xaaaacc);
-      this.revenueText = this.add
-        .bitmapText(statsLeft + 38, statsY, "clicker", "Q0", 12)
-        .setOrigin(0, 0.5)
-        .setTint(Colors.HIGHLIGHT_YELLOW_BRIGHT);
-      const bonusLabel = this.add
-        .bitmapText(panelX + 4, statsY, "clicker", "BONUS", 12)
-        .setOrigin(0, 0.5)
-        .setTint(0xaaaacc);
-      this.bonusText = this.add
-        .bitmapText(panelX + 68, statsY, "clicker", "Q0", 12)
-        .setOrigin(0, 0.5)
-        .setTint(Colors.HIGHLIGHT_YELLOW);
-      const statsBarDivBot = this.add.graphics();
-      statsBarDivBot.lineStyle(1, Colors.BORDER_BLUE, 0.45);
-      statsBarDivBot.lineBetween(
-        panelX - panelWidth / 2 + 8,
-        panelTop + 66,
-        panelX + panelWidth / 2 - 8,
-        panelTop + 66,
-      );
-      statsContainer.add([
-        statsBarDivTop,
-        revLabel,
-        this.revenueText,
-        bonusLabel,
-        this.bonusText,
-        statsBarDivBot,
-      ]);
-
-      // Tabbed panel controls (right-hand vertical tabs)
-      const tabX = panelX + panelWidth / 2 + tabGap + tabWidth / 2;
-      const tabStartY = panelTop + tabHeight / 2 + 4;
-      const tabKeys = ["ORDERS", "SETTINGS", "CATALOG"] as const;
-      // Content containers for each tab
-      this.ordersContainer = this.add.container(0, 0);
-      const settingsContainer = this.add.container(0, 0);
-      const catalogContainer = this.add.container(0, 0);
-
-      const containers = {
-        ORDERS: this.ordersContainer,
-        SETTINGS: settingsContainer,
-        CATALOG: catalogContainer,
-      };
-
-      // Store panel geometry for order rebuilding
-      this.ordersPanelX = panelX;
-      this.ordersPanelWidth = panelWidth;
-      this.ordersPanelTop = panelTop;
-      this.ordersPanelHeight = panelHeight;
-
-      // Generate and display current order
-      const currentOrder = buildOrder(items);
-      this.currentOrder = currentOrder;
-      this.fulfillmentSlots = this.buildOrderContent(
-        this.ordersContainer,
-        panelX,
-        panelTop + 62,
-        panelWidth - 20,
-        panelHeight - 76,
-        currentOrder,
-      );
-      this.fulfillmentImages = new Array(this.fulfillmentSlots.length).fill(
-        null,
-      );
-      this.fulfillmentOrderIconCounts = new Map<string, number>();
-      currentOrder.requirements.forEach((r) => {
-        this.fulfillmentOrderIconCounts.set(
-          r.iconKey,
-          (this.fulfillmentOrderIconCounts.get(r.iconKey) ?? 0) + r.quantity,
-        );
-      });
-
-      // Settings tab: button to launch DialCalibration scene
-      this.buildSettingsContent(settingsContainer, panelX, panelWidth);
-      settingsContainer.setVisible(false);
-      this.buildCatalogContent(
-        catalogContainer,
-        panelX,
-        panelTop + 36,
-        panelWidth - 20,
-        panelHeight - 50,
-        items,
-      );
-      catalogContainer.setVisible(false);
-
-      const updateTabDisplay = (label: (typeof tabKeys)[number]) => {
-        panelTitle.setText(label);
-        statsContainer.setVisible(label === "ORDERS");
-        Object.keys(containers).forEach((key) => {
-          containers[key as (typeof tabKeys)[number]].setVisible(key === label);
-        });
-      };
-      this.switchToOrdersTab = () => updateTabDisplay("ORDERS");
-      this.switchToCatalogTab = () => updateTabDisplay("CATALOG");
-
-      tabKeys.forEach((label, index) => {
-        const tabY = tabStartY + index * (tabHeight + tabSpacing);
-        const tabBg = this.add.rectangle(
-          tabX,
-          tabY,
-          tabWidth,
-          tabHeight,
-          Colors.PANEL_DARK,
-          0.9,
-        );
-        tabBg.setStrokeStyle(2, Colors.BORDER_BLUE, 0.8);
-        tabBg.setInteractive();
-        tabBg.on("pointerdown", () => updateTabDisplay(label));
-        tabBg.on("pointerover", () =>
-          tabBg.setFillStyle(Colors.BUTTON_HOVER, 0.95),
-        );
-        tabBg.on("pointerout", () =>
-          tabBg.setFillStyle(Colors.PANEL_DARK, 0.9),
-        );
-
-        const tabIcon = this.add
-          .bitmapText(tabX, tabY, "clicker", label[0], 16)
-          .setOrigin(0.5);
-        tabIcon.setTint(Colors.HIGHLIGHT_YELLOW);
-      });
-
-      // Menu button (bottom left)
-      const menuX = 80;
-      const menuY = gameHeight - 40;
-      const menuWidth = 140;
-      const menuHeight = 34;
-      const menuBg = this.add.rectangle(
-        menuX,
-        menuY,
-        menuWidth,
-        menuHeight,
-        Colors.PANEL_DARK,
-        0.9,
-      );
-      menuBg.setStrokeStyle(2, Colors.HIGHLIGHT_YELLOW);
-      menuBg.setInteractive();
-      menuBg.on("pointerdown", () => this.scene.start("MainMenu"));
-      menuBg.on("pointerover", () =>
-        menuBg.setFillStyle(Colors.BUTTON_HOVER, 0.95),
-      );
-      menuBg.on("pointerout", () =>
-        menuBg.setFillStyle(Colors.PANEL_DARK, 0.9),
-      );
-      this.add.bitmapText(menuX, menuY, "clicker", "MENU", 13).setOrigin(0.5);
-
-      // Build 6-slot A-level dial: unlocked categories in unlock order, padded with locked placeholders
-      const progression = ProgressionManager.getInstance();
-      const unlockedCats = progression.getUnlockedCategories();
-      const dialRootItems: MenuItem[] = unlockedCats
-        .map(({ categoryId }) => {
-          const found = (items as any[]).find(
-            (it: any) => it.id === categoryId,
-          );
-          return found as MenuItem;
-        })
-        .filter(Boolean) as MenuItem[];
-
-      // Pad remaining slots (up to 6) with locked placeholders
-      const totalDialSlots = ALL_CATEGORY_IDS.length;
-      const lockedSlotCount = totalDialSlots - dialRootItems.length;
-      for (let i = 0; i < lockedSlotCount; i++) {
-        dialRootItems.push({
-          id: `locked_slot_${i}`,
-          name: "LOCKED",
-          icon: "skill-blocked",
-          layers: [
-            { texture: "skill-blocked", depth: 3 },
-            { texture: "frame", depth: 2 },
-          ],
-        });
-      }
-
-      this.radialDial = new RadialDial(this, dialX, dialY, dialRootItems);
-      this.createCornerButtons(dialX, dialY, dialRadius);
-
-      // ── Purge any stale handlers from a previous shift ──────────────────────
-      // Phaser 3 never calls the user-defined shutdown() method — it only calls
-      // init(), preload(), create(), and update() directly. Because scene.events
-      // is the same EventEmitter instance across scene restarts, every call to
-      // create() stacks a new anonymous handler on top of any surviving ones.
-      // Clearing before re-registering makes the handler count exactly 1
-      // regardless of how many times the scene has been started.
-      this.events.removeAllListeners("dial:itemConfirmed");
-      this.events.removeAllListeners("dial:actionConfirmed");
-      this.events.removeAllListeners("dial:levelChanged");
-      this.events.removeAllListeners("dial:goBack");
-
-      // Listen for item confirmation — show terminal action dial
-      this.events.on("dial:itemConfirmed", (data: { item: any }) => {
-        if (this.radialDial) {
-          this.radialDial.showTerminalDial(data.item);
-        }
-        // Hide catalog button while terminal dial is active (badge stays)
-        this.cornerIsTerminal = true;
-        this.updateCornerButtons();
-      });
-
-      // Listen for terminal action selection
-      this.events.on(
-        "dial:actionConfirmed",
-        (data: { action: string; item: any }) => {
-          const iconKey: string = data.item.icon || data.item.id;
-
-          if (data.action === "send" && this.ordersContainer) {
-            // Place icon in the first empty slot
-            const slotIndex = this.fulfillmentImages.findIndex(
-              (s) => s === null,
-            );
-            if (slotIndex !== -1) {
-              const slot = this.fulfillmentSlots[slotIndex];
-              let img: Phaser.GameObjects.Image | null = null;
-              if (AssetLoader.textureExists(this, iconKey)) {
-                img = AssetLoader.createImage(this, slot.x, slot.y, iconKey);
-                img.setDisplaySize(slot.size - 6, slot.size - 6);
-                this.ordersContainer.add(img);
-              }
-              // Always record the slot as occupied so the next send picks the next slot
-              this.fulfillmentImages[slotIndex] = { img, iconKey };
-              // Color the slot bg: green = correct position, yellow = wrong position but in order
-              const isCorrect = slot.expectedIconKey === iconKey;
-              // Count how many of this icon were already placed before this slot
-              const alreadySent = this.fulfillmentImages.filter(
-                (e, i) => i !== slotIndex && e?.iconKey === iconKey,
-              ).length;
-              const isPresent =
-                alreadySent <
-                (this.fulfillmentOrderIconCounts.get(iconKey) ?? 0);
-              const bgFill = isCorrect
-                ? 0x003a1a
-                : isPresent
-                  ? 0x3a3000
-                  : 0x3a0008;
-              const bgStroke = isCorrect
-                ? 0x00e84a
-                : isPresent
-                  ? 0xffd700
-                  : 0xff2244;
-              slot.slotBg.clear();
-              slot.slotBg.fillStyle(bgFill, 0.85);
-              slot.slotBg.fillRect(
-                slot.x - slot.size / 2,
-                slot.y - slot.size / 2,
-                slot.size,
-                slot.size,
-              );
-              slot.slotBg.lineStyle(2, bgStroke, 0.95);
-              slot.slotBg.strokeRect(
-                slot.x - slot.size / 2,
-                slot.y - slot.size / 2,
-                slot.size,
-                slot.size,
-              );
-            }
-            this.checkOrderComplete();
-          } else if (data.action === "recall" && this.ordersContainer) {
-            // Find the rightmost filled slot containing this icon and remove it
-            let lastMatch = -1;
-            for (let i = this.fulfillmentImages.length - 1; i >= 0; i--) {
-              if (this.fulfillmentImages[i]?.iconKey === iconKey) {
-                lastMatch = i;
-                break;
-              }
-            }
-            if (lastMatch !== -1) {
-              this.fulfillmentImages[lastMatch]?.img?.destroy();
-              this.fulfillmentImages[lastMatch] = null;
-              // Revert slot bg to neutral
-              const slot = this.fulfillmentSlots[lastMatch];
-              slot.slotBg.clear();
-              slot.slotBg.fillStyle(Colors.PANEL_MEDIUM, 0.8);
-              slot.slotBg.fillRect(
-                slot.x - slot.size / 2,
-                slot.y - slot.size / 2,
-                slot.size,
-                slot.size,
-              );
-              slot.slotBg.lineStyle(1, Colors.BORDER_BLUE, 0.7);
-              slot.slotBg.strokeRect(
-                slot.x - slot.size / 2,
-                slot.y - slot.size / 2,
-                slot.size,
-                slot.size,
-              );
-            }
-            // If no match, dial already reset to A-level — nothing to do
-          }
-          // After an action, RadialDial.reset() returns the dial to A-level
-          this.cornerCurrentDepth = 0;
-          this.cornerIsTerminal = false;
-          this.cornerActiveCategoryItem = null;
-          this.updateCornerButtons();
-        },
-      );
-
-      // Listen for level changes (when drilling into sub-items)
-      // Note: RadialDial emits { depth, item } (not 'level')
-      this.events.on(
-        "dial:levelChanged",
-        (data: { depth: number; item: any }) => {
-          this.cornerCurrentDepth = data.depth;
-          this.cornerIsTerminal = false;
-          // Only store the category item at B-level (depth 1) so the badge
-          // always shows the root-category icon regardless of drill depth.
-          if (data.depth === 1) {
-            this.cornerActiveCategoryItem = data.item;
-          }
-          this.updateCornerButtons();
-        },
-      );
-
-      // Listen for going back (tap center to return to root)
-      this.events.on("dial:goBack", () => {
-        if (this.cornerIsTerminal) {
-          // Returning from terminal dial — still at the same depth (not A)
-          this.cornerIsTerminal = false;
-        } else {
-          this.cornerCurrentDepth = Math.max(0, this.cornerCurrentDepth - 1);
-          if (this.cornerCurrentDepth === 0) this.cornerActiveCategoryItem = null;
-        }
-        this.updateCornerButtons();
-      });
-
-      // Wire up shutdown() so the timer and radialDial are actually cleaned up.
-      // Phaser emits a 'shutdown' event on scene.events when stopping a scene;
-      // without registering here, shutdown() is never invoked.
+      this.buildPanelUI(gameWidth, gameHeight, dialY, dialRadius, items);
+      this.buildDial(items, dialX, dialY, dialRadius);
+      this.wireDialEvents();
       this.events.once("shutdown", this.shutdown, this);
     } catch (error) {
       console.error("Error creating Game scene:", error);
       this.add.bitmapText(50, 50, "clicker", "ERROR LOADING GAME DATA", 20);
     }
+  }
+
+  private buildPanelUI(gameWidth: number, gameHeight: number, dialY: number, dialRadius: number, items: any): void {
+    const settingsManager = SettingsManager.getInstance();
+
+    // Background
+    this.add.rectangle(
+      gameWidth / 2,
+      gameHeight / 2,
+      gameWidth,
+      gameHeight,
+      Colors.BACKGROUND_DARK,
+    );
+
+    // Tab dimensions — computed first so panel width can account for them
+    const tabWidth = 52;
+    const tabHeight = 40;
+    const tabSpacing = 6;
+    const tabGap = 8; // gap between panel right edge and tabs
+
+    // Central display panel (tall, from top to above dial)
+    // Reserve space for tabs so they're never clipped on narrow screens
+    const panelWidth = Math.min(420, gameWidth - tabWidth - tabGap - 20);
+    const panelTop = 20;
+    const panelBottom = dialY - dialRadius - 20;
+    const panelHeight = panelBottom - panelTop;
+    const panelX = 10 + panelWidth / 2; // left-align with menu button left edge
+    const panelY = (panelTop + panelBottom) / 2;
+
+    const mainPanel = this.add.rectangle(
+      panelX,
+      panelY,
+      panelWidth,
+      panelHeight,
+      Colors.PANEL_DARK,
+      0.85,
+    );
+    mainPanel.setStrokeStyle(2, Colors.BORDER_BLUE, 0.8);
+
+    // Panel title — vertically centered in the header bar (panelTop → panelTop+42)
+    const titleY = panelTop + 21;
+    const panelTitle = this.add
+      .bitmapText(panelX, titleY, "clicker", "ORDERS", 14)
+      .setOrigin(0.5);
+
+    // Shift timer arc — left side of the header bar, vertically centered with title
+    const timerR = this.shiftTimerRadius;
+    const timerX = panelX - panelWidth / 2 + timerR + 8;
+    const timerY = titleY;
+    this.shiftTimerX = timerX;
+    this.shiftTimerY = timerY;
+    this.shiftDurationMs = settingsManager.getShiftDurationMs();
+    const timerBg = this.add.graphics();
+    timerBg.fillStyle(Colors.PANEL_MEDIUM, 1);
+    timerBg.fillCircle(timerX, timerY, timerR);
+    timerBg.lineStyle(1, Colors.BORDER_BLUE, 0.7);
+    timerBg.strokeCircle(timerX, timerY, timerR);
+    this.shiftArcGraphic = this.add.graphics();
+    this.shiftStartTime = Date.now();
+    this.shiftTimerEvent = this.time.addEvent({
+      delay: this.shiftDurationMs,
+      callback: this.endShift,
+      callbackScope: this,
+    });
+
+    // Stats bar — persistent revenue & bonus tallies across orders
+    const statsContainer = this.add.container(0, 0);
+    const statsBarDivTop = this.add.graphics();
+    statsBarDivTop.lineStyle(1, Colors.BORDER_BLUE, 0.45);
+    statsBarDivTop.lineBetween(
+      panelX - panelWidth / 2 + 8,
+      panelTop + 42,
+      panelX + panelWidth / 2 - 8,
+      panelTop + 42,
+    );
+    const statsY = panelTop + 54;
+    const statsLeft = panelX - panelWidth / 2 + 14;
+    const revLabel = this.add
+      .bitmapText(statsLeft, statsY, "clicker", "REV", 12)
+      .setOrigin(0, 0.5)
+      .setTint(0xaaaacc);
+    this.revenueText = this.add
+      .bitmapText(statsLeft + 38, statsY, "clicker", "Q0", 12)
+      .setOrigin(0, 0.5)
+      .setTint(Colors.HIGHLIGHT_YELLOW_BRIGHT);
+    const bonusLabel = this.add
+      .bitmapText(panelX + 4, statsY, "clicker", "BONUS", 12)
+      .setOrigin(0, 0.5)
+      .setTint(0xaaaacc);
+    this.bonusText = this.add
+      .bitmapText(panelX + 68, statsY, "clicker", "Q0", 12)
+      .setOrigin(0, 0.5)
+      .setTint(Colors.HIGHLIGHT_YELLOW);
+    const statsBarDivBot = this.add.graphics();
+    statsBarDivBot.lineStyle(1, Colors.BORDER_BLUE, 0.45);
+    statsBarDivBot.lineBetween(
+      panelX - panelWidth / 2 + 8,
+      panelTop + 66,
+      panelX + panelWidth / 2 - 8,
+      panelTop + 66,
+    );
+    statsContainer.add([
+      statsBarDivTop,
+      revLabel,
+      this.revenueText,
+      bonusLabel,
+      this.bonusText,
+      statsBarDivBot,
+    ]);
+
+    // Tabbed panel controls (right-hand vertical tabs)
+    const tabX = panelX + panelWidth / 2 + tabGap + tabWidth / 2;
+    const tabStartY = panelTop + tabHeight / 2 + 4;
+    const tabKeys = ["ORDERS", "SETTINGS", "CATALOG"] as const;
+    // Content containers for each tab
+    this.ordersContainer = this.add.container(0, 0);
+    const settingsContainer = this.add.container(0, 0);
+    const catalogContainer = this.add.container(0, 0);
+
+    const containers = {
+      ORDERS: this.ordersContainer,
+      SETTINGS: settingsContainer,
+      CATALOG: catalogContainer,
+    };
+
+    // Store panel geometry for order rebuilding
+    this.ordersPanelX = panelX;
+    this.ordersPanelWidth = panelWidth;
+    this.ordersPanelTop = panelTop;
+    this.ordersPanelHeight = panelHeight;
+
+    // Generate and display current order
+    const currentOrder = buildOrder(items);
+    this.currentOrder = currentOrder;
+    this.fulfillmentSlots = this.buildOrderContent(
+      this.ordersContainer,
+      panelX,
+      panelTop + 62,
+      panelWidth - 20,
+      panelHeight - 76,
+      currentOrder,
+    );
+    this.fulfillmentImages = new Array(this.fulfillmentSlots.length).fill(null);
+    this.fulfillmentOrderIconCounts = new Map<string, number>();
+    currentOrder.requirements.forEach((r) => {
+      this.fulfillmentOrderIconCounts.set(
+        r.iconKey,
+        (this.fulfillmentOrderIconCounts.get(r.iconKey) ?? 0) + r.quantity,
+      );
+    });
+
+    // Settings tab: button to launch DialCalibration scene
+    this.buildSettingsContent(settingsContainer, panelX, panelWidth);
+    settingsContainer.setVisible(false);
+    this.buildCatalogContent(
+      catalogContainer,
+      panelX,
+      panelTop + 36,
+      panelWidth - 20,
+      panelHeight - 50,
+      items,
+    );
+    catalogContainer.setVisible(false);
+
+    const updateTabDisplay = (label: (typeof tabKeys)[number]) => {
+      panelTitle.setText(label);
+      statsContainer.setVisible(label === "ORDERS");
+      Object.keys(containers).forEach((key) => {
+        containers[key as (typeof tabKeys)[number]].setVisible(key === label);
+      });
+    };
+    this.switchToOrdersTab = () => updateTabDisplay("ORDERS");
+    this.switchToCatalogTab = () => updateTabDisplay("CATALOG");
+
+    tabKeys.forEach((label, index) => {
+      const tabY = tabStartY + index * (tabHeight + tabSpacing);
+      const tabBg = this.add.rectangle(
+        tabX,
+        tabY,
+        tabWidth,
+        tabHeight,
+        Colors.PANEL_DARK,
+        0.9,
+      );
+      tabBg.setStrokeStyle(2, Colors.BORDER_BLUE, 0.8);
+      tabBg.setInteractive();
+      tabBg.on("pointerdown", () => updateTabDisplay(label));
+      tabBg.on("pointerover", () => tabBg.setFillStyle(Colors.BUTTON_HOVER, 0.95));
+      tabBg.on("pointerout", () => tabBg.setFillStyle(Colors.PANEL_DARK, 0.9));
+
+      const tabIcon = this.add
+        .bitmapText(tabX, tabY, "clicker", label[0], 16)
+        .setOrigin(0.5);
+      tabIcon.setTint(Colors.HIGHLIGHT_YELLOW);
+    });
+
+    // Menu button (bottom left)
+    const menuX = 80;
+    const menuY = gameHeight - 40;
+    const menuWidth = 140;
+    const menuHeight = 34;
+    const menuBg = this.add.rectangle(
+      menuX,
+      menuY,
+      menuWidth,
+      menuHeight,
+      Colors.PANEL_DARK,
+      0.9,
+    );
+    menuBg.setStrokeStyle(2, Colors.HIGHLIGHT_YELLOW);
+    menuBg.setInteractive();
+    menuBg.on("pointerdown", () => this.scene.start("MainMenu"));
+    menuBg.on("pointerover", () => menuBg.setFillStyle(Colors.BUTTON_HOVER, 0.95));
+    menuBg.on("pointerout", () => menuBg.setFillStyle(Colors.PANEL_DARK, 0.9));
+    this.add.bitmapText(menuX, menuY, "clicker", "MENU", 13).setOrigin(0.5);
+  }
+
+  private buildDial(items: any, dialX: number, dialY: number, dialRadius: number): void {
+    const progression = ProgressionManager.getInstance();
+    const unlockedCats = progression.getUnlockedCategories();
+    const dialRootItems: MenuItem[] = unlockedCats
+      .map(({ categoryId }) => {
+        const found = (items as any[]).find((it: any) => it.id === categoryId);
+        return found as MenuItem;
+      })
+      .filter(Boolean) as MenuItem[];
+
+    // Pad remaining slots (up to 6) with locked placeholders
+    const totalDialSlots = ALL_CATEGORY_IDS.length;
+    const lockedSlotCount = totalDialSlots - dialRootItems.length;
+    for (let i = 0; i < lockedSlotCount; i++) {
+      dialRootItems.push({
+        id: `locked_slot_${i}`,
+        name: "LOCKED",
+        icon: "skill-blocked",
+        layers: [
+          { texture: "skill-blocked", depth: 3 },
+          { texture: "frame", depth: 2 },
+        ],
+      });
+    }
+
+    this.radialDial = new RadialDial(this, dialX, dialY, dialRootItems);
+    this.cornerHUD = new DialCornerHUD(this, dialX, dialY, dialRadius, {
+      openCatalog: (id) => { this.scrollCatalogToCategory(id); this.switchToCatalogTab?.(); },
+      closeCatalog: () => this.switchToOrdersTab?.(),
+    });
+  }
+
+  private wireDialEvents(): void {
+    // Purge any stale handlers from a previous shift — scene.events persists
+    // across scene restarts, so we clear before re-registering to keep exactly
+    // one handler per event regardless of restart count.
+    this.events.removeAllListeners("dial:itemConfirmed");
+    this.events.removeAllListeners("dial:actionConfirmed");
+    this.events.removeAllListeners("dial:levelChanged");
+    this.events.removeAllListeners("dial:goBack");
+
+    this.events.on("dial:itemConfirmed", (data: { item: any }) => {
+      if (this.radialDial) this.radialDial.showTerminalDial(data.item);
+      this.cornerHUD?.onItemConfirmed();
+    });
+
+    this.events.on("dial:actionConfirmed", (data: { action: string; item: any }) => {
+      const iconKey: string = data.item.icon || data.item.id;
+      if (data.action === "send") {
+        this.onSendItem(iconKey);
+      } else if (data.action === "recall") {
+        this.onRecallItem(iconKey);
+      }
+      this.cornerHUD?.onActionConfirmed();
+    });
+
+    this.events.on(
+      "dial:levelChanged",
+      (data: { depth: number; item: any }) => this.cornerHUD?.onLevelChanged(data.depth, data.item),
+    );
+
+    this.events.on("dial:goBack", () => this.cornerHUD?.onGoBack());
+  }
+
+  /** Place an item icon in the first empty fulfillment slot. */
+  private onSendItem(iconKey: string): void {
+    if (!this.ordersContainer) return;
+    const slotIndex = this.fulfillmentImages.findIndex((s) => s === null);
+    if (slotIndex === -1) return;
+
+    const slot = this.fulfillmentSlots[slotIndex];
+    let img: Phaser.GameObjects.Image | null = null;
+    if (AssetLoader.textureExists(this, iconKey)) {
+      img = AssetLoader.createImage(this, slot.x, slot.y, iconKey);
+      img.setDisplaySize(slot.size - 6, slot.size - 6);
+      this.ordersContainer.add(img);
+    }
+    this.fulfillmentImages[slotIndex] = { img, iconKey };
+
+    // Color the slot bg: green = correct, yellow = present but wrong position, red = not in order
+    const isCorrect = slot.expectedIconKey === iconKey;
+    const alreadySent = this.fulfillmentImages.filter(
+      (e, i) => i !== slotIndex && e?.iconKey === iconKey,
+    ).length;
+    const isPresent = alreadySent < (this.fulfillmentOrderIconCounts.get(iconKey) ?? 0);
+    const bgFill = isCorrect ? 0x003a1a : isPresent ? 0x3a3000 : 0x3a0008;
+    const bgStroke = isCorrect ? 0x00e84a : isPresent ? 0xffd700 : 0xff2244;
+
+    slot.slotBg.clear();
+    slot.slotBg.fillStyle(bgFill, 0.85);
+    slot.slotBg.fillRect(slot.x - slot.size / 2, slot.y - slot.size / 2, slot.size, slot.size);
+    slot.slotBg.lineStyle(2, bgStroke, 0.95);
+    slot.slotBg.strokeRect(slot.x - slot.size / 2, slot.y - slot.size / 2, slot.size, slot.size);
+
+    this.checkOrderComplete();
+  }
+
+  /** Remove the rightmost fulfillment slot occupied by the given icon. */
+  private onRecallItem(iconKey: string): void {
+    if (!this.ordersContainer) return;
+    let lastMatch = -1;
+    for (let i = this.fulfillmentImages.length - 1; i >= 0; i--) {
+      if (this.fulfillmentImages[i]?.iconKey === iconKey) { lastMatch = i; break; }
+    }
+    if (lastMatch === -1) return;
+
+    this.fulfillmentImages[lastMatch]?.img?.destroy();
+    this.fulfillmentImages[lastMatch] = null;
+    const slot = this.fulfillmentSlots[lastMatch];
+    slot.slotBg.clear();
+    slot.slotBg.fillStyle(Colors.PANEL_MEDIUM, 0.8);
+    slot.slotBg.fillRect(slot.x - slot.size / 2, slot.y - slot.size / 2, slot.size, slot.size);
+    slot.slotBg.lineStyle(1, Colors.BORDER_BLUE, 0.7);
+    slot.slotBg.strokeRect(slot.x - slot.size / 2, slot.y - slot.size / 2, slot.size, slot.size);
   }
 
   update(): void {
@@ -840,34 +759,38 @@ export class Game extends Phaser.Scene {
     width: number,
     height: number,
     order: Order,
-  ): Array<{
-    x: number;
-    y: number;
-    size: number;
-    slotBg: Phaser.GameObjects.Graphics;
-    expectedIconKey: string;
-  }> {
+  ): Array<{ x: number; y: number; size: number; slotBg: Phaser.GameObjects.Graphics; expectedIconKey: string }> {
     const contentX = x - width / 2 + 12;
     const rightEdge = x + width / 2 - 12;
     const contentBottom = y + height;
 
-    // Build expected sequence: expand each requirement into individual icon slots
+    // Expand requirements into a flat slot sequence
     const expectedSequence: string[] = [];
     order.requirements.forEach((req) => {
       for (let i = 0; i < req.quantity; i++) expectedSequence.push(req.iconKey);
     });
+    const totalQty = order.requirements.reduce((sum, req) => sum + req.quantity, 0);
 
-    // ── Fulfillment box row (bottom of panel) ──────────────────────────────
-    const totalQty = order.requirements.reduce(
-      (sum, req) => sum + req.quantity,
-      0,
+    const { slots, boxRowTop } = this.buildFulfillmentBoxRow(
+      container, x, width, contentBottom, totalQty, expectedSequence,
     );
+    this.buildOrderRequirementRows(container, x, width, boxRowTop, order, contentX, rightEdge);
+
+    return slots;
+  }
+
+  /** Renders the bottom strip of drop boxes (one per required item unit). */
+  private buildFulfillmentBoxRow(
+    container: Phaser.GameObjects.Container,
+    x: number,
+    width: number,
+    contentBottom: number,
+    totalQty: number,
+    expectedSequence: string[],
+  ): { slots: Array<{ x: number; y: number; size: number; slotBg: Phaser.GameObjects.Graphics; expectedIconKey: string }>; boxRowTop: number } {
     const boxRowHeight = 52;
     const boxGap = 5;
-    const boxSize = Math.min(
-      40,
-      Math.floor((width - 16 - (totalQty - 1) * boxGap) / totalQty),
-    );
+    const boxSize = Math.min(40, Math.floor((width - 16 - (totalQty - 1) * boxGap) / totalQty));
     const rowTotalWidth = totalQty * boxSize + (totalQty - 1) * boxGap;
     const boxRowTop = contentBottom - boxRowHeight;
     const boxRowCenterY = boxRowTop + boxRowHeight / 2;
@@ -878,179 +801,106 @@ export class Game extends Phaser.Scene {
     rowStripBg.fillStyle(0x071428, 0.9);
     rowStripBg.fillRect(x - width / 2 + 4, boxRowTop, width - 8, boxRowHeight);
     rowStripBg.lineStyle(1, Colors.BORDER_BLUE, 0.6);
-    rowStripBg.strokeRect(
-      x - width / 2 + 4,
-      boxRowTop,
-      width - 8,
-      boxRowHeight,
-    );
+    rowStripBg.strokeRect(x - width / 2 + 4, boxRowTop, width - 8, boxRowHeight);
     container.add(rowStripBg);
 
-    // One box per total quantity unit
-    const slots: Array<{
-      x: number;
-      y: number;
-      size: number;
-      slotBg: Phaser.GameObjects.Graphics;
-      expectedIconKey: string;
-    }> = [];
+    // One drop box per total quantity unit
+    const slots: Array<{ x: number; y: number; size: number; slotBg: Phaser.GameObjects.Graphics; expectedIconKey: string }> = [];
     for (let i = 0; i < totalQty; i++) {
       const bx = boxStartX + i * (boxSize + boxGap) + boxSize / 2;
       const boxBg = this.add.graphics();
       boxBg.fillStyle(Colors.PANEL_MEDIUM, 0.8);
-      boxBg.fillRect(
-        bx - boxSize / 2,
-        boxRowCenterY - boxSize / 2,
-        boxSize,
-        boxSize,
-      );
+      boxBg.fillRect(bx - boxSize / 2, boxRowCenterY - boxSize / 2, boxSize, boxSize);
       boxBg.lineStyle(1, Colors.BORDER_BLUE, 0.7);
-      boxBg.strokeRect(
-        bx - boxSize / 2,
-        boxRowCenterY - boxSize / 2,
-        boxSize,
-        boxSize,
-      );
+      boxBg.strokeRect(bx - boxSize / 2, boxRowCenterY - boxSize / 2, boxSize, boxSize);
       container.add(boxBg);
-      slots.push({
-        x: bx,
-        y: boxRowCenterY,
-        size: boxSize,
-        slotBg: boxBg,
-        expectedIconKey: expectedSequence[i] ?? "",
-      });
+      slots.push({ x: bx, y: boxRowCenterY, size: boxSize, slotBg: boxBg, expectedIconKey: expectedSequence[i] ?? "" });
     }
 
     // Separator above box row
     const aboveBoxSep = this.add.graphics();
     aboveBoxSep.lineStyle(1, Colors.BORDER_BLUE, 0.7);
-    aboveBoxSep.lineBetween(
-      x - width / 2 + 8,
-      boxRowTop,
-      x + width / 2 - 8,
-      boxRowTop,
-    );
+    aboveBoxSep.lineBetween(x - width / 2 + 8, boxRowTop, x + width / 2 - 8, boxRowTop);
     container.add(aboveBoxSep);
 
-    // ── Order list: anchored just above the box row ────────────────────────
+    return { slots, boxRowTop };
+  }
+
+  /** Renders the scrollable item rows and total budget line above the drop-box strip. */
+  private buildOrderRequirementRows(
+    container: Phaser.GameObjects.Container,
+    x: number,
+    width: number,
+    boxRowTop: number,
+    order: Order,
+    contentX: number,
+    rightEdge: number,
+  ): void {
     const rowHeight = 48;
     const rowPadding = 4;
     const fontSize = 12;
     const detailFontSize = 10;
     const qtyFontSize = Math.round(detailFontSize * (4 / 3)); // ~13
     const budgetLineHeight = 28;
-    const orderListHeight =
-      order.requirements.length * rowHeight + budgetLineHeight;
-    // Anchor list bottom to just above the box row
-    const orderListBottom = boxRowTop - 10;
-    const orderListTop = orderListBottom - orderListHeight;
+    const orderListHeight = order.requirements.length * rowHeight + budgetLineHeight;
+    const orderListTop = (boxRowTop - 10) - orderListHeight;
 
     order.requirements.forEach((req, index) => {
       const rowTop = orderListTop + index * rowHeight;
 
       // Alternating row background
       const rowBg = this.add.graphics();
-      const bgColor = index % 2 === 0 ? 0x112244 : 0x0d1a35;
-      rowBg.fillStyle(bgColor, 0.6);
-      rowBg.fillRect(
-        x - width / 2 + 4,
-        rowTop + rowPadding / 2,
-        width - 8,
-        rowHeight - rowPadding,
-      );
+      rowBg.fillStyle(index % 2 === 0 ? 0x112244 : 0x0d1a35, 0.6);
+      rowBg.fillRect(x - width / 2 + 4, rowTop + rowPadding / 2, width - 8, rowHeight - rowPadding);
       container.add(rowBg);
 
-      // Line 1: hash-sign bullet + item name
+      // Line 1: bullet + item name
       const nameLine1Y = rowTop + rowPadding + fontSize / 2 + 2;
-
       if (AssetLoader.textureExists(this, "hash-sign")) {
         const bullet = AssetLoader.createImage(this, contentX + 4, nameLine1Y, "hash-sign");
         bullet.setScale(0.45);
         bullet.setOrigin(0, 0.5);
         container.add(bullet);
       }
-
-      const nameText = this.add
-        .bitmapText(
-          contentX + 16,
-          nameLine1Y,
-          "clicker",
-          req.itemName.toUpperCase(),
-          fontSize,
-        )
-        .setOrigin(0, 0.5)
-        .setMaxWidth(width - 30);
-      container.add(nameText);
+      container.add(
+        this.add.bitmapText(contentX + 16, nameLine1Y, "clicker", req.itemName.toUpperCase(), fontSize)
+          .setOrigin(0, 0.5).setMaxWidth(width - 30),
+      );
 
       // Line 2: qty left, cost right
       const detailY = nameLine1Y + fontSize + 4;
-
-      const qtyText = this.add
-        .bitmapText(
-          contentX + 16,
-          detailY,
-          "clicker",
-          `X${req.quantity}`,
-          qtyFontSize,
-        )
-        .setOrigin(0, 0.5)
-        .setTint(0xaaaacc);
-      container.add(qtyText);
-
-      const itemCost = `Q${req.cost * req.quantity}`;
-      const costText = this.add
-        .bitmapText(rightEdge, detailY, "clicker", itemCost, detailFontSize)
-        .setOrigin(1, 0.5)
-        .setTint(Colors.HIGHLIGHT_YELLOW);
-      container.add(costText);
+      container.add(
+        this.add.bitmapText(contentX + 16, detailY, "clicker", `X${req.quantity}`, qtyFontSize)
+          .setOrigin(0, 0.5).setTint(0xaaaacc),
+      );
+      container.add(
+        this.add.bitmapText(rightEdge, detailY, "clicker", `Q${req.cost * req.quantity}`, detailFontSize)
+          .setOrigin(1, 0.5).setTint(Colors.HIGHLIGHT_YELLOW),
+      );
 
       // Thin separator between items (not after last)
       if (index < order.requirements.length - 1) {
-        const sepY = rowTop + rowHeight - rowPadding / 2;
         const sep = this.add.graphics();
         sep.lineStyle(1, Colors.BORDER_BLUE, 0.3);
-        sep.lineBetween(x - width / 2 + 8, sepY, x + width / 2 - 8, sepY);
+        sep.lineBetween(x - width / 2 + 8, rowTop + rowHeight - rowPadding / 2, x + width / 2 - 8, rowTop + rowHeight - rowPadding / 2);
         container.add(sep);
       }
     });
 
-    // Total budget line directly below requirements, above box row
+    // Total budget line
     const budgetY = orderListTop + order.requirements.length * rowHeight;
-
     const separatorLine = this.add.graphics();
     separatorLine.lineStyle(1, Colors.BORDER_BLUE, 0.7);
-    separatorLine.lineBetween(
-      x - width / 2 + 8,
-      budgetY,
-      x + width / 2 - 8,
-      budgetY,
-    );
+    separatorLine.lineBetween(x - width / 2 + 8, budgetY, x + width / 2 - 8, budgetY);
     container.add(separatorLine);
-
-    const budgetLabel = this.add
-      .bitmapText(
-        contentX,
-        budgetY + budgetLineHeight / 2,
-        "clicker",
-        "TOTAL BUDGET",
-        fontSize,
-      )
-      .setOrigin(0, 0.5);
-    container.add(budgetLabel);
-
-    const budgetValue = this.add
-      .bitmapText(
-        rightEdge,
-        budgetY + budgetLineHeight / 2,
-        "clicker",
-        `Q${order.budget}`,
-        fontSize + 1,
-      )
-      .setOrigin(1, 0.5)
-      .setTint(Colors.HIGHLIGHT_YELLOW_BRIGHT);
-    container.add(budgetValue);
-
-    return slots;
+    container.add(
+      this.add.bitmapText(contentX, budgetY + budgetLineHeight / 2, "clicker", "TOTAL BUDGET", fontSize)
+        .setOrigin(0, 0.5),
+    );
+    container.add(
+      this.add.bitmapText(rightEdge, budgetY + budgetLineHeight / 2, "clicker", `Q${order.budget}`, fontSize + 1)
+        .setOrigin(1, 0.5).setTint(Colors.HIGHLIGHT_YELLOW_BRIGHT),
+    );
   }
 
   private checkOrderComplete(): void {
@@ -1196,178 +1046,6 @@ export class Game extends Phaser.Scene {
     if (this.radialDial) {
       this.radialDial.destroy();
     }
-  }
-
-  // ── Corner buttons ─────────────────────────────────────────────────────────
-
-  /** Build the two corner button GameObjects (hidden on creation). */
-  private createCornerButtons(
-    dialX: number,
-    dialY: number,
-    dialRadius: number,
-  ): void {
-    const btnSize = 40;
-    const margin = 6;
-    const btnX = dialX + dialRadius - btnSize / 2 - margin;
-    const upperY = dialY - dialRadius + btnSize / 2 + margin;
-    const lowerY = dialY + dialRadius - btnSize / 2 - margin;
-
-    // ── Catalog button (upper-right) ─────────────────────────────────────
-    this.cornerCatalogBg = this.add.graphics();
-    this.cornerCatalogBg.setDepth(20);
-
-    this.cornerCatalogIcon = AssetLoader.createImage(this, btnX, upperY, "skill-brain")
-      .setScale(0.85)
-      .setDepth(21);
-
-    this.cornerCatalogBg.setInteractive(
-      new Phaser.Geom.Circle(btnX, upperY, btnSize / 2),
-      Phaser.Geom.Circle.Contains,
-    );
-    this.cornerCatalogBg.on("pointerdown", () => {
-      // Only act when the button is active (B-level, non-terminal)
-      const isActive = this.cornerCurrentDepth === 1 && !this.cornerIsTerminal;
-      if (!isActive) return;
-      if (this.cornerCatalogOpen) {
-        this.cornerCatalogOpen = false;
-        this.updateCornerButtons();
-        this.switchToOrdersTab?.();
-      } else {
-        this.cornerCatalogOpen = true;
-        this.updateCornerButtons();
-        this.scrollCatalogToCategory(this.cornerActiveCategoryItem?.id ?? "");
-        this.switchToCatalogTab?.();
-      }
-    });
-    this.cornerCatalogBg.on("pointerover", () => {
-      const isActive = this.cornerCurrentDepth === 1 && !this.cornerIsTerminal;
-      this.drawCatalogBtn(btnX, upperY, btnSize / 2, isActive, true);
-    });
-    this.cornerCatalogBg.on("pointerout", () => {
-      const isActive = this.cornerCurrentDepth === 1 && !this.cornerIsTerminal;
-      this.drawCatalogBtn(btnX, upperY, btnSize / 2, isActive, false);
-    });
-
-    // ── Level badge (lower-right) ─────────────────────────────────────────
-    this.cornerLevelBg = this.add.graphics();
-    this.cornerLevelBg.setDepth(20);
-
-    // Placeholder image — replaced with real texture in updateCornerButtons
-    this.cornerLevelIcon = this.add
-      .image(btnX, lowerY, "")
-      .setScale(0.9)
-      .setDepth(22);
-
-    this.cornerLevelLabel = this.add
-      .bitmapText(btnX + btnSize / 2 - 7, lowerY - btnSize / 2 + 7, "clicker", "A", 10)
-      .setOrigin(0.5)
-      .setDepth(23);
-
-    // Store positions for redraw
-    (this.cornerLevelBg as any)._btnX = btnX;
-    (this.cornerLevelBg as any)._lowerY = lowerY;
-    (this.cornerLevelBg as any)._btnSize = btnSize;
-    (this.cornerCatalogBg as any)._btnX = btnX;
-    (this.cornerCatalogBg as any)._upperY = upperY;
-    (this.cornerCatalogBg as any)._btnSize = btnSize;
-
-    // Draw initial state (depth 0, inactive)
-    this.updateCornerButtons();
-  }
-
-  /** Redraw the catalog button background. `active` = clickable; `hovered` = pointer-over tint. */
-  private drawCatalogBtn(
-    btnX: number,
-    upperY: number,
-    radius: number,
-    active: boolean,
-    hovered: boolean,
-  ): void {
-    if (!this.cornerCatalogBg) return;
-    this.cornerCatalogBg.clear();
-    const fillColor = hovered && active ? Colors.BUTTON_HOVER : Colors.PANEL_DARK;
-    const fillAlpha = active ? 0.9 : 0.45;
-    this.cornerCatalogBg.fillStyle(fillColor, fillAlpha);
-    this.cornerCatalogBg.fillCircle(btnX, upperY, radius);
-    // Yellow stroke when open, blue when active, dim gray when inactive
-    const strokeColor = this.cornerCatalogOpen
-      ? Colors.HIGHLIGHT_YELLOW
-      : active
-        ? Colors.BORDER_BLUE
-        : 0x334455;
-    const strokeAlpha = active ? 0.9 : 0.4;
-    this.cornerCatalogBg.lineStyle(2, strokeColor, strokeAlpha);
-    this.cornerCatalogBg.strokeCircle(btnX, upperY, radius);
-    // Dim the icon when inactive
-    this.cornerCatalogIcon?.setAlpha(active ? 1 : 0.3);
-  }
-
-  /** Sync corner button appearance to current dial state. Both buttons are always visible. */
-  private updateCornerButtons(): void {
-    if (!this.cornerLevelBg || !this.cornerCatalogBg) return;
-
-    const bgData = this.cornerLevelBg as any;
-    const catData = this.cornerCatalogBg as any;
-    const btnX: number = bgData._btnX;
-    const lowerY: number = bgData._lowerY;
-    const btnSize: number = bgData._btnSize;
-    const upperY: number = catData._upperY;
-
-    const depth = this.cornerCurrentDepth;
-    const isTerminal = this.cornerIsTerminal;
-    const isCatalogActive = depth === 1 && !isTerminal;
-
-    // ── Level badge (always visible) ─────────────────────────────────────
-    this.cornerLevelBg.clear();
-    // Dim the ring at A-level (depth 0), bright ring at depth >= 1
-    const ringColor = depth >= 1 ? Colors.NEON_BLUE : 0x334455;
-    const ringAlpha = depth >= 1 ? 0.9 : 0.5;
-    this.cornerLevelBg.fillStyle(Colors.PANEL_DARK, depth >= 1 ? 0.9 : 0.45);
-    this.cornerLevelBg.fillCircle(btnX, lowerY, btnSize / 2);
-    this.cornerLevelBg.lineStyle(2, ringColor, ringAlpha);
-    this.cornerLevelBg.strokeCircle(btnX, lowerY, btnSize / 2);
-
-    // Level letter
-    const letter = String.fromCharCode(65 + depth);
-    this.cornerLevelLabel?.setText(letter);
-    this.cornerLevelLabel?.setPosition(
-      btnX + btnSize / 2 - 7,
-      lowerY - btnSize / 2 + 7,
-    );
-    this.cornerLevelLabel?.setTint(
-      depth >= 1 ? Colors.HIGHLIGHT_YELLOW : 0x556677,
-    );
-
-    // Category icon — skill-diagram at A-level, category icon at depth >= 1
-    if (this.cornerLevelIcon) {
-      const categoryItem = this.cornerActiveCategoryItem;
-      const useDefault = depth === 0 || !categoryItem;
-      const iconKey: string = useDefault
-        ? "skill-diagram"
-        : (categoryItem.icon ?? categoryItem.id);
-
-      if (AssetLoader.textureExists(this, iconKey)) {
-        const atlasKey = AssetLoader.getAtlasKey(iconKey);
-        if (atlasKey) {
-          this.cornerLevelIcon.setTexture(atlasKey, iconKey);
-        } else {
-          this.cornerLevelIcon.setTexture(iconKey);
-        }
-        this.cornerLevelIcon.setPosition(btnX, lowerY);
-        this.cornerLevelIcon.setScale(0.9);
-        this.cornerLevelIcon.setAlpha(depth >= 1 ? 1 : 0.35);
-        this.cornerLevelIcon.setVisible(true);
-      } else {
-        this.cornerLevelIcon.setVisible(false);
-      }
-    }
-
-    // ── Catalog button (always visible, grayed out when inactive) ─────────
-    // Reset open state if it's now inactive (drill past B, go back to A, terminal)
-    if (!isCatalogActive && this.cornerCatalogOpen) {
-      this.cornerCatalogOpen = false;
-    }
-    this.drawCatalogBtn(btnX, upperY, btnSize / 2, isCatalogActive, false);
   }
 
   /** Scroll the catalog list so the given category header appears at the top. */

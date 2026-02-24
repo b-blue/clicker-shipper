@@ -340,7 +340,18 @@ export class RadialDial {
   }
 
   private redrawDial(): void {
-    // Clear previous graphics and texts
+    this.clearSliceObjects();
+    const displayItems = this.getDisplayItems();
+    const sliceAngle = (Math.PI * 2) / this.sliceCount;
+    this.drawDialFrame(sliceAngle);
+    this.drawCenterIndicator();
+    this.drawAllSlices(displayItems, sliceAngle);
+    this.centerGraphic.setDepth(10);
+    this.centerImage.setDepth(10);
+  }
+
+  /** Destroy all per-frame slice objects and reset their backing arrays. */
+  private clearSliceObjects(): void {
     this.sliceGraphics.forEach(g => g.destroy());
     this.sliceTexts.forEach(t => t.destroy());
     this.sliceImages.forEach(i => i.destroy());
@@ -349,13 +360,11 @@ export class RadialDial {
     this.sliceTexts = [];
     this.sliceImages = [];
     this.sliceGlows = [];
+  }
 
+  /** Draw the outer HUD frame circle and the radial divider lines between slices. */
+  private drawDialFrame(sliceAngle: number): void {
     this.dialFrameGraphic.clear();
-
-    const displayItems = this.getDisplayItems();
-    const sliceAngle = (Math.PI * 2) / this.sliceCount;
-
-    // Draw glassy HUD frame
     const frameRadius = this.sliceRadius + 10;
     this.dialFrameGraphic.fillStyle(Colors.PANEL_DARK, 0.65);
     this.dialFrameGraphic.fillCircle(this.dialX, this.dialY, frameRadius);
@@ -368,41 +377,33 @@ export class RadialDial {
       const angle = i * sliceAngle - Math.PI / 2;
       const inner = this.centerRadius + 6;
       const outer = this.sliceRadius + 8;
-      this.dialFrameGraphic.moveTo(
-        this.dialX + Math.cos(angle) * inner,
-        this.dialY + Math.sin(angle) * inner
-      );
-      this.dialFrameGraphic.lineTo(
-        this.dialX + Math.cos(angle) * outer,
-        this.dialY + Math.sin(angle) * outer
-      );
+      this.dialFrameGraphic.moveTo(this.dialX + Math.cos(angle) * inner, this.dialY + Math.sin(angle) * inner);
+      this.dialFrameGraphic.lineTo(this.dialX + Math.cos(angle) * outer, this.dialY + Math.sin(angle) * outer);
     }
     this.dialFrameGraphic.strokePath();
+  }
 
-    // Draw center ring
+  /** Draw the center ring, rotating glow arc, and the center preview image. */
+  private drawCenterIndicator(): void {
     this.centerGraphic.clear();
-
     this.centerGraphic.fillStyle(Colors.PANEL_DARK, 0.35);
     this.centerGraphic.fillCircle(this.dialX, this.dialY, this.centerRadius - 2);
 
     const ringColor = this.highlightedSliceIndex === -999 && this.navigationController.getDepth() > 0
-      ? Colors.HIGHLIGHT_YELLOW
-      : Colors.LIGHT_BLUE;
+      ? Colors.HIGHLIGHT_YELLOW : Colors.LIGHT_BLUE;
     this.centerGraphic.lineStyle(3, ringColor, 0.7);
     this.centerGraphic.strokeCircle(this.dialX, this.dialY, this.centerRadius);
 
     const glowStart = this.glowAngle;
-    const glowEnd = glowStart + Math.PI / 3;
     this.centerGraphic.lineStyle(4, Colors.HIGHLIGHT_YELLOW_BRIGHT, 0.6);
     this.centerGraphic.beginPath();
-    this.centerGraphic.arc(this.dialX, this.dialY, this.centerRadius + 2, glowStart, glowEnd);
+    this.centerGraphic.arc(this.dialX, this.dialY, this.centerRadius + 2, glowStart, glowStart + Math.PI / 3);
     this.centerGraphic.strokePath();
 
-    // Update center display — selected item (hover/drag) takes priority, else default icon
+    // Show selected item icon, or the default back/nav icon when nothing is selected
     const centerDisplayItem = this.selectedItem;
     if (centerDisplayItem) {
-      const item = centerDisplayItem as any;
-      const textureKey = item.icon || item.id;
+      const textureKey = (centerDisplayItem as any).icon || (centerDisplayItem as any).id;
       if (AssetLoader.textureExists(this.scene, textureKey)) {
         this.setCenterTexture(textureKey);
         this.centerImage.setPosition(this.dialX, this.dialY);
@@ -420,34 +421,30 @@ export class RadialDial {
         this.centerImage.setVisible(false);
       }
     }
+  }
 
-    // Draw slices
+  /** Render every slice: glow, pie wedge, and item icon/label. */
+  private drawAllSlices(displayItems: MenuItem[], sliceAngle: number): void {
     for (let i = 0; i < this.sliceCount; i++) {
       const startAngle = i * sliceAngle - Math.PI / 2;
       const endAngle = startAngle + sliceAngle;
       const isHighlighted = i === this.highlightedSliceIndex;
       const sliceItem = displayItems[i];
       const isLockedItem = sliceItem ? this.isLockedNavItem(sliceItem) : false;
-      // A-level locked placeholders get a darkened slice; sub-level locked nav gets normal slice
       const isALevelLocked = isLockedItem && this.navigationController.getDepth() === 0;
       const color = isHighlighted ? Colors.SLICE_HIGHLIGHTED : (isALevelLocked ? 0x11111a : Colors.SLICE_NORMAL);
       const alpha = isHighlighted ? 0.9 : (isALevelLocked ? 0.5 : 0.8);
 
-      // Draw glow for highlighted slice with exponential falloff
+      // Neon glow behind highlighted slice
       if (isHighlighted) {
         const glowGraphics = this.scene.add.graphics();
-        // Create neon glow at slice edges that fades rapidly inward
-        // Multiple layers with exponential opacity to create hot edge effect
-        for (let i = 0; i < 8; i++) {
-          const radius = this.sliceRadius + 8 + (i * 3);
-          const opacity = Math.pow(1 - (i / 8), 3) * 0.15; // Rapid exponential falloff
+        for (let g = 0; g < 8; g++) {
+          const radius = this.sliceRadius + 8 + (g * 3);
+          const opacity = Math.pow(1 - (g / 8), 3) * 0.15;
           glowGraphics.fillStyle(Colors.NEON_BLUE, opacity);
           glowGraphics.beginPath();
           glowGraphics.moveTo(this.dialX, this.dialY);
-          glowGraphics.lineTo(
-            this.dialX + Math.cos(startAngle) * radius,
-            this.dialY + Math.sin(startAngle) * radius
-          );
+          glowGraphics.lineTo(this.dialX + Math.cos(startAngle) * radius, this.dialY + Math.sin(startAngle) * radius);
           glowGraphics.arc(this.dialX, this.dialY, radius, startAngle, endAngle);
           glowGraphics.lineTo(this.dialX, this.dialY);
           glowGraphics.closePath();
@@ -457,15 +454,12 @@ export class RadialDial {
         this.sliceGlows.push(glowGraphics);
       }
 
-      // Draw slice
+      // Pie wedge
       const graphics = this.scene.add.graphics();
       graphics.fillStyle(color, alpha);
       graphics.beginPath();
       graphics.moveTo(this.dialX, this.dialY);
-      graphics.lineTo(
-        this.dialX + Math.cos(startAngle) * this.sliceRadius,
-        this.dialY + Math.sin(startAngle) * this.sliceRadius
-      );
+      graphics.lineTo(this.dialX + Math.cos(startAngle) * this.sliceRadius, this.dialY + Math.sin(startAngle) * this.sliceRadius);
       graphics.arc(this.dialX, this.dialY, this.sliceRadius, startAngle, endAngle);
       graphics.lineTo(this.dialX, this.dialY);
       graphics.closePath();
@@ -473,110 +467,69 @@ export class RadialDial {
       graphics.lineStyle(1, Colors.NEON_BLUE, 0.35);
       graphics.beginPath();
       graphics.moveTo(this.dialX, this.dialY);
-      graphics.lineTo(
-        this.dialX + Math.cos(startAngle) * this.sliceRadius,
-        this.dialY + Math.sin(startAngle) * this.sliceRadius
-      );
+      graphics.lineTo(this.dialX + Math.cos(startAngle) * this.sliceRadius, this.dialY + Math.sin(startAngle) * this.sliceRadius);
       graphics.arc(this.dialX, this.dialY, this.sliceRadius, startAngle, endAngle);
       graphics.lineTo(this.dialX, this.dialY);
       graphics.closePath();
       graphics.strokePath();
       graphics.setDepth(0);
-
       this.sliceGraphics.push(graphics);
 
-      // Draw icon/text for each item
+      if (!sliceItem) continue;
+
+      // Item icon / label
       const midAngle = startAngle + sliceAngle / 2;
-      const textDistance = this.sliceRadius - 40;
-      const textX = this.dialX + Math.cos(midAngle) * textDistance;
-      const textY = this.dialY + Math.sin(midAngle) * textDistance;
-      const item = sliceItem;
+      const textX = this.dialX + Math.cos(midAngle) * (this.sliceRadius - 40);
+      const textY = this.dialY + Math.sin(midAngle) * (this.sliceRadius - 40);
+      const lockedAlpha = isLockedItem ? 0.35 : 1;
 
-      // Skip rendering if no item at this slice (fewer items than slices)
-      if (!item) {
-        continue;
-      }
-
-      // Try to display sprite for items; fall back to text
-      if ('id' in item) {
-        const itemId = item.id;
-        const hasLayers = 'layers' in item && item.layers && item.layers.length > 0;
-        // Locked items render at reduced alpha so they look inactive
-        const lockedAlpha = isLockedItem ? 0.35 : 1;
-        
+      if ('id' in sliceItem) {
+        const hasLayers = 'layers' in sliceItem && sliceItem.layers && sliceItem.layers.length > 0;
         if (hasLayers) {
-          // Render multi-layer image
           const baseScale = this.navigationController.getScaleForDepth();
-          const baseDepth = 2;
-          
-          item.layers!.forEach((layer, index) => {
+          sliceItem.layers!.forEach((layer, index) => {
             if (AssetLoader.textureExists(this.scene, layer.texture)) {
               const layerImage = AssetLoader.createImage(this.scene, textX, textY, layer.texture);
               layerImage.setScale((layer.scale ?? 1) * baseScale);
-              layerImage.setDepth(layer.depth ?? (baseDepth + index));
+              layerImage.setDepth(layer.depth ?? (2 + index));
               layerImage.setAlpha(layer.alpha ?? lockedAlpha);
-              
-              if (layer.tint !== undefined) {
-                layerImage.setTint(layer.tint);
-              }
-              
+              if (layer.tint !== undefined) layerImage.setTint(layer.tint);
               this.sliceImages.push(layerImage);
             }
           });
-        } else if ('icon' in item && item.icon) {
-          // Use item.icon as texture key (MenuItem format)
-          const textureKey = item.icon;
-          if (AssetLoader.textureExists(this.scene, textureKey)) {
-            const image = AssetLoader.createImage(this.scene, textX, textY, textureKey);
+        } else if ('icon' in sliceItem && sliceItem.icon) {
+          if (AssetLoader.textureExists(this.scene, sliceItem.icon)) {
+            const image = AssetLoader.createImage(this.scene, textX, textY, sliceItem.icon);
             image.setScale(this.navigationController.getScaleForDepth());
             image.setDepth(2);
             image.setAlpha(lockedAlpha);
             this.sliceImages.push(image);
           } else {
-            // Icon texture not loaded, fall back to text
-            const text = this.scene.add.bitmapText(textX, textY, 'clicker', item.name.toUpperCase(), this.navigationController.getDepth() === 0 ? 12 : 11)
-              .setOrigin(0.5, 0.5)
-              .setMaxWidth(80)
-              .setDepth(0);
+            const text = this.scene.add.bitmapText(textX, textY, 'clicker', sliceItem.name.toUpperCase(), this.navigationController.getDepth() === 0 ? 12 : 11)
+              .setOrigin(0.5, 0.5).setMaxWidth(80).setDepth(0);
             this.sliceTexts.push(text);
           }
-        } else if (AssetLoader.textureExists(this.scene, itemId)) {
-          // Create single image using itemId (legacy behavior)
-          const image = AssetLoader.createImage(this.scene, textX, textY, itemId);
+        } else if (AssetLoader.textureExists(this.scene, sliceItem.id)) {
+          const image = AssetLoader.createImage(this.scene, textX, textY, sliceItem.id);
           image.setScale(this.navigationController.getScaleForDepth());
           image.setDepth(2);
           this.sliceImages.push(image);
         } else {
-          // Texture doesn't exist, fall back to text
-          const text = this.scene.add.bitmapText(textX, textY, 'clicker', item.name.toUpperCase(), this.navigationController.getDepth() === 0 ? 12 : 11)
-            .setOrigin(0.5, 0.5)
-            .setMaxWidth(80)
-            .setDepth(0);
+          const text = this.scene.add.bitmapText(textX, textY, 'clicker', sliceItem.name.toUpperCase(), this.navigationController.getDepth() === 0 ? 12 : 11)
+            .setOrigin(0.5, 0.5).setMaxWidth(80).setDepth(0);
           this.sliceTexts.push(text);
         }
       } else {
-        // No id property, fall back to text
-        const text = this.scene.add.bitmapText(textX, textY, 'clicker', (item as any).name.toUpperCase(), 12)
-          .setOrigin(0.5, 0.5)
-          .setMaxWidth(80)
-          .setDepth(0);
+        const text = this.scene.add.bitmapText(textX, textY, 'clicker', (sliceItem as any).name.toUpperCase(), 12)
+          .setOrigin(0.5, 0.5).setMaxWidth(80).setDepth(0);
         this.sliceTexts.push(text);
-
-        // Add corner badge indicator for navigable items
-        if (this.navigationController.isNavigable(item)) {
-          const badgeX = textX + 20;
-          const badgeY = textY - 20;
-          const badgeText = this.scene.add.bitmapText(badgeX, badgeY, 'clicker', '>', 16);
-          badgeText.setOrigin(0.5, 0.5);
-          badgeText.setDepth(5);
-          this.sliceTexts.push(badgeText);
+        if (this.navigationController.isNavigable(sliceItem)) {
+          const badge = this.scene.add.bitmapText(textX + 20, textY - 20, 'clicker', '>', 16)
+            .setOrigin(0.5, 0.5).setDepth(5);
+          this.sliceTexts.push(badge);
         }
       }
     }
-
-    // Ensure center graphics and image are on top
-    this.centerGraphic.setDepth(10);
-    this.centerImage.setDepth(10);
   }
 
   public reset(): void {

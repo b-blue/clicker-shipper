@@ -157,17 +157,15 @@ export class DialCornerHUD {
   private drawLevelBadge(): void {
     const { btnX, lowerY, btnSize } = this;
     const depth = this.currentDepth;
-    const active = depth >= 1;
 
+    // Level badge is always fully visible — it always reflects a valid nav level.
     this.levelBg.clear();
-    this.levelBg.fillStyle(Colors.PANEL_DARK, active ? 0.9 : 0.45);
+    this.levelBg.fillStyle(Colors.PANEL_DARK, 0.9);
     this.levelBg.fillCircle(btnX, lowerY, btnSize / 2);
-    this.levelBg.lineStyle(2, active ? Colors.NEON_BLUE : 0x334455, active ? 0.9 : 0.5);
-    this.levelBg.strokeCircle(btnX, lowerY, btnSize / 2);
 
     this.levelLabel.setText(String.fromCharCode(65 + depth));
     this.levelLabel.setPosition(btnX + btnSize / 2 - 7, lowerY - btnSize / 2 + 7);
-    this.levelLabel.setTint(active ? Colors.HIGHLIGHT_YELLOW : 0x556677);
+    this.levelLabel.setTint(Colors.HIGHLIGHT_YELLOW);
 
     const categoryItem = this.activeCategoryItem;
     const iconKey: string =
@@ -177,10 +175,12 @@ export class DialCornerHUD {
 
     if (AssetLoader.textureExists(this.scene, iconKey)) {
       const atlasKey = AssetLoader.getAtlasKey(iconKey);
-      atlasKey
-        ? this.levelIcon.setTexture(atlasKey, iconKey)
-        : this.levelIcon.setTexture(iconKey);
-      this.levelIcon.setPosition(btnX, lowerY).setScale(0.9).setAlpha(active ? 1 : 0.35);
+      if (atlasKey) {
+        this.levelIcon.setTexture(atlasKey, iconKey);
+      } else {
+        this.levelIcon.setTexture(iconKey);
+      }
+      this.levelIcon.setPosition(btnX, lowerY).setScale(0.9).setAlpha(1);
       this.levelIcon.setVisible(true);
     } else {
       this.levelIcon.setVisible(false);

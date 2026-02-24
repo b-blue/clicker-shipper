@@ -27,8 +27,7 @@ export class Preloader extends Phaser.Scene {
       await settingsManager.loadSettings();
       
       const config = gameManager.getConfig();
-      const items = gameManager.getItems();
-      
+
       // Now load root dial icon (if path is specified)
       if (config.rootDialIconPath) {
         this.load.image('rootDialIcon', config.rootDialIconPath);

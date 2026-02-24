@@ -19,30 +19,6 @@ import { EventEmitter } from 'eventemitter3';
 // ---------------------------------------------------------------------------
 
 describe('Game scene — dial event handler idempotency across restarts', () => {
-  /**
-   * Simulates the create() → restart → create() cycle using a real EventEmitter
-   * (the same object Phaser reuses between scene restarts).
-   */
-  function simulateCreateCycle(
-    events: EventEmitter,
-    callCount: number,
-  ): { actionFires: number; itemFires: number } {
-    let actionFires = 0;
-    let itemFires = 0;
-
-    for (let i = 0; i < callCount; i++) {
-      // ---- This is what Game.create() must do BEFORE registering handlers ----
-      events.removeAllListeners('dial:actionConfirmed');
-      events.removeAllListeners('dial:itemConfirmed');
-      // -----------------------------------------------------------------------
-
-      events.on('dial:actionConfirmed', () => { actionFires++; });
-      events.on('dial:itemConfirmed',   () => { itemFires++;   });
-    }
-
-    return { actionFires: 0, itemFires: 0 }; // reset counters; return emitter
-  }
-
   it('accumulates handlers WITHOUT the removeAllListeners fix (documents the bug)', () => {
     const events = new EventEmitter();
     let fires = 0;

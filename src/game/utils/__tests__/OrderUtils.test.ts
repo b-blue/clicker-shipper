@@ -259,6 +259,92 @@ describe('getShippableItems', () => {
       expect(result.map(i => i.id)).toEqual(['iron_ore', 'coal']);
     });
   });
+
+  describe('depth-aware inclusion of nav_*_down_N items', () => {
+    const { ProgressionManager } = jest.requireMock('../../managers/ProgressionManager') as {
+      ProgressionManager: { getInstance: jest.Mock };
+    };
+
+    /** Progression category tree with a nav_*_down_1 sub-tree containing deeper items. */
+    function makeDeepNavRootTree(): MenuItem[] {
+      return [
+        {
+          id: 'nav_resources_root',
+          name: 'Resources',
+          icon: 'skill-diagram',
+          children: [
+            { id: 'iron_ore', name: 'Iron Ore', icon: 'iron-ore', cost: 10 },
+            { id: 'coal',     name: 'Coal',     icon: 'coal',     cost: 15 },
+            {
+              id: 'nav_resources_down_1',
+              name: 'Advanced…',
+              icon: 'skill-down',
+              children: [
+                { id: 'titanium', name: 'Titanium', icon: 'titanium', cost: 80 },
+                { id: 'platinum', name: 'Platinum', icon: 'platinum', cost: 120 },
+                {
+                  id: 'nav_resources_down_2',
+                  name: 'Rare…',
+                  icon: 'skill-down',
+                  children: [
+                    { id: 'dark_matter', name: 'Dark Matter', icon: 'dark-matter', cost: 500 },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ];
+    }
+
+    it('at depth 1: excludes items inside nav_*_down_1 (levelN=1 is NOT < 1)', () => {
+      ProgressionManager.getInstance.mockReturnValue({
+        isUnlocked: jest.fn(() => true),
+        getUnlockedDepth: jest.fn(() => 1),
+      });
+      const ids = getShippableItems(makeDeepNavRootTree()).map(i => i.id);
+      expect(ids).toEqual(['iron_ore', 'coal']);
+      expect(ids).not.toContain('titanium');
+      expect(ids).not.toContain('platinum');
+      expect(ids).not.toContain('dark_matter');
+    });
+
+    it('at depth 2: includes items inside nav_*_down_1 but not nav_*_down_2', () => {
+      ProgressionManager.getInstance.mockReturnValue({
+        isUnlocked: jest.fn(() => true),
+        getUnlockedDepth: jest.fn(() => 2),
+      });
+      const ids = getShippableItems(makeDeepNavRootTree()).map(i => i.id);
+      expect(ids).toContain('iron_ore');
+      expect(ids).toContain('coal');
+      expect(ids).toContain('titanium');
+      expect(ids).toContain('platinum');
+      expect(ids).not.toContain('dark_matter');
+    });
+
+    it('at depth 3: includes items from both nav_*_down_1 and nav_*_down_2', () => {
+      ProgressionManager.getInstance.mockReturnValue({
+        isUnlocked: jest.fn(() => true),
+        getUnlockedDepth: jest.fn(() => 3),
+      });
+      const ids = getShippableItems(makeDeepNavRootTree()).map(i => i.id);
+      expect(ids).toContain('titanium');
+      expect(ids).toContain('platinum');
+      expect(ids).toContain('dark_matter');
+    });
+
+    it('deeper items are immediately available after deepenCategory is purchased (same shift)', () => {
+      // Simulate: player was at depth 1, just purchased deepen → depth is now 2
+      ProgressionManager.getInstance.mockReturnValue({
+        isUnlocked: jest.fn(() => true),
+        getUnlockedDepth: jest.fn(() => 2),
+      });
+      const ids = getShippableItems(makeDeepNavRootTree()).map(i => i.id);
+      // Titanium and Platinum should appear in the order pool right away
+      expect(ids).toContain('titanium');
+      expect(ids).toContain('platinum');
+    });
+  });
 });
 
 // ─── generateOrder ────────────────────────────────────────────────────────────

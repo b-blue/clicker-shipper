@@ -36,8 +36,34 @@ export function getShippableItems(items: any[]): MenuItem[] {
   const shippable: MenuItem[] = [];
 
   // Obtain progression state; fall back gracefully when unavailable (e.g. tests).
-  let pm: { isUnlocked: (id: string) => boolean } | null = null;
+  let pm: { isUnlocked: (id: string) => boolean; getUnlockedDepth: (id: string) => number } | null = null;
   try { pm = ProgressionManager.getInstance(); } catch { /* unavailable */ }
+
+  /**
+   * Recursively collects leaf (shippable) items from a nav node, respecting
+   * the unlocked depth for nav_*_down_N gated sub-trees.
+   */
+  const collectLeaves = (node: MenuItem, unlockedDepth: number): void => {
+    if (!node.children) return;
+    node.children.forEach((child: MenuItem) => {
+      // Depth-gated nav node: recurse only when the player has unlocked far
+      // enough (levelN must be strictly less than their unlocked depth).
+      const downMatch = child.id.match(/_down_(\d+)$/);
+      if (downMatch) {
+        const levelN = parseInt(downMatch[1], 10);
+        if (levelN < unlockedDepth) {
+          collectLeaves(child, unlockedDepth);
+        }
+        return;
+      }
+      // Exclude any remaining navigation nodes (non-numeric _down_ ids,
+      // skill-down icons, etc.) that are not leaf items.
+      const isNavDown = child.icon === 'skill-down' || child.id.includes('_down_');
+      if (!isNavDown && child.cost !== undefined) {
+        shippable.push(child);
+      }
+    });
+  };
 
   normalized.forEach(rootItem => {
     if (!rootItem.children) return;
@@ -46,12 +72,10 @@ export function getShippableItems(items: any[]): MenuItem[] {
     const isProgressionCategory = rootItem.id.startsWith('nav_') && rootItem.id.endsWith('_root');
     if (isProgressionCategory && pm && !pm.isUnlocked(rootItem.id)) return;
 
-    rootItem.children.forEach((child: MenuItem) => {
-      const isNavDown = child.icon === 'skill-down' || child.id.includes('_down_');
-      if (!isNavDown && child.cost !== undefined) {
-        shippable.push(child);
-      }
-    });
+    // Depth governs how many nav_*_down_N levels are accessible.
+    // Non-progression categories default to depth=1 (B-level only).
+    const unlockedDepth = (isProgressionCategory && pm) ? pm.getUnlockedDepth(rootItem.id) : 1;
+    collectLeaves(rootItem, unlockedDepth);
   });
 
   return shippable;

@@ -472,6 +472,7 @@ export class Game extends Phaser.Scene {
     const durationLbl = this.add.bitmapText(panelX - btnW / 2, durationLabelY, 'clicker', 'SHIFT DURATION', 10)
       .setOrigin(0, 0.5).setTint(0xaaaacc);
     const durationPresets = [
+		{ label: '30 SEC', ms: 30000 },
       { label: '1 MIN', ms: 60000 },
       { label: '2 MIN', ms: 120000 },
       { label: '5 MIN', ms: 300000 },

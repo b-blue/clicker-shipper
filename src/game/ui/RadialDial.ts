@@ -329,6 +329,16 @@ export class RadialDial {
     }
   }
 
+  /** Atlas-aware texture setter for the persistent center image. */
+  private setCenterTexture(iconKey: string): void {
+    const atlasKey = AssetLoader.getAtlasKey(iconKey);
+    if (atlasKey) {
+      this.centerImage.setTexture(atlasKey, iconKey);
+    } else {
+      this.centerImage.setTexture(iconKey);
+    }
+  }
+
   private redrawDial(): void {
     // Clear previous graphics and texts
     this.sliceGraphics.forEach(g => g.destroy());
@@ -393,8 +403,8 @@ export class RadialDial {
     if (centerDisplayItem) {
       const item = centerDisplayItem as any;
       const textureKey = item.icon || item.id;
-      if (this.scene.textures.exists(textureKey)) {
-        this.centerImage.setTexture(textureKey);
+      if (AssetLoader.textureExists(this.scene, textureKey)) {
+        this.setCenterTexture(textureKey);
         this.centerImage.setPosition(this.dialX, this.dialY);
         this.centerImage.setVisible(true);
       } else {
@@ -402,12 +412,8 @@ export class RadialDial {
       }
     } else {
       const defaultKey = (this.terminalItem || this.navigationController.getDepth() > 0) ? 'skill-up' : 'skill-diagram';
-      if (this.scene.textures.exists(defaultKey)) {
-        this.centerImage.setTexture(defaultKey);
-        this.centerImage.setPosition(this.dialX, this.dialY);
-        this.centerImage.setVisible(true);
-      } else if (this.scene.textures.exists('rootDialIcon')) {
-        this.centerImage.setTexture('rootDialIcon');
+      if (AssetLoader.textureExists(this.scene, defaultKey)) {
+        this.setCenterTexture(defaultKey);
         this.centerImage.setPosition(this.dialX, this.dialY);
         this.centerImage.setVisible(true);
       } else {

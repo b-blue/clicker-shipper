@@ -820,21 +820,21 @@
         },
         {
           "id": "item_armaments_002",
-          "name": "TETRAHEDRON SIMPLEX",
+          "name": "TETRAHEDRON DELETER",
           "icon": "arm2",
           "type": "armaments",
           "cost": 25
         },
         {
           "id": "item_armaments_003",
-          "name": "VOID PISTOL",
+          "name": "T-77 PULSE RIFLE",
           "icon": "arm3",
           "type": "armaments",
           "cost": 26
         },
         {
           "id": "item_armaments_004",
-          "name": "CHAIN REPEATER",
+          "name": "TETRAHEDRON HOLEPUNCH",
           "icon": "arm4",
           "type": "armaments",
           "cost": 27

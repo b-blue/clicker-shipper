@@ -210,18 +210,22 @@ describe('RadialDial drag-to-center selection', () => {
   it('uses skill-diagram as center default at root', () => {
     const scene = createMockScene();
     const items = createMockItems();
-    scene.textures.exists.mockImplementation((key: string) => key === 'skill-diagram');
+    // skill-diagram lives in atlas-nav; mock the atlas frame lookup
+    scene.textures.exists.mockImplementation((key: string) => key === 'atlas-nav');
+    scene.textures.get.mockImplementation(() => ({ has: (key: string) => key === 'skill-diagram' }));
 
     new RadialDial(scene as any, 100, 100, items);
 
     const centerImage = (scene as any).__images[0];
-    expect(centerImage.setTexture).toHaveBeenCalledWith('skill-diagram');
+    expect(centerImage.setTexture).toHaveBeenCalledWith('atlas-nav', 'skill-diagram');
   });
 
   it('uses skill-up as center default on nested dials', () => {
     const scene = createMockScene();
     const items = createMockItems();
-    scene.textures.exists.mockImplementation((key: string) => key === 'skill-up' || key === 'skill-diagram');
+    // skill-up lives in atlas-nav; mock the atlas frame lookup
+    scene.textures.exists.mockImplementation((key: string) => key === 'atlas-nav');
+    scene.textures.get.mockImplementation(() => ({ has: (key: string) => key === 'skill-up' || key === 'skill-diagram' }));
 
     const dial = new RadialDial(scene as any, dialX, dialY, items);
 
@@ -232,7 +236,7 @@ describe('RadialDial drag-to-center selection', () => {
     (dial as any).handlePointerUp({ x: dialX, y: dialY });
 
     const centerImage = (scene as any).__images[0];
-    expect(centerImage.setTexture).toHaveBeenCalledWith('skill-up');
+    expect(centerImage.setTexture).toHaveBeenCalledWith('atlas-nav', 'skill-up');
   });
 
   it('creates glow beneath icons when rendering', () => {

@@ -7,18 +7,22 @@ export interface CornerHudCallbacks {
   openCatalog: (categoryId: string) => void;
   /** Returns to the orders tab. */
   closeCatalog: () => void;
+  /** Returns the player to the main menu scene. */
+  openMenu: () => void;
 }
 
 /**
- * Two persistent corner buttons anchored to the upper-right and lower-right
- * vertices of the dial's bounding square.
+ * Three persistent corner buttons anchored to the dial's bounding square.
  *
- * Lower-right — Level badge: always visible; dim at A-level, bright + category
- * icon at B-level and deeper.
+ * Lower-right — Level badge: always visible; shows current nav depth letter
+ * and the active category icon.
  *
  * Upper-right — Catalog shortcut: always visible; active (full color, clickable)
  * only at B-level non-terminal; grayed out elsewhere.  First tap opens the
  * catalog; second tap returns to the orders view.
+ *
+ * Lower-left — Menu button: always visible; tapping returns the player to the
+ * main menu scene.
  */
 export class DialCornerHUD {
   private readonly scene: Phaser.Scene;
@@ -31,7 +35,8 @@ export class DialCornerHUD {
   private catalogOpen: boolean = false;
 
   // Cached geometry
-  private readonly btnX: number;
+  private readonly btnX: number;     // right-side X (catalog + level badge)
+  private readonly menuBtnX: number; // left-side X (menu button)
   private readonly upperY: number;
   private readonly lowerY: number;
   private readonly btnSize: number = 40;
@@ -45,6 +50,10 @@ export class DialCornerHUD {
   private readonly catalogBg: Phaser.GameObjects.Graphics;
   private readonly catalogIcon: Phaser.GameObjects.Image;
 
+  // Menu button (lower-left)
+  private readonly menuBg: Phaser.GameObjects.Graphics;
+  private readonly menuIcon: Phaser.GameObjects.Image;
+
   constructor(
     scene: Phaser.Scene,
     dialX: number,
@@ -57,11 +66,12 @@ export class DialCornerHUD {
 
     const margin = 6;
     const half = this.btnSize / 2;
-    this.btnX   = dialX + dialRadius - half - margin;
-    this.upperY = dialY - dialRadius + half + margin;
-    this.lowerY = dialY + dialRadius - half - margin;
+    this.btnX     = dialX + dialRadius - half - margin;
+    this.menuBtnX = dialX - dialRadius + half + margin;
+    this.upperY   = dialY - dialRadius + half + margin;
+    this.lowerY   = dialY + dialRadius - half - margin;
 
-    const { btnX, upperY, lowerY, btnSize } = this;
+    const { btnX, menuBtnX, upperY, lowerY, btnSize } = this;
 
     // ── Catalog button (upper-right) ─────────────────────────────────────
     this.catalogBg = scene.add.graphics().setDepth(20);
@@ -88,6 +98,20 @@ export class DialCornerHUD {
       .bitmapText(btnX + btnSize / 2 - 7, lowerY - btnSize / 2 + 7, 'clicker', 'A', 10)
       .setOrigin(0.5)
       .setDepth(23);
+
+    // ── Menu button (lower-left) ─────────────────────────────────────────
+    this.menuBg = scene.add.graphics().setDepth(20);
+    this.menuIcon = AssetLoader.createImage(scene, menuBtnX, lowerY, 'skill-question')
+      .setScale(0.85)
+      .setDepth(21);
+
+    this.menuBg.setInteractive(
+      new Phaser.Geom.Circle(menuBtnX, lowerY, half),
+      Phaser.Geom.Circle.Contains,
+    );
+    this.menuBg.on('pointerdown', () => this.callbacks.openMenu());
+    this.menuBg.on('pointerover', () => this.drawMenuBtn(true));
+    this.menuBg.on('pointerout',  () => this.drawMenuBtn(false));
 
     this.redraw();
   }
@@ -146,12 +170,13 @@ export class DialCornerHUD {
     }
   }
 
-  /** Redraws both badges to match the current navigation state. */
+  /** Redraws all corner buttons to match the current navigation state. */
   private redraw(): void {
     this.drawLevelBadge();
     // Reset catalog-open state whenever the button is no longer active
     if (!this.isCatalogActive() && this.catalogOpen) this.catalogOpen = false;
     this.drawCatalogBtn(this.isCatalogActive(), false);
+    this.drawMenuBtn(false);
   }
 
   private drawLevelBadge(): void {
@@ -204,5 +229,16 @@ export class DialCornerHUD {
     );
     this.catalogBg.strokeCircle(btnX, upperY, radius);
     this.catalogIcon.setAlpha(active ? 1 : 0.3);
+  }
+
+  private drawMenuBtn(hovered: boolean): void {
+    const { menuBtnX, lowerY, btnSize } = this;
+    const radius = btnSize / 2;
+    this.menuBg.clear();
+    this.menuBg.fillStyle(hovered ? Colors.BUTTON_HOVER : Colors.PANEL_DARK, 0.9);
+    this.menuBg.fillCircle(menuBtnX, lowerY, radius);
+    this.menuBg.lineStyle(2, Colors.BORDER_BLUE, 0.9);
+    this.menuBg.strokeCircle(menuBtnX, lowerY, radius);
+    this.menuIcon.setAlpha(1);
   }
 }

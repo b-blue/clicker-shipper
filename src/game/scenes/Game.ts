@@ -107,7 +107,7 @@ export class Game extends Phaser.Scene {
     const panelTop = 20;
     const panelBottom = dialY - dialRadius - 20;
     const panelHeight = panelBottom - panelTop;
-    const panelX = 10 + panelWidth / 2; // left-align with menu button left edge
+    const panelX = 10 + panelWidth / 2; // left-align with 10px screen margin
     const panelY = (panelTop + panelBottom) / 2;
 
     const mainPanel = this.add.rectangle(
@@ -277,25 +277,6 @@ export class Game extends Phaser.Scene {
       tabIcon.setTint(Colors.HIGHLIGHT_YELLOW);
     });
 
-    // Menu button (bottom left)
-    const menuX = 80;
-    const menuY = gameHeight - 40;
-    const menuWidth = 140;
-    const menuHeight = 34;
-    const menuBg = this.add.rectangle(
-      menuX,
-      menuY,
-      menuWidth,
-      menuHeight,
-      Colors.PANEL_DARK,
-      0.9,
-    );
-    menuBg.setStrokeStyle(2, Colors.HIGHLIGHT_YELLOW);
-    menuBg.setInteractive();
-    menuBg.on("pointerdown", () => this.scene.start("MainMenu"));
-    menuBg.on("pointerover", () => menuBg.setFillStyle(Colors.BUTTON_HOVER, 0.95));
-    menuBg.on("pointerout", () => menuBg.setFillStyle(Colors.PANEL_DARK, 0.9));
-    this.add.bitmapText(menuX, menuY, "clicker", "MENU", 13).setOrigin(0.5);
   }
 
   private buildDial(items: any, dialX: number, dialY: number, dialRadius: number): void {
@@ -327,6 +308,7 @@ export class Game extends Phaser.Scene {
     this.cornerHUD = new DialCornerHUD(this, dialX, dialY, dialRadius, {
       openCatalog: (id) => { this.scrollCatalogToCategory(id); this.switchToCatalogTab?.(); },
       closeCatalog: () => this.switchToOrdersTab?.(),
+      openMenu: () => this.scene.start('MainMenu'),
     });
   }
 

@@ -1,4 +1,5 @@
 import { ProgressionState, UnlockedCategory } from '../types/GameTypes';
+import { POWERUP_CATALOG, PowerupEntry } from '../constants/Powerups';
 
 const STORAGE_KEY = 'clicker-shipper-progression';
 
@@ -29,6 +30,7 @@ const DEFAULT_STATE: ProgressionState = {
   unlockedCategories: [{ categoryId: 'nav_resources_root', depth: 1 }],
   quantaBank: 0,
   shiftsCompleted: 0,
+  purchasedPowerups: [],
 };
 
 export class ProgressionManager {
@@ -52,7 +54,10 @@ export class ProgressionManager {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        return JSON.parse(raw) as ProgressionState;
+        const parsed = JSON.parse(raw) as ProgressionState;
+        // Backward-compat: field absent in saves created before the powerup system
+        if (!parsed.purchasedPowerups) parsed.purchasedPowerups = [];
+        return parsed;
       }
     } catch {
       // fall through to default
@@ -181,6 +186,32 @@ export class ProgressionManager {
     const entry = this.state.unlockedCategories.find(c => c.categoryId === categoryId)!;
     this.state.quantaBank -= cost;
     entry.depth += 1;
+    this.save();
+    return true;
+  }
+
+  // ── Powerups ──────────────────────────────────────────────────────────────
+
+  /** Returns true if the given powerup has been permanently purchased. */
+  hasPowerup(id: string): boolean {
+    return this.state.purchasedPowerups.includes(id);
+  }
+
+  /** Cost of a powerup by ID (0 if not in catalog). */
+  getPowerupCost(id: string): number {
+    return (POWERUP_CATALOG[id] as PowerupEntry | undefined)?.cost ?? 0;
+  }
+
+  /**
+   * Purchase a permanent powerup.
+   * Returns false if already owned or the player cannot afford it.
+   */
+  purchasePowerup(id: string): boolean {
+    if (this.hasPowerup(id)) return false;
+    const cost = this.getPowerupCost(id);
+    if (!this.canAfford(cost)) return false;
+    this.state.quantaBank -= cost;
+    this.state.purchasedPowerups.push(id);
     this.save();
     return true;
   }

@@ -417,3 +417,38 @@ Items assembled from base components present a distinct dial face when navigated
 - A small staging-area row in the central panel shows currently staged ingredients for visibility outside the dial.
 
 ---
+
+### Powerup System
+
+Purchasable one-time upgrades that alter game behavior. Bought with accumulated quanta, persisted in `ProgressionState.purchasedPowerups`.
+
+**Architecture:**
+
+`src/game/constants/Powerups.ts` is the single source of truth:
+- `POWERUP_IDS` — typed `const` object of canonical string keys (e.g. `{ ORDER_HINTS: 'ORDER_HINTS' }`).
+- `POWERUP_CATALOG` — metadata per powerup: `name`, `description`, `cost`, and `type`.
+
+`ProgressionManager` exposes three methods:
+- `hasPowerup(id)` — the only call site needed in rendering code; returns `true` if permanently owned.
+- `purchasePowerup(id)` — deducts quanta and persists.
+- `getPowerupCost(id)` — looks up catalog cost.
+
+**`type` field (future-flexibility hook):**
+
+| Value | Meaning | Future storage |
+|---|---|---|
+| `'permanent'` | Bought once, always active | `purchasedPowerups: string[]` (current) |
+| `'consumable'` | Bought per-shift, depleted on use | `consumablePowerups: Record<string, number>` |
+| `'toggle'` | Bought once, enabled/disabled per-shift | `activePowerups: string[]` |
+
+Call sites always use `hasPowerup(id)` — internal storage evolves per type without touching rendering.
+
+**Planned powerups:**
+
+| ID | Cost | Description |
+|---|---|---|
+| `ORDER_HINTS` | Q50 | Show a dimmed ghost icon inside each unfilled order slot, reminding the player what item is required. **Re-entry point:** `buildFulfillmentSlotRow` in `Game.ts` contains the comment `POWERUP[ORDER_HINTS]` marking exactly where to create the `slotIcon` when this powerup is active. |
+
+**Purchase UI:** TBD — candidate locations include the EndShift screen (between shifts) or a new in-panel SHOP tab.
+
+---

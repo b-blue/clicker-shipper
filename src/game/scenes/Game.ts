@@ -793,14 +793,8 @@ export class Game extends Phaser.Scene {
       boxBg.strokeRect(bx - boxSize / 2, by - boxSize / 2, boxSize, boxSize);
       container.add(boxBg);
 
-      // Item icon centred in slot
-      let slotIcon: Phaser.GameObjects.Image | null = null;
-      if (AssetLoader.textureExists(this, req.iconKey)) {
-        slotIcon = AssetLoader.createImage(this, bx, by, req.iconKey);
-        slotIcon.setDisplaySize(boxSize - 8, boxSize - 8);
-        slotIcon.setAlpha(0.4); // dim until fulfilled
-        container.add(slotIcon);
-      }
+      // POWERUP[ORDER_HINTS]: create dimmed ghost slotIcon here when the powerup is unlocked
+      const slotIcon: Phaser.GameObjects.Image | null = null;
 
       // Required quantity badge (top-right corner, shown only when qty > 1)
       let badgeGraphic: Phaser.GameObjects.Graphics | null = null;

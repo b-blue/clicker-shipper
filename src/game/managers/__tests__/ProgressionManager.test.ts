@@ -245,3 +245,69 @@ describe('ProgressionManager — CATEGORY_DISPLAY_NAMES', () => {
     });
   });
 });
+
+describe('ProgressionManager — powerup system', () => {
+  it('hasPowerup returns false for an unpurchased powerup', () => {
+    const pm = freshManager();
+    expect(pm.hasPowerup('ORDER_HINTS')).toBe(false);
+  });
+
+  it('getPowerupCost returns the catalog cost for a known powerup', () => {
+    const pm = freshManager();
+    expect(pm.getPowerupCost('ORDER_HINTS')).toBe(50);
+  });
+
+  it('getPowerupCost returns 0 for an unknown powerup ID', () => {
+    const pm = freshManager();
+    expect(pm.getPowerupCost('NONEXISTENT')).toBe(0);
+  });
+
+  it('purchasePowerup returns false when player cannot afford it', () => {
+    const pm = freshManager();
+    // quantaBank starts at 0; ORDER_HINTS costs Q50
+    expect(pm.purchasePowerup('ORDER_HINTS')).toBe(false);
+    expect(pm.hasPowerup('ORDER_HINTS')).toBe(false);
+  });
+
+  it('purchasePowerup succeeds and deducts cost when player can afford it', () => {
+    const pm = freshManager();
+    pm.addQuanta(100);
+    expect(pm.purchasePowerup('ORDER_HINTS')).toBe(true);
+    expect(pm.hasPowerup('ORDER_HINTS')).toBe(true);
+    expect(pm.getQuantaBank()).toBe(50); // 100 - 50
+  });
+
+  it('purchasePowerup returns false if already owned (no double-purchase)', () => {
+    const pm = freshManager();
+    pm.addQuanta(200);
+    pm.purchasePowerup('ORDER_HINTS');
+    const secondPurchase = pm.purchasePowerup('ORDER_HINTS');
+    expect(secondPurchase).toBe(false);
+    expect(pm.getQuantaBank()).toBe(150); // only deducted once
+  });
+
+  it('purchased powerups persist across save/reload', () => {
+    const pm = freshManager();
+    pm.addQuanta(100);
+    pm.purchasePowerup('ORDER_HINTS');
+
+    (ProgressionManager as any).instance = undefined;
+    const pm2 = ProgressionManager.getInstance();
+    expect(pm2.hasPowerup('ORDER_HINTS')).toBe(true);
+  });
+
+  it('backward-compat: loads saved state missing purchasedPowerups without error', () => {
+    // Simulate a save file created before the powerup system existed
+    const legacy = JSON.stringify({
+      unlockedCategories: [{ categoryId: 'nav_resources_root', depth: 1 }],
+      quantaBank: 42,
+      shiftsCompleted: 3,
+      // purchasedPowerups intentionally absent
+    });
+    localStorage.setItem('clicker-shipper-progression', legacy);
+    (ProgressionManager as any).instance = undefined;
+    const pm = ProgressionManager.getInstance();
+    expect(pm.getQuantaBank()).toBe(42);
+    expect(pm.hasPowerup('ORDER_HINTS')).toBe(false);
+  });
+});

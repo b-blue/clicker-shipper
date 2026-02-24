@@ -80,4 +80,5 @@ export interface ProgressionState {
   unlockedCategories: UnlockedCategory[]; // index 0 always nav_resources_root; append order = dial slot order
   quantaBank: number;                     // persistent cross-shift spendable currency
   shiftsCompleted: number;
+  purchasedPowerups: string[];            // IDs of permanently purchased powerups
 }

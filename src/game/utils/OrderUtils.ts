@@ -163,14 +163,12 @@ export function getCatalogRows(items: any[]): CatalogCategory[] {
   return rows;
 }
 
-/** Weighted random quantity: 60%=1, 25%=2, 10%=3, 4%=4, 1%=5 */
+/** Weighted random quantity: 60%=1, 30%=2, 10%=3 (max 3 per item type). */
 export function getRandomQuantity(): number {
   const roll = Math.random();
   if (roll < 0.60) return 1;
-  if (roll < 0.85) return 2;
-  if (roll < 0.95) return 3;
-  if (roll < 0.99) return 4;
-  return 5;
+  if (roll < 0.90) return 2;
+  return 3;
 }
 
 /**
@@ -188,6 +186,9 @@ export function generateOrder(
     return { id: `order_${Date.now()}`, budget: 0, requirements: [] };
   }
 
+  const MAX_ITEM_QTY = 3;  // no more than this quantity of a single item type
+  const MAX_TOTAL_QTY = 7; // no more than this total items across the whole order
+
   const numItems = Math.min(Math.floor(rng() * 5) + 1, shippable.length);
   const selected: MenuItem[] = [];
   const indices = new Set<number>();
@@ -200,15 +201,24 @@ export function generateOrder(
     itemId: item.id,
     itemName: item.name,
     iconKey: item.icon,
-    quantity: qtyFn(),
+    quantity: Math.min(qtyFn(), MAX_ITEM_QTY),
     cost: item.cost ?? 0,
   }));
 
-  const budget = requirements.reduce((sum, req) => sum + req.cost * req.quantity, 0);
+  // Trim total quantity to MAX_TOTAL_QTY, reducing from the last requirement first
+  let total = requirements.reduce((s, r) => s + r.quantity, 0);
+  for (let i = requirements.length - 1; i >= 0 && total > MAX_TOTAL_QTY; i--) {
+    const cut = Math.min(requirements[i].quantity, total - MAX_TOTAL_QTY);
+    requirements[i].quantity -= cut;
+    total -= cut;
+  }
+  const trimmed = requirements.filter(r => r.quantity > 0);
+
+  const budget = trimmed.reduce((sum, req) => sum + req.cost * req.quantity, 0);
 
   return {
     id: `order_${Date.now()}`,
     budget,
-    requirements,
+    requirements: trimmed,
   };
 }

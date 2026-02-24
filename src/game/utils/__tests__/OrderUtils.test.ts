@@ -443,16 +443,33 @@ describe('generateOrder', () => {
     expect(order.requirements[0].quantity).toBe(3);
     expect(order.budget).toBe(10 * 3);
   });
+
+  it('total quantity across all requirements never exceeds 7', () => {
+    for (let run = 0; run < 50; run++) {
+      const order = generateOrder(makeMultiCategoryTree());
+      const total = order.requirements.reduce((s, r) => s + r.quantity, 0);
+      expect(total).toBeLessThanOrEqual(7);
+    }
+  });
+
+  it('no single requirement has a quantity greater than 3', () => {
+    for (let run = 0; run < 50; run++) {
+      const order = generateOrder(makeMultiCategoryTree());
+      order.requirements.forEach(req => {
+        expect(req.quantity).toBeLessThanOrEqual(3);
+      });
+    }
+  });
 });
 
 // ─── getRandomQuantity ────────────────────────────────────────────────────────
 
 describe('getRandomQuantity', () => {
-  it('always returns a value between 1 and 5', () => {
+  it('always returns a value between 1 and 3', () => {
     for (let i = 0; i < 500; i++) {
       const qty = getRandomQuantity();
       expect(qty).toBeGreaterThanOrEqual(1);
-      expect(qty).toBeLessThanOrEqual(5);
+      expect(qty).toBeLessThanOrEqual(3);
     }
   });
 

@@ -863,11 +863,12 @@ export class Game extends Phaser.Scene {
         const bullet = AssetLoader.createImage(this, contentX + 4, nameLine1Y, "hash-sign");
         bullet.setScale(0.45);
         bullet.setOrigin(0, 0.5);
+        bullet.setTint(0xffffff);
         container.add(bullet);
       }
       container.add(
-        this.add.bitmapText(contentX + 16, nameLine1Y, "clicker", req.itemName.toUpperCase(), fontSize)
-          .setOrigin(0, 0.5).setMaxWidth(width - 30),
+        this.add.bitmapText(contentX + 22, nameLine1Y, "clicker", req.itemName.toUpperCase(), fontSize)
+          .setOrigin(0, 0.5).setMaxWidth(width - 36),
       );
 
       // Line 2: qty left, cost right

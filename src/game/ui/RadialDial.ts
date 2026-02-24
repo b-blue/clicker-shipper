@@ -44,7 +44,7 @@ export class RadialDial {
   private lastTouchEndTime: number = 0;     // timestamp of last real touch-end, used to suppress synthesized mouse events
   private readonly touchSynthesisWindow: number = 500; // ms within which mouse events after a touch are ignored
   private lastActionTime: number = 0;       // timestamp of last confirmed terminal action, used to debounce rapid double-sends
-  private readonly actionDebounceWindow: number = 600; // ms: post-action cooldown (must exceed browser synthesis delay ~300ms)
+  private readonly actionDebounceWindow: number = 150; // ms to block a rapid double-tap on the terminal dial
   private activePointerId: number = -1;     // pointer ID that owns the current gesture; -1 = no active gesture
   private glowAngle: number = 0;
   private glowTimer: Phaser.Time.TimerEvent | null = null;
@@ -129,17 +129,8 @@ export class RadialDial {
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
-    // Guard 1: simultaneous secondary touches.
+    // Guard 1: simultaneous secondary touches (e.g. palm + finger on mobile).
     if (this.activePointerId !== -1 && pointer.pointerId !== this.activePointerId) {
-      return;
-    }
-
-    // Guard 2: post-action cooldown.
-    // After a terminal action fires, block ALL new gesture starts for actionDebounceWindow ms.
-    // This is the primary defence against synthesized mouse events that browsers inject
-    // after a real touch (typically ~300 ms later). It works regardless of whether
-    // pointer.wasTouch is correctly set by the current Phaser version.
-    if (Date.now() - this.lastActionTime < this.actionDebounceWindow) {
       return;
     }
 
@@ -153,10 +144,11 @@ export class RadialDial {
     this.dragStartSliceIndex = -1;
     this.lastNonCenterSliceIndex = -1;
 
-    // Suppress synthesized mouse-down events the browser fires ~300ms after a real touch.
-    // Without this, the synthesized mousedown resets pointerConsumed and the subsequent
-    // mouseup fires a second action on the now-visible terminal dial.
-    if (!pointer.wasTouch && (Date.now() - this.lastTouchEndTime) < this.touchSynthesisWindow) {
+    // Guard 2: suppress synthesized mouse-down events browsers fire ~300 ms after a real touch.
+    // pointer.wasTouch is unreliable in Phaser 3.90's pointer-event path, so also check the
+    // underlying DOM event's pointerType directly.
+    const isTouch = pointer.wasTouch || (pointer.event as PointerEvent | undefined)?.pointerType === 'touch';
+    if (!isTouch && (Date.now() - this.lastTouchEndTime) < this.touchSynthesisWindow) {
       return;
     }
 
@@ -192,7 +184,10 @@ export class RadialDial {
 
     // Record when a real touch ends so handlePointerDown can suppress the
     // synthesized mouse events the browser fires shortly after.
-    if (pointer.wasTouch) {
+    // Check both wasTouch and the underlying DOM event's pointerType because
+    // Phaser 3.90's pointer-event path does not always set wasTouch correctly.
+    const isTouch = pointer.wasTouch || (pointer.event as PointerEvent | undefined)?.pointerType === 'touch';
+    if (isTouch) {
       this.lastTouchEndTime = Date.now();
     }
 

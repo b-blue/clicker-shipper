@@ -1215,49 +1215,53 @@ export class Game extends Phaser.Scene {
     // ── Catalog button (upper-right) ─────────────────────────────────────
     this.cornerCatalogBg = this.add.graphics();
     this.cornerCatalogBg.setDepth(20);
-    this.cornerCatalogBg.setVisible(false);
 
     this.cornerCatalogIcon = AssetLoader.createImage(this, btnX, upperY, "skill-brain")
       .setScale(0.85)
-      .setDepth(21)
-      .setVisible(false);
+      .setDepth(21);
 
     this.cornerCatalogBg.setInteractive(
       new Phaser.Geom.Circle(btnX, upperY, btnSize / 2),
       Phaser.Geom.Circle.Contains,
     );
     this.cornerCatalogBg.on("pointerdown", () => {
+      // Only act when the button is active (B-level, non-terminal)
+      const isActive = this.cornerCurrentDepth === 1 && !this.cornerIsTerminal;
+      if (!isActive) return;
       if (this.cornerCatalogOpen) {
         this.cornerCatalogOpen = false;
-        this.drawCatalogBtn(btnX, upperY, btnSize / 2, false);
+        this.updateCornerButtons();
         this.switchToOrdersTab?.();
       } else {
         this.cornerCatalogOpen = true;
-        this.drawCatalogBtn(btnX, upperY, btnSize / 2, false);
+        this.updateCornerButtons();
         this.scrollCatalogToCategory(this.cornerActiveCategoryItem?.id ?? "");
         this.switchToCatalogTab?.();
       }
     });
-    this.cornerCatalogBg.on("pointerover", () => this.drawCatalogBtn(btnX, upperY, btnSize / 2, true));
-    this.cornerCatalogBg.on("pointerout", () => this.drawCatalogBtn(btnX, upperY, btnSize / 2, false));
+    this.cornerCatalogBg.on("pointerover", () => {
+      const isActive = this.cornerCurrentDepth === 1 && !this.cornerIsTerminal;
+      this.drawCatalogBtn(btnX, upperY, btnSize / 2, isActive, true);
+    });
+    this.cornerCatalogBg.on("pointerout", () => {
+      const isActive = this.cornerCurrentDepth === 1 && !this.cornerIsTerminal;
+      this.drawCatalogBtn(btnX, upperY, btnSize / 2, isActive, false);
+    });
 
     // ── Level badge (lower-right) ─────────────────────────────────────────
     this.cornerLevelBg = this.add.graphics();
     this.cornerLevelBg.setDepth(20);
-    this.cornerLevelBg.setVisible(false);
 
-    // Placeholder image — will be replaced with real texture in updateCornerButtons
+    // Placeholder image — replaced with real texture in updateCornerButtons
     this.cornerLevelIcon = this.add
       .image(btnX, lowerY, "")
       .setScale(0.9)
-      .setDepth(22)
-      .setVisible(false);
+      .setDepth(22);
 
     this.cornerLevelLabel = this.add
       .bitmapText(btnX + btnSize / 2 - 7, lowerY - btnSize / 2 + 7, "clicker", "A", 10)
       .setOrigin(0.5)
-      .setDepth(23)
-      .setVisible(false);
+      .setDepth(23);
 
     // Store positions for redraw
     (this.cornerLevelBg as any)._btnX = btnX;
@@ -1266,31 +1270,39 @@ export class Game extends Phaser.Scene {
     (this.cornerCatalogBg as any)._btnX = btnX;
     (this.cornerCatalogBg as any)._upperY = upperY;
     (this.cornerCatalogBg as any)._btnSize = btnSize;
+
+    // Draw initial state (depth 0, inactive)
+    this.updateCornerButtons();
   }
 
-  /** Redraw the catalog button background (hover-aware). */
+  /** Redraw the catalog button background. `active` = clickable; `hovered` = pointer-over tint. */
   private drawCatalogBtn(
     btnX: number,
     upperY: number,
     radius: number,
+    active: boolean,
     hovered: boolean,
   ): void {
     if (!this.cornerCatalogBg) return;
     this.cornerCatalogBg.clear();
-    this.cornerCatalogBg.fillStyle(
-      hovered ? Colors.BUTTON_HOVER : Colors.PANEL_DARK,
-      0.9,
-    );
+    const fillColor = hovered && active ? Colors.BUTTON_HOVER : Colors.PANEL_DARK;
+    const fillAlpha = active ? 0.9 : 0.45;
+    this.cornerCatalogBg.fillStyle(fillColor, fillAlpha);
     this.cornerCatalogBg.fillCircle(btnX, upperY, radius);
-    // Stroke yellow when the catalog is open, blue otherwise
+    // Yellow stroke when open, blue when active, dim gray when inactive
     const strokeColor = this.cornerCatalogOpen
       ? Colors.HIGHLIGHT_YELLOW
-      : Colors.BORDER_BLUE;
-    this.cornerCatalogBg.lineStyle(2, strokeColor, 0.9);
+      : active
+        ? Colors.BORDER_BLUE
+        : 0x334455;
+    const strokeAlpha = active ? 0.9 : 0.4;
+    this.cornerCatalogBg.lineStyle(2, strokeColor, strokeAlpha);
     this.cornerCatalogBg.strokeCircle(btnX, upperY, radius);
+    // Dim the icon when inactive
+    this.cornerCatalogIcon?.setAlpha(active ? 1 : 0.3);
   }
 
-  /** Sync corner button visibility and content to current dial state. */
+  /** Sync corner button appearance to current dial state. Both buttons are always visible. */
   private updateCornerButtons(): void {
     if (!this.cornerLevelBg || !this.cornerCatalogBg) return;
 
@@ -1303,65 +1315,59 @@ export class Game extends Phaser.Scene {
 
     const depth = this.cornerCurrentDepth;
     const isTerminal = this.cornerIsTerminal;
-    const showBadge = depth >= 1;
-    const showCatalog = depth === 1 && !isTerminal;
+    const isCatalogActive = depth === 1 && !isTerminal;
 
-    // ── Level badge ───────────────────────────────────────────────────────
-    this.cornerLevelBg.setVisible(showBadge);
-    this.cornerLevelIcon?.setVisible(showBadge);
-    this.cornerLevelLabel?.setVisible(showBadge);
+    // ── Level badge (always visible) ─────────────────────────────────────
+    this.cornerLevelBg.clear();
+    // Dim the ring at A-level (depth 0), bright ring at depth >= 1
+    const ringColor = depth >= 1 ? Colors.NEON_BLUE : 0x334455;
+    const ringAlpha = depth >= 1 ? 0.9 : 0.5;
+    this.cornerLevelBg.fillStyle(Colors.PANEL_DARK, depth >= 1 ? 0.9 : 0.45);
+    this.cornerLevelBg.fillCircle(btnX, lowerY, btnSize / 2);
+    this.cornerLevelBg.lineStyle(2, ringColor, ringAlpha);
+    this.cornerLevelBg.strokeCircle(btnX, lowerY, btnSize / 2);
 
-    if (showBadge) {
-      // Draw badge background
-      this.cornerLevelBg.clear();
-      this.cornerLevelBg.fillStyle(Colors.PANEL_DARK, 0.9);
-      this.cornerLevelBg.fillCircle(btnX, lowerY, btnSize / 2);
-      this.cornerLevelBg.lineStyle(2, Colors.NEON_BLUE, 0.9);
-      this.cornerLevelBg.strokeCircle(btnX, lowerY, btnSize / 2);
+    // Level letter
+    const letter = String.fromCharCode(65 + depth);
+    this.cornerLevelLabel?.setText(letter);
+    this.cornerLevelLabel?.setPosition(
+      btnX + btnSize / 2 - 7,
+      lowerY - btnSize / 2 + 7,
+    );
+    this.cornerLevelLabel?.setTint(
+      depth >= 1 ? Colors.HIGHLIGHT_YELLOW : 0x556677,
+    );
 
-      // Update level letter (A=0, B=1, C=2 …)
-      const letter = String.fromCharCode(65 + depth);
-      this.cornerLevelLabel?.setText(letter);
-      this.cornerLevelLabel?.setPosition(
-        btnX + btnSize / 2 - 7,
-        lowerY - btnSize / 2 + 7,
-      );
-      this.cornerLevelLabel?.setTint(Colors.HIGHLIGHT_YELLOW);
-
-      // Update category icon — use the B-level (depth-1) category root icon
-      // so the badge always shows which category we entered, regardless of
-      // how deep we have drilled (C, D, …).
+    // Category icon — skill-diagram at A-level, category icon at depth >= 1
+    if (this.cornerLevelIcon) {
       const categoryItem = this.cornerActiveCategoryItem;
-      if (categoryItem && this.cornerLevelIcon) {
-        const iconKey: string = categoryItem.icon ?? categoryItem.id;
-        if (AssetLoader.textureExists(this, iconKey)) {
-          const atlasKey = AssetLoader.getAtlasKey(iconKey);
-          if (atlasKey) {
-            this.cornerLevelIcon.setTexture(atlasKey, iconKey);
-          } else {
-            this.cornerLevelIcon.setTexture(iconKey);
-          }
-          this.cornerLevelIcon.setPosition(btnX, lowerY);
-          this.cornerLevelIcon.setScale(0.9);
-          this.cornerLevelIcon.setVisible(true);
+      const useDefault = depth === 0 || !categoryItem;
+      const iconKey: string = useDefault
+        ? "skill-diagram"
+        : (categoryItem.icon ?? categoryItem.id);
+
+      if (AssetLoader.textureExists(this, iconKey)) {
+        const atlasKey = AssetLoader.getAtlasKey(iconKey);
+        if (atlasKey) {
+          this.cornerLevelIcon.setTexture(atlasKey, iconKey);
         } else {
-          this.cornerLevelIcon.setVisible(false);
+          this.cornerLevelIcon.setTexture(iconKey);
         }
+        this.cornerLevelIcon.setPosition(btnX, lowerY);
+        this.cornerLevelIcon.setScale(0.9);
+        this.cornerLevelIcon.setAlpha(depth >= 1 ? 1 : 0.35);
+        this.cornerLevelIcon.setVisible(true);
+      } else {
+        this.cornerLevelIcon.setVisible(false);
       }
     }
 
-    // ── Catalog button ────────────────────────────────────────────────────
-    // When the button is being hidden (navigated away / terminal), reset the
-    // open state so it always starts closed the next time it appears.
-    if (!showCatalog && this.cornerCatalogOpen) {
+    // ── Catalog button (always visible, grayed out when inactive) ─────────
+    // Reset open state if it's now inactive (drill past B, go back to A, terminal)
+    if (!isCatalogActive && this.cornerCatalogOpen) {
       this.cornerCatalogOpen = false;
     }
-    this.cornerCatalogBg.setVisible(showCatalog);
-    this.cornerCatalogIcon?.setVisible(showCatalog);
-
-    if (showCatalog) {
-      this.drawCatalogBtn(btnX, upperY, btnSize / 2, false);
-    }
+    this.drawCatalogBtn(btnX, upperY, btnSize / 2, isCatalogActive, false);
   }
 
   /** Scroll the catalog list so the given category header appears at the top. */

@@ -44,7 +44,7 @@ export class RadialDial {
   private lastTouchEndTime: number = 0;     // timestamp of last real touch-end, used to suppress synthesized mouse events
   private readonly touchSynthesisWindow: number = 500; // ms within which mouse events after a touch are ignored
   private lastActionTime: number = 0;       // timestamp of last confirmed terminal action, used to debounce rapid double-sends
-  private readonly actionDebounceWindow: number = 300; // ms to block a second terminal action after the first
+  private readonly actionDebounceWindow: number = 600; // ms: post-action cooldown (must exceed browser synthesis delay ~300ms)
   private activePointerId: number = -1;     // pointer ID that owns the current gesture; -1 = no active gesture
   private glowAngle: number = 0;
   private glowTimer: Phaser.Time.TimerEvent | null = null;
@@ -129,10 +129,17 @@ export class RadialDial {
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
-    // If another pointer already owns the active gesture, ignore this one.
-    // This prevents a second finger/palm contact from resetting pointerConsumed
-    // and firing duplicate actions (root cause of 2–3 items at once on mobile).
+    // Guard 1: simultaneous secondary touches.
     if (this.activePointerId !== -1 && pointer.pointerId !== this.activePointerId) {
+      return;
+    }
+
+    // Guard 2: post-action cooldown.
+    // After a terminal action fires, block ALL new gesture starts for actionDebounceWindow ms.
+    // This is the primary defence against synthesized mouse events that browsers inject
+    // after a real touch (typically ~300 ms later). It works regardless of whether
+    // pointer.wasTouch is correctly set by the current Phaser version.
+    if (Date.now() - this.lastActionTime < this.actionDebounceWindow) {
       return;
     }
 

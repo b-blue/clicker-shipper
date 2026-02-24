@@ -18,7 +18,7 @@
       "children": [
         {
           "id": "item_resources_001",
-          "name": "SCRAP ALLOY",
+          "name": "FFC STRIP",
           "icon": "resource1",
           "type": "resources",
           "cost": 10
@@ -396,28 +396,28 @@
         },
         {
           "id": "item_resources_002",
-          "name": "NEURAL SOLDER",
+          "name": "DE-9 CONNECTOR",
           "icon": "resource2",
           "type": "resources",
           "cost": 11
         },
         {
           "id": "item_resources_003",
-          "name": "DATAPLAST",
+          "name": "CAT 7 SPOOL",
           "icon": "resource3",
           "type": "resources",
           "cost": 12
         },
         {
           "id": "item_resources_004",
-          "name": "CHROME FLUX",
+          "name": "SERVER RACK KEY",
           "icon": "resource4",
           "type": "resources",
           "cost": 13
         },
         {
           "id": "item_resources_005",
-          "name": "VOLT RESIN",
+          "name": "WIRE SCRAP",
           "icon": "resource5",
           "type": "resources",
           "cost": 14

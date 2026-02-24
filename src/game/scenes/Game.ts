@@ -58,6 +58,7 @@ export class Game extends Phaser.Scene {
   // Corner catalog button (upper-right)
   private cornerCatalogBg: Phaser.GameObjects.Graphics | null = null;
   private cornerCatalogIcon: Phaser.GameObjects.Image | null = null;
+  private cornerCatalogOpen: boolean = false;
   // Catalog scroll state (populated inside buildCatalogContent)
   private catalogListContainer: Phaser.GameObjects.Container | null = null;
   private catalogListTop: number = 0;
@@ -1222,20 +1223,23 @@ export class Game extends Phaser.Scene {
       .setVisible(false);
 
     this.cornerCatalogBg.setInteractive(
-      new Phaser.Geom.Rectangle(
-        btnX - btnSize / 2,
-        upperY - btnSize / 2,
-        btnSize,
-        btnSize,
-      ),
-      Phaser.Geom.Rectangle.Contains,
+      new Phaser.Geom.Circle(btnX, upperY, btnSize / 2),
+      Phaser.Geom.Circle.Contains,
     );
     this.cornerCatalogBg.on("pointerdown", () => {
-      this.scrollCatalogToCategory(this.cornerActiveCategoryItem?.id ?? "");
-      this.switchToCatalogTab?.();
+      if (this.cornerCatalogOpen) {
+        this.cornerCatalogOpen = false;
+        this.drawCatalogBtn(btnX, upperY, btnSize / 2, false);
+        this.switchToOrdersTab?.();
+      } else {
+        this.cornerCatalogOpen = true;
+        this.drawCatalogBtn(btnX, upperY, btnSize / 2, false);
+        this.scrollCatalogToCategory(this.cornerActiveCategoryItem?.id ?? "");
+        this.switchToCatalogTab?.();
+      }
     });
-    this.cornerCatalogBg.on("pointerover", () => this.drawCatalogBtn(btnX, upperY, btnSize, true));
-    this.cornerCatalogBg.on("pointerout", () => this.drawCatalogBtn(btnX, upperY, btnSize, false));
+    this.cornerCatalogBg.on("pointerover", () => this.drawCatalogBtn(btnX, upperY, btnSize / 2, true));
+    this.cornerCatalogBg.on("pointerout", () => this.drawCatalogBtn(btnX, upperY, btnSize / 2, false));
 
     // ── Level badge (lower-right) ─────────────────────────────────────────
     this.cornerLevelBg = this.add.graphics();
@@ -1268,7 +1272,7 @@ export class Game extends Phaser.Scene {
   private drawCatalogBtn(
     btnX: number,
     upperY: number,
-    btnSize: number,
+    radius: number,
     hovered: boolean,
   ): void {
     if (!this.cornerCatalogBg) return;
@@ -1277,19 +1281,13 @@ export class Game extends Phaser.Scene {
       hovered ? Colors.BUTTON_HOVER : Colors.PANEL_DARK,
       0.9,
     );
-    this.cornerCatalogBg.fillRect(
-      btnX - btnSize / 2,
-      upperY - btnSize / 2,
-      btnSize,
-      btnSize,
-    );
-    this.cornerCatalogBg.lineStyle(2, Colors.BORDER_BLUE, 0.9);
-    this.cornerCatalogBg.strokeRect(
-      btnX - btnSize / 2,
-      upperY - btnSize / 2,
-      btnSize,
-      btnSize,
-    );
+    this.cornerCatalogBg.fillCircle(btnX, upperY, radius);
+    // Stroke yellow when the catalog is open, blue otherwise
+    const strokeColor = this.cornerCatalogOpen
+      ? Colors.HIGHLIGHT_YELLOW
+      : Colors.BORDER_BLUE;
+    this.cornerCatalogBg.lineStyle(2, strokeColor, 0.9);
+    this.cornerCatalogBg.strokeCircle(btnX, upperY, radius);
   }
 
   /** Sync corner button visibility and content to current dial state. */
@@ -1353,11 +1351,16 @@ export class Game extends Phaser.Scene {
     }
 
     // ── Catalog button ────────────────────────────────────────────────────
+    // When the button is being hidden (navigated away / terminal), reset the
+    // open state so it always starts closed the next time it appears.
+    if (!showCatalog && this.cornerCatalogOpen) {
+      this.cornerCatalogOpen = false;
+    }
     this.cornerCatalogBg.setVisible(showCatalog);
     this.cornerCatalogIcon?.setVisible(showCatalog);
 
     if (showCatalog) {
-      this.drawCatalogBtn(btnX, upperY, btnSize, false);
+      this.drawCatalogBtn(btnX, upperY, btnSize / 2, false);
     }
   }
 

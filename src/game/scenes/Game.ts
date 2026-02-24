@@ -317,10 +317,10 @@ export class Game extends Phaser.Scene {
     this.events.removeAllListeners("dial:levelChanged");
     this.events.removeAllListeners("dial:goBack");
 
-    this.events.on("dial:itemConfirmed", (data: { item: any }) => {
+    this.events.on("dial:itemConfirmed", (data: { item: any; sliceCenterAngle?: number }) => {
       const iconKey: string = data.item.icon || data.item.id;
       const existingQty = this.getCurrentFulfilledQty(iconKey);
-      if (this.radialDial) this.radialDial.showTerminalDial(data.item, existingQty);
+      if (this.radialDial) this.radialDial.showTerminalDial(data.item, existingQty, data.sliceCenterAngle ?? Math.PI / 2);
       this.cornerHUD?.onItemConfirmed();
     });
 

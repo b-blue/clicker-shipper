@@ -645,3 +645,74 @@ describe('RadialDial — confirmedSliceIndex baseline', () => {
     expect(scene.events.emit).toHaveBeenCalledWith('dial:itemConfirmed', expect.anything());
   });
 });
+
+describe('RadialDial — sliceCenterAngle in dial:itemConfirmed', () => {
+  const dialX = 100;
+  const dialY = 100;
+
+  it('includes sliceCenterAngle in the dial:itemConfirmed payload matching the confirmed slice', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    // Drill to sub-items
+    const catStart = slicePoint(dialX, dialY, 6, 0, 120);
+    (dial as any).handlePointerDown(catStart);
+    (dial as any).handlePointerUp(catStart);
+
+    scene.events.emit.mockClear();
+
+    // Tap slice index 3
+    const subStart = slicePoint(dialX, dialY, 6, 3, 120);
+    (dial as any).handlePointerDown(subStart);
+    (dial as any).handlePointerUp(subStart);
+
+    const calls = (scene.events.emit as jest.Mock).mock.calls;
+    const confirmCall = calls.find(([evt]: [string]) => evt === 'dial:itemConfirmed');
+    expect(confirmCall).toBeDefined();
+    const payload = confirmCall![1] as { item: any; sliceCenterAngle: number };
+    // For slice 3 of 6: -π/2 + (3+0.5)*(2π/6) = 2π/3
+    expect(payload.sliceCenterAngle).toBeCloseTo((2 * Math.PI) / 3, 5);
+  });
+});
+
+describe('RadialDial — terminalStartAngle positioning', () => {
+  const dialX = 100;
+  const dialY = 100;
+
+  it('positions the trigger at a custom startAngle passed to showTerminalDial', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    const fakeItem = { id: 'sub1', name: 'Sub 1', icon: 'icon1', cost: 10 };
+    // startAngle = 0 (3 o'clock)
+    dial.showTerminalDial(fakeItem as any, 0, 0);
+
+    // arcRadius = (centerRadius + sliceRadius) / 2 = (50 + 150) / 2 = 100
+    // arcProgress = (max(1,0) - 0.5) / 3 = 1/6
+    // triggerAngle = 0 - (1/6)*π = -π/6
+    const arcRadius = 100;
+    const arcProgress = 0.5 / 3;
+    const expectedTriggerAngle = 0 - arcProgress * Math.PI;
+    const triggerX = dialX + Math.cos(expectedTriggerAngle) * arcRadius;
+    const triggerY = dialY + Math.sin(expectedTriggerAngle) * arcRadius;
+
+    // A pointer exactly on the trigger should activate it
+    (dial as any).handlePointerDown({ x: triggerX, y: triggerY, pointerId: 1, wasTouch: false, event: {} });
+    expect((dial as any).isTriggerActive).toBe(true);
+  });
+
+  it("defaults to π/2 (6 o'clock) when no startAngle is provided", () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    const fakeItem = { id: 'sub1', name: 'Sub 1', icon: 'icon1', cost: 10 };
+    dial.showTerminalDial(fakeItem as any);
+    expect((dial as any).terminalStartAngle).toBeCloseTo(Math.PI / 2, 5);
+  });
+});

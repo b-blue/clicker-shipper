@@ -33,8 +33,9 @@ export class RadialDial {
   // Quantity-selector mode (active when terminalItem is set)
   private isTriggerActive: boolean = false;
   private currentQuantity: number = 1;
-  private arcProgress: number = 0;          // 0.0–1.0; 0 = 6 o'clock, 1 = 12 o'clock; negative = removal zone
+  private arcProgress: number = 0;          // 0.0–1.0; 0 = start angle, 1 = start − π; negative = removal zone
   private arcRadius: number = 0;            // computed midpoint between centerRadius and sliceRadius
+  private terminalStartAngle: number = Math.PI / 2; // dial angle (radians) where the arc track begins
   private readonly triggerHitRadius: number = 18; // px radius of the trigger button
   private arcFillGraphics: Phaser.GameObjects.Graphics | null = null;
   private quantityNumeral: Phaser.GameObjects.BitmapText | null = null;
@@ -97,10 +98,9 @@ export class RadialDial {
         const dx = pointer.x - this.dialX;
         const dy = pointer.y - this.dialY;
         const pointerAngle = Math.atan2(dy, dx);
-        // Valid range: right semicircle plus a small CW extension for removal
-        // CCW upper bound: −π/2 (12 o'clock)  CW lower bound: π/2 + π/6 (just past 6 o'clock)
-        const clampedAngle = Math.max(-Math.PI / 2, Math.min(Math.PI / 2 + Math.PI / 6, pointerAngle));
-        const angularTravel = Math.PI / 2 - clampedAngle; // positive = CCW (add), negative = CW (remove)
+        // Valid sweep: π radians CCW from start, plus π/6 CW for removal zone
+        const clampedAngle = Math.max(this.terminalStartAngle - Math.PI, Math.min(this.terminalStartAngle + Math.PI / 6, pointerAngle));
+        const angularTravel = this.terminalStartAngle - clampedAngle; // positive = CCW (add), negative = CW (remove)
         // Map to [-1/6, 1]: negative means removal zone
         this.arcProgress = Math.max(-1 / 6, Math.min(1, angularTravel / Math.PI));
         this.currentQuantity = this.arcProgress < 0 ? 0 : Math.min(3, Math.floor(this.arcProgress * 3) + 1);
@@ -171,7 +171,7 @@ export class RadialDial {
 
     // Terminal mode: only the dynamic trigger button is interactive
     if (this.terminalItem) {
-      const triggerAngle = Math.PI / 2 - this.arcProgress * Math.PI;
+      const triggerAngle = this.terminalStartAngle - this.arcProgress * Math.PI;
       const triggerX = this.dialX + Math.cos(triggerAngle) * this.arcRadius;
       const triggerY = this.dialY + Math.sin(triggerAngle) * this.arcRadius;
       const tdx = pointer.x - triggerX;
@@ -289,8 +289,11 @@ export class RadialDial {
             item: confirmedItem 
           });
         } else {
-          // Confirm leaf item selection
-          this.scene.events.emit('dial:itemConfirmed', { item: confirmedItem });
+          // Confirm leaf item selection — include the slice's center angle so the
+          // terminal dial can orient its trigger thumb toward the tapping finger.
+          const sliceRad = (2 * Math.PI) / this.sliceCount;
+          const sliceCenterAngle = -Math.PI / 2 + (confirmedSliceIndex + 0.5) * sliceRad;
+          this.scene.events.emit('dial:itemConfirmed', { item: confirmedItem, sliceCenterAngle });
           this.selectedItem = null;
           this.highlightedSliceIndex = -1;
           this.redrawDial();
@@ -503,23 +506,23 @@ export class RadialDial {
     g.setDepth(1);
     this.arcFillGraphics = g;
 
-    const { dialX, dialY, arcRadius, arcProgress } = this;
+    const { dialX, dialY, arcRadius, arcProgress, terminalStartAngle } = this;
 
     // Dynamic trigger position
-    const triggerAngle = Math.PI / 2 - arcProgress * Math.PI;
+    const triggerAngle = terminalStartAngle - arcProgress * Math.PI;
     const triggerX = dialX + Math.cos(triggerAngle) * arcRadius;
     const triggerY = dialY + Math.sin(triggerAngle) * arcRadius;
 
-    // Track arc: full dim semicircle 6 o'clock → 12 o'clock (CCW) on the inset radius
+    // Track arc: full dim semicircle from terminalStartAngle going CCW by π
     g.lineStyle(8, 0x223344, 1.0);
     g.beginPath();
-    g.arc(dialX, dialY, arcRadius, Math.PI / 2, -Math.PI / 2, true);
+    g.arc(dialX, dialY, arcRadius, terminalStartAngle, terminalStartAngle - Math.PI, true);
     g.strokePath();
 
-    // Removal extension track: 6 o'clock → just past CW (clockwise), dim red
+    // Removal extension track: small CW extension past start, dim red
     g.lineStyle(8, 0x331111, 1.0);
     g.beginPath();
-    g.arc(dialX, dialY, arcRadius, Math.PI / 2, Math.PI / 2 + Math.PI / 6, false);
+    g.arc(dialX, dialY, arcRadius, terminalStartAngle, terminalStartAngle + Math.PI / 6, false);
     g.strokePath();
 
     // Fill arc
@@ -527,19 +530,19 @@ export class RadialDial {
       const arcColor = arcProgress < 1 / 3 ? 0x00cccc : (arcProgress < 2 / 3 ? 0xffd700 : 0xff8800);
       g.lineStyle(8, arcColor, 1.0);
       g.beginPath();
-      const fillEndAngle = Math.PI / 2 - arcProgress * Math.PI;
-      g.arc(dialX, dialY, arcRadius, Math.PI / 2, fillEndAngle, true);
+      const fillEndAngle = terminalStartAngle - arcProgress * Math.PI;
+      g.arc(dialX, dialY, arcRadius, terminalStartAngle, fillEndAngle, true);
       g.strokePath();
     } else if (arcProgress < 0) {
       // Removal zone fill: red CW extension
       g.lineStyle(8, 0xff2244, 1.0);
       g.beginPath();
-      g.arc(dialX, dialY, arcRadius, Math.PI / 2, Math.PI / 2 - arcProgress * Math.PI, false);
+      g.arc(dialX, dialY, arcRadius, terminalStartAngle, terminalStartAngle - arcProgress * Math.PI, false);
       g.strokePath();
     }
 
-    // Zone threshold ticks at 4 o'clock (π/6) and 2 o'clock (−π/6)
-    [Math.PI / 6, -Math.PI / 6].forEach(angle => {
+    // Zone threshold ticks at 1/3 and 2/3 of the CCW sweep
+    [terminalStartAngle - Math.PI / 3, terminalStartAngle - 2 * Math.PI / 3].forEach(angle => {
       const inner = arcRadius - 8;
       const outer = arcRadius + 8;
       g.lineStyle(2, 0xffffff, 0.5);
@@ -676,6 +679,7 @@ export class RadialDial {
     if (this.arcFillGraphics) { this.arcFillGraphics.destroy(); this.arcFillGraphics = null; }
     if (this.quantityNumeral) { this.quantityNumeral.destroy(); this.quantityNumeral = null; }
     if (this.glowTimer) this.glowTimer.paused = false;
+    this.terminalStartAngle = Math.PI / 2;
     this.highlightedSliceIndex = -1;
     this.selectedItem = null;
     this.dragStartSliceIndex = -1;
@@ -688,8 +692,9 @@ export class RadialDial {
     this.redrawDial();
   }
 
-  public showTerminalDial(item: MenuItem, existingQty: number = 0): void {
+  public showTerminalDial(item: MenuItem, existingQty: number = 0, startAngle: number = Math.PI / 2): void {
     this.terminalItem = item;
+    this.terminalStartAngle = startAngle;
     this.isTriggerActive = false;
     // Pre-position the arc at the midpoint of the current quantity zone.
     // For a fresh item (existingQty=0) start at zone-1 midpoint so an

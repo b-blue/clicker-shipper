@@ -108,7 +108,7 @@ export class RadialDial {
     }
 
     // Check if pointer is within the dial region
-    if (distance < this.sliceRadius + 50 && distance > this.centerRadius + 5) {
+    if (distance < this.sliceRadius && distance > this.centerRadius + 5) {
       const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
       const normalizedAngle = (angle + 360) % 360;
       const sliceAngle = 360 / this.sliceCount;
@@ -157,7 +157,7 @@ export class RadialDial {
     this.pointerConsumed = false; // genuine new gesture — allow next pointerup to process
 
     // Check if started on a slice
-    if (distance < this.sliceRadius + 50 && distance > this.centerRadius + 5) {
+    if (distance < this.sliceRadius && distance > this.centerRadius + 5) {
       const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
       const normalizedAngle = (angle + 360) % 360;
       const sliceAngle = 360 / this.sliceCount;

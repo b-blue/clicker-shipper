@@ -442,7 +442,7 @@
       "children": [
         {
           "id": "item_armaments_001",
-          "name": "PULSE CARBINE",
+          "name": "T-700",
           "icon": "arm1",
           "type": "armaments",
           "cost": 24
@@ -790,28 +790,28 @@
             },
             {
               "id": "item_armaments_007",
-              "name": "arm7",
+              "name": "SYLVAN HAMMER GR2",
               "icon": "arm7",
               "type": "armaments",
               "cost": 24
             },
             {
               "id": "item_armaments_008",
-              "name": "arm8",
+              "name": "TR33 SYLVAN ",
               "icon": "arm8",
               "type": "armaments",
               "cost": 25
             },
             {
               "id": "item_armaments_009",
-              "name": "arm9",
+              "name": "L770 DEADFALL",
               "icon": "arm9",
               "type": "armaments",
               "cost": 26
             },
             {
               "id": "item_armaments_010",
-              "name": "arm10",
+              "name": "SYLVAN HAILSTORM 9X66",
               "icon": "arm10",
               "type": "armaments",
               "cost": 27
@@ -820,7 +820,7 @@
         },
         {
           "id": "item_armaments_002",
-          "name": "GRID STRIKER",
+          "name": "TETRAHEDRON SIMPLEX",
           "icon": "arm2",
           "type": "armaments",
           "cost": 25
@@ -841,7 +841,7 @@
         },
         {
           "id": "item_armaments_005",
-          "name": "NEURORIFLE",
+          "name": "TETRAHEDRON SIMPLEX",
           "icon": "arm5",
           "type": "armaments",
           "cost": 28

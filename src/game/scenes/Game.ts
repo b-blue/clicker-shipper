@@ -57,7 +57,7 @@ export class Game extends Phaser.Scene {
   private cornerLevelLabel: Phaser.GameObjects.BitmapText | null = null;
   // Corner catalog button (upper-right)
   private cornerCatalogBg: Phaser.GameObjects.Graphics | null = null;
-  private cornerCatalogLabel: Phaser.GameObjects.BitmapText | null = null;
+  private cornerCatalogIcon: Phaser.GameObjects.Image | null = null;
   // Catalog scroll state (populated inside buildCatalogContent)
   private catalogListContainer: Phaser.GameObjects.Container | null = null;
   private catalogListTop: number = 0;
@@ -1216,9 +1216,8 @@ export class Game extends Phaser.Scene {
     this.cornerCatalogBg.setDepth(20);
     this.cornerCatalogBg.setVisible(false);
 
-    this.cornerCatalogLabel = this.add
-      .bitmapText(btnX, upperY, "clicker", "CAT", 10)
-      .setOrigin(0.5)
+    this.cornerCatalogIcon = AssetLoader.createImage(this, btnX, upperY, "skill-brain")
+      .setScale(0.85)
       .setDepth(21)
       .setVisible(false);
 
@@ -1355,15 +1354,10 @@ export class Game extends Phaser.Scene {
 
     // ── Catalog button ────────────────────────────────────────────────────
     this.cornerCatalogBg.setVisible(showCatalog);
-    this.cornerCatalogLabel?.setVisible(showCatalog);
+    this.cornerCatalogIcon?.setVisible(showCatalog);
 
     if (showCatalog) {
       this.drawCatalogBtn(btnX, upperY, btnSize, false);
-
-      // Show category icon or fallback "CAT" text
-      if (this.cornerActiveCategoryItem) {
-        this.cornerCatalogLabel?.setText("CAT").setTint(Colors.HIGHLIGHT_YELLOW_BRIGHT);
-      }
     }
   }
 

@@ -155,3 +155,223 @@ describe('Game scene — shutdown() is not called unless explicitly wired', () =
     expect(fireCount).toBe(1); // still exactly 1, not accumulating
   });
 });
+
+// ---------------------------------------------------------------------------
+// Pure-logic unit tests: positional order-row algorithms
+//
+// The Game scene's placeItem / evaluateSlot / checkOrderComplete methods
+// operate on plain data structures. These tests exercise the same algorithms
+// in isolation (no Phaser instantiation required) to document and guard the
+// intended behaviour.
+// ---------------------------------------------------------------------------
+
+describe('Order row — slot evaluation algorithm', () => {
+  // Mirrors Game.evaluateSlot: determine correctness of slot[i] given requirements[].
+  function evaluate(
+    slotIconKey: string | null,
+    slotIndex: number,
+    requirements: { iconKey: string }[],
+  ): 'empty' | 'correct' | 'misplaced' | 'wrong' {
+    if (slotIconKey === null) return 'empty';
+    const inOrder = requirements.some((r) => r.iconKey === slotIconKey);
+    if (!inOrder) return 'wrong';
+    return requirements[slotIndex]?.iconKey === slotIconKey ? 'correct' : 'misplaced';
+  }
+
+  const reqs = [{ iconKey: 'iron' }, { iconKey: 'wood' }, { iconKey: 'stone' }];
+
+  it('returns empty for a null slot', () => {
+    expect(evaluate(null, 0, reqs)).toBe('empty');
+  });
+
+  it('returns correct when item matches the slot position', () => {
+    expect(evaluate('iron',  0, reqs)).toBe('correct');
+    expect(evaluate('wood',  1, reqs)).toBe('correct');
+    expect(evaluate('stone', 2, reqs)).toBe('correct');
+  });
+
+  it('returns misplaced when item is in the order but at the wrong position', () => {
+    expect(evaluate('wood',  0, reqs)).toBe('misplaced'); // wood belongs at slot 1
+    expect(evaluate('stone', 0, reqs)).toBe('misplaced'); // stone belongs at slot 2
+    expect(evaluate('iron',  2, reqs)).toBe('misplaced'); // iron belongs at slot 0
+  });
+
+  it('returns wrong when item is not in the order at all', () => {
+    expect(evaluate('copper', 0, reqs)).toBe('wrong');
+    expect(evaluate('coal',   1, reqs)).toBe('wrong');
+  });
+
+  it('handles an out-of-bounds slotIndex gracefully (treats as misplaced)', () => {
+    // No requirement exists at index 5, so the item is in-order but position unknown → misplaced
+    expect(evaluate('iron', 5, reqs)).toBe('misplaced');
+  });
+});
+
+describe('Order row — leftward collapse algorithm', () => {
+  // Mirrors the qty=0 branch of Game.placeItem.
+  type Slot = { iconKey: string | null; placedQty: number };
+
+  function removeAndCollapse(slots: Slot[], iconKey: string): Slot[] {
+    const result: Slot[] = slots.map((s) => ({ ...s })); // shallow copy
+    const idx = result.findIndex((s) => s.iconKey === iconKey);
+    if (idx === -1) return result;
+    // Shift left
+    for (let i = idx; i < result.length - 1; i++) {
+      result[i].iconKey   = result[i + 1].iconKey;
+      result[i].placedQty = result[i + 1].placedQty;
+    }
+    result[result.length - 1].iconKey   = null;
+    result[result.length - 1].placedQty = 0;
+    return result;
+  }
+
+  it('removes a middle item and shifts remaining slots left', () => {
+    const slots = [
+      { iconKey: 'iron',  placedQty: 2 },
+      { iconKey: 'wood',  placedQty: 1 },
+      { iconKey: 'stone', placedQty: 3 },
+    ];
+    const result = removeAndCollapse(slots, 'wood');
+    expect(result[0]).toEqual({ iconKey: 'iron',  placedQty: 2 });
+    expect(result[1]).toEqual({ iconKey: 'stone', placedQty: 3 });
+    expect(result[2]).toEqual({ iconKey: null,    placedQty: 0 });
+  });
+
+  it('removes the first item and shifts all others left', () => {
+    const slots = [
+      { iconKey: 'iron',  placedQty: 1 },
+      { iconKey: 'wood',  placedQty: 2 },
+      { iconKey: 'stone', placedQty: 1 },
+    ];
+    const result = removeAndCollapse(slots, 'iron');
+    expect(result[0]).toEqual({ iconKey: 'wood',  placedQty: 2 });
+    expect(result[1]).toEqual({ iconKey: 'stone', placedQty: 1 });
+    expect(result[2]).toEqual({ iconKey: null,    placedQty: 0 });
+  });
+
+  it('removes a last item without disturbing earlier slots', () => {
+    const slots = [
+      { iconKey: 'iron',  placedQty: 1 },
+      { iconKey: 'wood',  placedQty: 2 },
+      { iconKey: 'stone', placedQty: 1 },
+    ];
+    const result = removeAndCollapse(slots, 'stone');
+    expect(result[0]).toEqual({ iconKey: 'iron', placedQty: 1 });
+    expect(result[1]).toEqual({ iconKey: 'wood', placedQty: 2 });
+    expect(result[2]).toEqual({ iconKey: null,   placedQty: 0 });
+  });
+
+  it('is a no-op when the item is not present', () => {
+    const slots = [
+      { iconKey: 'iron', placedQty: 1 },
+      { iconKey: null,   placedQty: 0 },
+    ];
+    const result = removeAndCollapse(slots, 'copper');
+    expect(result[0]).toEqual({ iconKey: 'iron', placedQty: 1 });
+    expect(result[1]).toEqual({ iconKey: null,   placedQty: 0 });
+  });
+
+  it('re-evaluates a previously-correct slot as misplaced after the shift', () => {
+    // stone was at slot 2 (correct). After removing wood (slot 1),
+    // stone shifts to slot 1 — which is wrong for stone (stone belongs at slot 2).
+    const reqs = [{ iconKey: 'iron' }, { iconKey: 'wood' }, { iconKey: 'stone' }];
+    type EvalSlot = { iconKey: string | null; placedQty: number };
+    function evaluate(s: EvalSlot, i: number) {
+      if (s.iconKey === null) return 'empty';
+      if (!reqs.some((r) => r.iconKey === s.iconKey)) return 'wrong';
+      return reqs[i]?.iconKey === s.iconKey ? 'correct' : 'misplaced';
+    }
+    const slots: EvalSlot[] = [
+      { iconKey: 'iron',  placedQty: 1 },
+      { iconKey: 'wood',  placedQty: 1 },
+      { iconKey: 'stone', placedQty: 1 },
+    ];
+    // Before removal: stone at slot 2 is correct
+    expect(evaluate(slots[2], 2)).toBe('correct');
+
+    const result = removeAndCollapse(slots, 'wood');
+    // After removal: stone is at slot 1 (was slot 2) → misplaced
+    expect(evaluate(result[1], 1)).toBe('misplaced');
+  });
+});
+
+describe('Order row — completion check algorithm', () => {
+  type Slot = { iconKey: string | null; placedQty: number };
+  type Req  = { iconKey: string; quantity: number };
+
+  function evaluate(
+    slotIconKey: string | null,
+    slotIndex: number,
+    requirements: Req[],
+  ): 'empty' | 'correct' | 'misplaced' | 'wrong' {
+    if (slotIconKey === null) return 'empty';
+    const inOrder = requirements.some((r) => r.iconKey === slotIconKey);
+    if (!inOrder) return 'wrong';
+    return requirements[slotIndex]?.iconKey === slotIconKey ? 'correct' : 'misplaced';
+  }
+
+  function isComplete(slots: Slot[], requirements: Req[]): boolean {
+    // Red items block completion
+    for (let i = 0; i < slots.length; i++) {
+      if (evaluate(slots[i].iconKey, i, requirements) === 'wrong') return false;
+    }
+    // All requirements must be satisfied
+    return requirements.every((req) =>
+      slots.some((s) => s.iconKey === req.iconKey && s.placedQty >= req.quantity),
+    );
+  }
+
+  const reqs: Req[] = [
+    { iconKey: 'iron',  quantity: 2 },
+    { iconKey: 'wood',  quantity: 1 },
+  ];
+
+  it('returns false when some requirements are not met', () => {
+    const slots: Slot[] = [
+      { iconKey: 'iron', placedQty: 1 }, // only 1 of 2
+      { iconKey: null,   placedQty: 0 },
+    ];
+    expect(isComplete(slots, reqs)).toBe(false);
+  });
+
+  it('returns true when all requirements are satisfied (any order)', () => {
+    const slots: Slot[] = [
+      { iconKey: 'wood', placedQty: 1 }, // misplaced but not wrong
+      { iconKey: 'iron', placedQty: 2 }, // misplaced but not wrong
+    ];
+    expect(isComplete(slots, reqs)).toBe(true);
+  });
+
+  it('returns false when a wrong (red) item is present even if requirements are met', () => {
+    const slots: Slot[] = [
+      { iconKey: 'iron',   placedQty: 2 },
+      { iconKey: 'copper', placedQty: 1 }, // not in order → red
+    ];
+    // iron is satisfied but wood is missing; copper blocks
+    expect(isComplete(slots, reqs)).toBe(false);
+  });
+
+  it('returns false when wrong item is present alongside met requirements', () => {
+    const slotsWithExtra: Slot[] = [
+      { iconKey: 'iron',   placedQty: 2 },
+      { iconKey: 'wood',   placedQty: 1 },
+      { iconKey: 'copper', placedQty: 1 }, // extra wrong item in a third slot
+    ];
+    const reqs2: Req[] = [{ iconKey: 'iron', quantity: 2 }, { iconKey: 'wood', quantity: 1 }];
+    for (let i = 0; i < slotsWithExtra.length; i++) {
+      if (evaluate(slotsWithExtra[i].iconKey, i, reqs2) === 'wrong') {
+        expect(isComplete(slotsWithExtra, reqs2)).toBe(false);
+        return;
+      }
+    }
+    fail('expected a wrong slot');
+  });
+
+  it('returns true when all requirements exactly met and no wrong items', () => {
+    const slots: Slot[] = [
+      { iconKey: 'iron', placedQty: 2 },
+      { iconKey: 'wood', placedQty: 1 },
+    ];
+    expect(isComplete(slots, reqs)).toBe(true);
+  });
+});

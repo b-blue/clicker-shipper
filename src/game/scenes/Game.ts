@@ -14,11 +14,14 @@ import {
 } from "../utils/OrderUtils";
 import { MenuItem, Order } from "../types/GameTypes";
 
-/** A single order-fulfillment slot (one per distinct item type in an order). */
+/**
+ * A positional fulfillment slot in the order row.
+ * Slots start empty (iconKey === null). Items are placed left-to-right.
+ * Removing an item collapses the row leftward.
+ */
 interface OrderSlot {
-  iconKey: string;
-  requiredQty: number;
-  fulfilledQty: number;
+  iconKey: string | null;  // null = empty slot
+  placedQty: number;       // 0 when empty
   x: number;
   y: number;
   size: number;
@@ -326,7 +329,7 @@ export class Game extends Phaser.Scene {
 
     this.events.on("dial:quantityConfirmed", (data: { item: any; quantity: number }) => {
       const iconKey: string = data.item.icon || data.item.id;
-      this.setItemQuantity(iconKey, data.quantity);
+      this.placeItem(iconKey, data.quantity);
       this.cornerHUD?.onQuantityConfirmed();
     });
 
@@ -338,57 +341,142 @@ export class Game extends Phaser.Scene {
     this.events.on("dial:goBack", () => this.cornerHUD?.onGoBack());
   }
 
-  /** Return how many units of iconKey are currently fulfilled. */
+  /** Return how many units of iconKey are currently placed in the row. */
   private getCurrentFulfilledQty(iconKey: string): number {
-    return this.orderSlots.find((s) => s.iconKey === iconKey)?.fulfilledQty ?? 0;
+    return this.orderSlots.find((s) => s.iconKey === iconKey)?.placedQty ?? 0;
   }
 
   /**
-   * Set the fulfilled quantity for a given item type.
-   * targetQty = 0 means remove the item from the order.
-   * Clamps to [0, slot.requiredQty].
+   * Evaluate the placement correctness of slot at slotIndex.
+   * - 'empty'    : slot has no item
+   * - 'correct'  : item belongs in this exact position (matches requirements[slotIndex])
+   * - 'misplaced': item is in the order but at the wrong position
+   * - 'wrong'    : item is not in the order at all
    */
-  private setItemQuantity(iconKey: string, targetQty: number): void {
+  private evaluateSlot(slotIndex: number): 'empty' | 'correct' | 'misplaced' | 'wrong' {
+    const slot = this.orderSlots[slotIndex];
+    if (!slot || slot.iconKey === null) return 'empty';
+    if (!this.currentOrder) return 'wrong';
+    const inOrder = this.currentOrder.requirements.some((r) => r.iconKey === slot.iconKey);
+    if (!inOrder) return 'wrong';
+    const correctKey = this.currentOrder.requirements[slotIndex]?.iconKey;
+    return correctKey === slot.iconKey ? 'correct' : 'misplaced';
+  }
+
+  /**
+   * Redraw the visual for a single slot: background color, item icon, and quantity badge.
+   * Must be called after any data change to orderSlots[slotIndex].
+   */
+  private redrawSlot(slotIndex: number): void {
     if (!this.ordersContainer) return;
-    const slot = this.orderSlots.find((s) => s.iconKey === iconKey);
+    const slot = this.orderSlots[slotIndex];
     if (!slot) return;
 
-    const clamped = Math.max(0, Math.min(slot.requiredQty, targetQty));
-    slot.fulfilledQty = clamped;
+    const status = this.evaluateSlot(slotIndex);
 
-    // Redraw slot background based on fulfillment state
+    // Background fill + border color keyed to placement status
     slot.slotBg.clear();
-    const isFull = clamped >= slot.requiredQty;
-    const bgFill = isFull ? 0x003a1a : clamped > 0 ? 0x0a1f3a : Colors.PANEL_MEDIUM;
-    const bgStroke = isFull ? 0x00e84a : clamped > 0 ? Colors.NEON_BLUE : Colors.BORDER_BLUE;
-    const strokeAlpha = isFull || clamped > 0 ? 0.95 : 0.7;
+    let bgFill: number;
+    let bgStroke: number;
+    let strokeAlpha: number;
+    switch (status) {
+      case 'correct':   bgFill = 0x003a1a; bgStroke = 0x00e84a; strokeAlpha = 0.95; break;
+      case 'misplaced': bgFill = 0x2a2000; bgStroke = 0xffd700; strokeAlpha = 0.95; break;
+      case 'wrong':     bgFill = 0x2a0011; bgStroke = 0xff2244; strokeAlpha = 0.95; break;
+      default:          bgFill = Colors.PANEL_MEDIUM; bgStroke = Colors.BORDER_BLUE; strokeAlpha = 0.7; break;
+    }
     slot.slotBg.fillStyle(bgFill, 0.85);
     slot.slotBg.fillRect(slot.x - slot.size / 2, slot.y - slot.size / 2, slot.size, slot.size);
     slot.slotBg.lineStyle(2, bgStroke, strokeAlpha);
     slot.slotBg.strokeRect(slot.x - slot.size / 2, slot.y - slot.size / 2, slot.size, slot.size);
 
-    // Update or hide the quantity badge
-    if (slot.badgeGraphic) { slot.badgeGraphic.destroy(); slot.badgeGraphic = null; }
-    if (slot.badgeText) { slot.badgeText.destroy(); slot.badgeText = null; }
+    // Item icon — destroy old, create new if slot is filled
+    if (slot.slotIcon) { slot.slotIcon.destroy(); slot.slotIcon = null; }
+    if (slot.iconKey && AssetLoader.textureExists(this, slot.iconKey)) {
+      slot.slotIcon = AssetLoader.createImage(this, slot.x, slot.y, slot.iconKey);
+      slot.slotIcon.setDisplaySize(slot.size - 8, slot.size - 8);
+      slot.slotIcon.setDepth(3);
+      this.ordersContainer.add(slot.slotIcon);
+    }
 
-    if (clamped > 0) {
-      const badgeG = this.add.graphics();
+    // Quantity badge — destroy old, create new if slot is filled
+    if (slot.badgeGraphic) { slot.badgeGraphic.destroy(); slot.badgeGraphic = null; }
+    if (slot.badgeText)    { slot.badgeText.destroy();    slot.badgeText = null; }
+    if (slot.iconKey !== null && slot.placedQty > 0) {
       const badgeR = 9;
       const badgeX = slot.x + slot.size / 2 - badgeR + 2;
       const badgeY = slot.y - slot.size / 2 + badgeR - 2;
-      badgeG.fillStyle(isFull ? 0x00e84a : Colors.NEON_BLUE, 1);
+      const badgeColor = status === 'correct'   ? 0x00e84a
+                       : status === 'misplaced' ? 0xffd700
+                       : status === 'wrong'     ? 0xff2244
+                       : Colors.NEON_BLUE;
+      const badgeTint  = status === 'correct'   ? 0x002200
+                       : status === 'misplaced' ? 0x221100
+                       : status === 'wrong'     ? 0x330011
+                       : 0x000033;
+      const badgeG = this.add.graphics();
+      badgeG.fillStyle(badgeColor, 1);
       badgeG.fillCircle(badgeX, badgeY, badgeR);
+      badgeG.setDepth(4);
       this.ordersContainer.add(badgeG);
-      const badgeTxt = this.add.bitmapText(badgeX, badgeY, "clicker", String(clamped), 10)
-        .setOrigin(0.5)
-        .setTint(isFull ? 0x002200 : 0x000033)
-        .setDepth(5);
+      const badgeTxt = this.add.bitmapText(badgeX, badgeY, "clicker", String(slot.placedQty), 10)
+        .setOrigin(0.5).setTint(badgeTint).setDepth(5);
       this.ordersContainer.add(badgeTxt);
       slot.badgeGraphic = badgeG;
       slot.badgeText = badgeTxt;
     }
+  }
 
-    // Switch to ORDERS tab so the player can see the updated slot
+  /**
+   * Place or update an item in the fulfillment row.
+   * - qty > 0 & item not yet placed: fill leftmost empty slot.
+   * - qty > 0 & item already placed: update that slot's quantity in place.
+   * - qty === 0: remove the item, collapse the row leftward.
+   */
+  private placeItem(iconKey: string, qty: number): void {
+    if (!this.ordersContainer || !this.currentOrder) return;
+
+    const existingIdx = this.orderSlots.findIndex((s) => s.iconKey === iconKey);
+
+    if (qty === 0) {
+      // Nothing to remove if item isn't in the row
+      if (existingIdx === -1) return;
+
+      // Destroy the icon image at the removed slot before shifting
+      for (let i = existingIdx; i < this.orderSlots.length; i++) {
+        const s = this.orderSlots[i];
+        if (s.slotIcon) { s.slotIcon.destroy(); s.slotIcon = null; }
+      }
+
+      // Shift subsequent slot data leftward
+      for (let i = existingIdx; i < this.orderSlots.length - 1; i++) {
+        this.orderSlots[i].iconKey   = this.orderSlots[i + 1].iconKey;
+        this.orderSlots[i].placedQty = this.orderSlots[i + 1].placedQty;
+      }
+      // Blank the last slot
+      const last = this.orderSlots[this.orderSlots.length - 1];
+      last.iconKey   = null;
+      last.placedQty = 0;
+
+      // Redraw every affected position
+      for (let i = existingIdx; i < this.orderSlots.length; i++) {
+        this.redrawSlot(i);
+      }
+
+    } else if (existingIdx !== -1) {
+      // Update quantity in place
+      this.orderSlots[existingIdx].placedQty = qty;
+      this.redrawSlot(existingIdx);
+
+    } else {
+      // Place in leftmost empty slot
+      const emptyIdx = this.orderSlots.findIndex((s) => s.iconKey === null);
+      if (emptyIdx === -1) return; // row is full
+      this.orderSlots[emptyIdx].iconKey   = iconKey;
+      this.orderSlots[emptyIdx].placedQty = qty;
+      this.redrawSlot(emptyIdx);
+    }
+
     this.switchToOrdersTab?.();
     this.checkOrderComplete();
   }
@@ -780,12 +868,12 @@ export class Game extends Phaser.Scene {
     rowStripBg.strokeRect(x - width / 2 + 4, boxRowTop, width - 8, boxRowHeight);
     container.add(rowStripBg);
 
+    // Build empty slots — items are placed dynamically, not pre-assigned
     const slots: OrderSlot[] = [];
-    requirements.forEach((req, i) => {
+    for (let i = 0; i < totalSlots; i++) {
       const bx = boxStartX + i * (boxSize + boxGap) + boxSize / 2;
       const by = boxRowCenterY;
 
-      // Slot background
       const boxBg = this.add.graphics();
       boxBg.fillStyle(Colors.PANEL_MEDIUM, 0.8);
       boxBg.fillRect(bx - boxSize / 2, by - boxSize / 2, boxSize, boxSize);
@@ -793,38 +881,18 @@ export class Game extends Phaser.Scene {
       boxBg.strokeRect(bx - boxSize / 2, by - boxSize / 2, boxSize, boxSize);
       container.add(boxBg);
 
-      // POWERUP[ORDER_HINTS]: create dimmed ghost slotIcon here when the powerup is unlocked
-      const slotIcon: Phaser.GameObjects.Image | null = null;
-
-      // Required quantity badge (top-right corner, shown only when qty > 1)
-      let badgeGraphic: Phaser.GameObjects.Graphics | null = null;
-      let badgeText: Phaser.GameObjects.BitmapText | null = null;
-      if (req.quantity > 1) {
-        const badgeR = 9;
-        const badgeX = bx + boxSize / 2 - badgeR + 2;
-        const badgeY = by - boxSize / 2 + badgeR - 2;
-        badgeGraphic = this.add.graphics();
-        badgeGraphic.fillStyle(0x334466, 1);
-        badgeGraphic.fillCircle(badgeX, badgeY, badgeR);
-        container.add(badgeGraphic);
-        badgeText = this.add.bitmapText(badgeX, badgeY, "clicker", `x${req.quantity}`, 9)
-          .setOrigin(0.5).setTint(0xaaaacc).setDepth(5);
-        container.add(badgeText);
-      }
-
       slots.push({
-        iconKey: req.iconKey,
-        requiredQty: req.quantity,
-        fulfilledQty: 0,
+        iconKey: null,
+        placedQty: 0,
         x: bx,
         y: by,
         size: boxSize,
         slotBg: boxBg,
-        slotIcon,
-        badgeGraphic,
-        badgeText,
+        slotIcon: null,
+        badgeGraphic: null,
+        badgeText: null,
       });
-    });
+    }
 
     // Separator above box row
     const aboveBoxSep = this.add.graphics();
@@ -914,7 +982,16 @@ export class Game extends Phaser.Scene {
   }
 
   private checkOrderComplete(): void {
-    if (!this.orderSlots.every((s) => s.fulfilledQty >= s.requiredQty)) return;
+    if (!this.currentOrder) return;
+    // Red (wrong) items block completion
+    for (let i = 0; i < this.orderSlots.length; i++) {
+      if (this.evaluateSlot(i) === 'wrong') return;
+    }
+    // Every requirement must be satisfied by a placed item at the correct quantity
+    const allMet = this.currentOrder.requirements.every((req) =>
+      this.orderSlots.some((s) => s.iconKey === req.iconKey && s.placedQty >= req.quantity),
+    );
+    if (!allMet) return;
     this.switchToOrdersTab?.();
     this.completeOrder();
   }

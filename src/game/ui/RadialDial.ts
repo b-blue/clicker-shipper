@@ -4,6 +4,7 @@ import { Colors } from '../constants/Colors';
 import { NavigationController } from '../controllers/NavigationController';
 import { normalizeItems } from '../utils/ItemAdapter';
 import { ProgressionManager } from '../managers/ProgressionManager';
+import { AssetLoader } from '../managers/AssetLoader';
 
 export class RadialDial {
   private scene: Phaser.Scene;
@@ -503,8 +504,8 @@ export class RadialDial {
           const baseDepth = 2;
           
           item.layers!.forEach((layer, index) => {
-            if (this.scene.textures.exists(layer.texture)) {
-              const layerImage = this.scene.add.image(textX, textY, layer.texture);
+            if (AssetLoader.textureExists(this.scene, layer.texture)) {
+              const layerImage = AssetLoader.createImage(this.scene, textX, textY, layer.texture);
               layerImage.setScale((layer.scale ?? 1) * baseScale);
               layerImage.setDepth(layer.depth ?? (baseDepth + index));
               layerImage.setAlpha(layer.alpha ?? lockedAlpha);
@@ -519,8 +520,8 @@ export class RadialDial {
         } else if ('icon' in item && item.icon) {
           // Use item.icon as texture key (MenuItem format)
           const textureKey = item.icon;
-          if (this.scene.textures.exists(textureKey)) {
-            const image = this.scene.add.image(textX, textY, textureKey);
+          if (AssetLoader.textureExists(this.scene, textureKey)) {
+            const image = AssetLoader.createImage(this.scene, textX, textY, textureKey);
             image.setScale(this.navigationController.getScaleForDepth());
             image.setDepth(2);
             image.setAlpha(lockedAlpha);
@@ -533,9 +534,9 @@ export class RadialDial {
               .setDepth(0);
             this.sliceTexts.push(text);
           }
-        } else if (this.scene.textures.exists(itemId)) {
+        } else if (AssetLoader.textureExists(this.scene, itemId)) {
           // Create single image using itemId (legacy behavior)
-          const image = this.scene.add.image(textX, textY, itemId);
+          const image = AssetLoader.createImage(this.scene, textX, textY, itemId);
           image.setScale(this.navigationController.getScaleForDepth());
           image.setDepth(2);
           this.sliceImages.push(image);

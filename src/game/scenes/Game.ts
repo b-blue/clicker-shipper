@@ -5,6 +5,7 @@ import {
   ProgressionManager,
   ALL_CATEGORY_IDS,
 } from "../managers/ProgressionManager";
+import { AssetLoader } from "../managers/AssetLoader";
 import { Colors } from "../constants/Colors";
 import {
   generateOrder as buildOrder,
@@ -37,6 +38,7 @@ export class Game extends Phaser.Scene {
   private revenueText: Phaser.GameObjects.BitmapText | null = null;
   private bonusText: Phaser.GameObjects.BitmapText | null = null;
   private switchToOrdersTab: (() => void) | null = null;
+  private switchToCatalogTab: (() => void) | null = null;
   private shiftArcGraphic: Phaser.GameObjects.Graphics | null = null;
   private shiftTimerEvent: Phaser.Time.TimerEvent | null = null;
   private shiftStartTime: number = 0;
@@ -44,6 +46,25 @@ export class Game extends Phaser.Scene {
   private shiftTimerX: number = 0;
   private shiftTimerY: number = 0;
   private readonly shiftTimerRadius: number = 12;
+
+  // Corner button state
+  private cornerCurrentDepth: number = 0;
+  private cornerIsTerminal: boolean = false;
+  private cornerActiveCategoryItem: any = null;
+  // Corner badge (lower-right): level indicator
+  private cornerLevelBg: Phaser.GameObjects.Graphics | null = null;
+  private cornerLevelIcon: Phaser.GameObjects.Image | null = null;
+  private cornerLevelLabel: Phaser.GameObjects.BitmapText | null = null;
+  // Corner catalog button (upper-right)
+  private cornerCatalogBg: Phaser.GameObjects.Graphics | null = null;
+  private cornerCatalogLabel: Phaser.GameObjects.BitmapText | null = null;
+  // Catalog scroll state (populated inside buildCatalogContent)
+  private catalogListContainer: Phaser.GameObjects.Container | null = null;
+  private catalogListTop: number = 0;
+  private catalogPanelHeight: number = 0;
+  private catalogRowHeight: number = 60;
+  private catalogListContentHeight: number = 0;
+  private catalogRowCategoryIds: string[] = [];
 
   constructor() {
     super("Game");
@@ -234,6 +255,7 @@ export class Game extends Phaser.Scene {
         });
       };
       this.switchToOrdersTab = () => updateTabDisplay("ORDERS");
+      this.switchToCatalogTab = () => updateTabDisplay("CATALOG");
 
       tabKeys.forEach((label, index) => {
         const tabY = tabStartY + index * (tabHeight + tabSpacing);
@@ -313,6 +335,7 @@ export class Game extends Phaser.Scene {
       }
 
       this.radialDial = new RadialDial(this, dialX, dialY, dialRootItems);
+      this.createCornerButtons(dialX, dialY, dialRadius);
 
       // ── Purge any stale handlers from a previous shift ──────────────────────
       // Phaser 3 never calls the user-defined shutdown() method — it only calls
@@ -331,6 +354,9 @@ export class Game extends Phaser.Scene {
         if (this.radialDial) {
           this.radialDial.showTerminalDial(data.item);
         }
+        // Hide catalog button while terminal dial is active (badge stays)
+        this.cornerIsTerminal = true;
+        this.updateCornerButtons();
       });
 
       // Listen for terminal action selection
@@ -347,8 +373,8 @@ export class Game extends Phaser.Scene {
             if (slotIndex !== -1) {
               const slot = this.fulfillmentSlots[slotIndex];
               let img: Phaser.GameObjects.Image | null = null;
-              if (this.textures.exists(iconKey)) {
-                img = this.add.image(slot.x, slot.y, iconKey);
+              if (AssetLoader.textureExists(this, iconKey)) {
+                img = AssetLoader.createImage(this, slot.x, slot.y, iconKey);
                 img.setDisplaySize(slot.size - 6, slot.size - 6);
                 this.ordersContainer.add(img);
               }
@@ -422,20 +448,40 @@ export class Game extends Phaser.Scene {
             }
             // If no match, dial already reset to A-level — nothing to do
           }
+          // After an action, RadialDial.reset() returns the dial to A-level
+          this.cornerCurrentDepth = 0;
+          this.cornerIsTerminal = false;
+          this.cornerActiveCategoryItem = null;
+          this.updateCornerButtons();
         },
       );
 
       // Listen for level changes (when drilling into sub-items)
+      // Note: RadialDial emits { depth, item } (not 'level')
       this.events.on(
         "dial:levelChanged",
-        (data: { level: number; item: any }) => {
-          console.log("Entered submenu for:", data.item.name);
+        (data: { depth: number; item: any }) => {
+          this.cornerCurrentDepth = data.depth;
+          this.cornerIsTerminal = false;
+          // Only store the category item at B-level (depth 1) so the badge
+          // always shows the root-category icon regardless of drill depth.
+          if (data.depth === 1) {
+            this.cornerActiveCategoryItem = data.item;
+          }
+          this.updateCornerButtons();
         },
       );
 
       // Listen for going back (tap center to return to root)
       this.events.on("dial:goBack", () => {
-        console.log("Returned to main menu");
+        if (this.cornerIsTerminal) {
+          // Returning from terminal dial — still at the same depth (not A)
+          this.cornerIsTerminal = false;
+        } else {
+          this.cornerCurrentDepth = Math.max(0, this.cornerCurrentDepth - 1);
+          if (this.cornerCurrentDepth === 0) this.cornerActiveCategoryItem = null;
+        }
+        this.updateCornerButtons();
       });
 
       // Wire up shutdown() so the timer and radialDial are actually cleaned up.
@@ -483,7 +529,13 @@ export class Game extends Phaser.Scene {
     const iconFrameSize = 48;
     const iconScale = 1.3;
 
+    // Store scroll state on the instance so scrollCatalogToCategory() can use it
+    this.catalogListTop = listTop;
+    this.catalogRowHeight = rowHeight;
+    this.catalogPanelHeight = height;
+
     const listContainer = this.add.container(listLeft, listTop);
+    this.catalogListContainer = listContainer;
     const maskGraphic = this.add.graphics();
     maskGraphic.fillStyle(0xffffff, 1);
     maskGraphic.fillRect(listLeft, listTop, width, height);
@@ -493,10 +545,16 @@ export class Game extends Phaser.Scene {
     // Flatten categories into display rows: header row then one row per item
     type DisplayRow = { item: MenuItem; isHeader: boolean };
     const rows: DisplayRow[] = [];
+    const rowCatIds: string[] = [];
     catalogCategories.forEach(({ category, items: catItems }) => {
       rows.push({ item: category, isHeader: true });
-      catItems.forEach((item) => rows.push({ item, isHeader: false }));
+      rowCatIds.push(category.id);
+      catItems.forEach((item) => {
+        rows.push({ item, isHeader: false });
+        rowCatIds.push(category.id);
+      });
     });
+    this.catalogRowCategoryIds = rowCatIds;
 
     rows.forEach((row, index) => {
       const rowY = index * rowHeight + rowHeight / 2;
@@ -535,9 +593,8 @@ export class Game extends Phaser.Scene {
         listContainer.add(frameBg);
       }
 
-      if (this.textures.exists(row.item.icon)) {
-        const iconImage = this.add
-          .image(iconX, iconY, row.item.icon)
+      if (AssetLoader.textureExists(this, row.item.icon)) {
+        const iconImage = AssetLoader.createImage(this, iconX, iconY, row.item.icon)
           .setScale(iconScale)
           .setDepth(2);
         listContainer.add(iconImage);
@@ -568,6 +625,7 @@ export class Game extends Phaser.Scene {
     container.add(listContainer);
 
     const listContentHeight = rows.length * rowHeight;
+    this.catalogListContentHeight = listContentHeight;
     let scrollOffset = 0;
     const minOffset = Math.min(0, height - listContentHeight);
 
@@ -904,8 +962,8 @@ export class Game extends Phaser.Scene {
       // Line 1: hash-sign bullet + item name
       const nameLine1Y = rowTop + rowPadding + fontSize / 2 + 2;
 
-      if (this.textures.exists("hash-sign")) {
-        const bullet = this.add.image(contentX + 4, nameLine1Y, "hash-sign");
+      if (AssetLoader.textureExists(this, "hash-sign")) {
+        const bullet = AssetLoader.createImage(this, contentX + 4, nameLine1Y, "hash-sign");
         bullet.setScale(0.45);
         bullet.setOrigin(0, 0.5);
         container.add(bullet);
@@ -1137,5 +1195,193 @@ export class Game extends Phaser.Scene {
     if (this.radialDial) {
       this.radialDial.destroy();
     }
+  }
+
+  // ── Corner buttons ─────────────────────────────────────────────────────────
+
+  /** Build the two corner button GameObjects (hidden on creation). */
+  private createCornerButtons(
+    dialX: number,
+    dialY: number,
+    dialRadius: number,
+  ): void {
+    const btnSize = 40;
+    const margin = 6;
+    const btnX = dialX + dialRadius - btnSize / 2 - margin;
+    const upperY = dialY - dialRadius + btnSize / 2 + margin;
+    const lowerY = dialY + dialRadius - btnSize / 2 - margin;
+
+    // ── Catalog button (upper-right) ─────────────────────────────────────
+    this.cornerCatalogBg = this.add.graphics();
+    this.cornerCatalogBg.setDepth(20);
+    this.cornerCatalogBg.setVisible(false);
+
+    this.cornerCatalogLabel = this.add
+      .bitmapText(btnX, upperY, "clicker", "CAT", 10)
+      .setOrigin(0.5)
+      .setDepth(21)
+      .setVisible(false);
+
+    this.cornerCatalogBg.setInteractive(
+      new Phaser.Geom.Rectangle(
+        btnX - btnSize / 2,
+        upperY - btnSize / 2,
+        btnSize,
+        btnSize,
+      ),
+      Phaser.Geom.Rectangle.Contains,
+    );
+    this.cornerCatalogBg.on("pointerdown", () => {
+      this.scrollCatalogToCategory(this.cornerActiveCategoryItem?.id ?? "");
+      this.switchToCatalogTab?.();
+    });
+    this.cornerCatalogBg.on("pointerover", () => this.drawCatalogBtn(btnX, upperY, btnSize, true));
+    this.cornerCatalogBg.on("pointerout", () => this.drawCatalogBtn(btnX, upperY, btnSize, false));
+
+    // ── Level badge (lower-right) ─────────────────────────────────────────
+    this.cornerLevelBg = this.add.graphics();
+    this.cornerLevelBg.setDepth(20);
+    this.cornerLevelBg.setVisible(false);
+
+    // Placeholder image — will be replaced with real texture in updateCornerButtons
+    this.cornerLevelIcon = this.add
+      .image(btnX, lowerY, "")
+      .setScale(0.9)
+      .setDepth(22)
+      .setVisible(false);
+
+    this.cornerLevelLabel = this.add
+      .bitmapText(btnX + btnSize / 2 - 7, lowerY - btnSize / 2 + 7, "clicker", "A", 10)
+      .setOrigin(0.5)
+      .setDepth(23)
+      .setVisible(false);
+
+    // Store positions for redraw
+    (this.cornerLevelBg as any)._btnX = btnX;
+    (this.cornerLevelBg as any)._lowerY = lowerY;
+    (this.cornerLevelBg as any)._btnSize = btnSize;
+    (this.cornerCatalogBg as any)._btnX = btnX;
+    (this.cornerCatalogBg as any)._upperY = upperY;
+    (this.cornerCatalogBg as any)._btnSize = btnSize;
+  }
+
+  /** Redraw the catalog button background (hover-aware). */
+  private drawCatalogBtn(
+    btnX: number,
+    upperY: number,
+    btnSize: number,
+    hovered: boolean,
+  ): void {
+    if (!this.cornerCatalogBg) return;
+    this.cornerCatalogBg.clear();
+    this.cornerCatalogBg.fillStyle(
+      hovered ? Colors.BUTTON_HOVER : Colors.PANEL_DARK,
+      0.9,
+    );
+    this.cornerCatalogBg.fillRect(
+      btnX - btnSize / 2,
+      upperY - btnSize / 2,
+      btnSize,
+      btnSize,
+    );
+    this.cornerCatalogBg.lineStyle(2, Colors.BORDER_BLUE, 0.9);
+    this.cornerCatalogBg.strokeRect(
+      btnX - btnSize / 2,
+      upperY - btnSize / 2,
+      btnSize,
+      btnSize,
+    );
+  }
+
+  /** Sync corner button visibility and content to current dial state. */
+  private updateCornerButtons(): void {
+    if (!this.cornerLevelBg || !this.cornerCatalogBg) return;
+
+    const bgData = this.cornerLevelBg as any;
+    const catData = this.cornerCatalogBg as any;
+    const btnX: number = bgData._btnX;
+    const lowerY: number = bgData._lowerY;
+    const btnSize: number = bgData._btnSize;
+    const upperY: number = catData._upperY;
+
+    const depth = this.cornerCurrentDepth;
+    const isTerminal = this.cornerIsTerminal;
+    const showBadge = depth >= 1;
+    const showCatalog = depth === 1 && !isTerminal;
+
+    // ── Level badge ───────────────────────────────────────────────────────
+    this.cornerLevelBg.setVisible(showBadge);
+    this.cornerLevelIcon?.setVisible(showBadge);
+    this.cornerLevelLabel?.setVisible(showBadge);
+
+    if (showBadge) {
+      // Draw badge background
+      this.cornerLevelBg.clear();
+      this.cornerLevelBg.fillStyle(Colors.PANEL_DARK, 0.9);
+      this.cornerLevelBg.fillCircle(btnX, lowerY, btnSize / 2);
+      this.cornerLevelBg.lineStyle(2, Colors.NEON_BLUE, 0.9);
+      this.cornerLevelBg.strokeCircle(btnX, lowerY, btnSize / 2);
+
+      // Update level letter (A=0, B=1, C=2 …)
+      const letter = String.fromCharCode(65 + depth);
+      this.cornerLevelLabel?.setText(letter);
+      this.cornerLevelLabel?.setPosition(
+        btnX + btnSize / 2 - 7,
+        lowerY - btnSize / 2 + 7,
+      );
+      this.cornerLevelLabel?.setTint(Colors.HIGHLIGHT_YELLOW);
+
+      // Update category icon — use the B-level (depth-1) category root icon
+      // so the badge always shows which category we entered, regardless of
+      // how deep we have drilled (C, D, …).
+      const categoryItem = this.cornerActiveCategoryItem;
+      if (categoryItem && this.cornerLevelIcon) {
+        const iconKey: string = categoryItem.icon ?? categoryItem.id;
+        if (AssetLoader.textureExists(this, iconKey)) {
+          const atlasKey = AssetLoader.getAtlasKey(iconKey);
+          if (atlasKey) {
+            this.cornerLevelIcon.setTexture(atlasKey, iconKey);
+          } else {
+            this.cornerLevelIcon.setTexture(iconKey);
+          }
+          this.cornerLevelIcon.setPosition(btnX, lowerY);
+          this.cornerLevelIcon.setScale(0.9);
+          this.cornerLevelIcon.setVisible(true);
+        } else {
+          this.cornerLevelIcon.setVisible(false);
+        }
+      }
+    }
+
+    // ── Catalog button ────────────────────────────────────────────────────
+    this.cornerCatalogBg.setVisible(showCatalog);
+    this.cornerCatalogLabel?.setVisible(showCatalog);
+
+    if (showCatalog) {
+      this.drawCatalogBtn(btnX, upperY, btnSize, false);
+
+      // Show category icon or fallback "CAT" text
+      if (this.cornerActiveCategoryItem) {
+        this.cornerCatalogLabel?.setText("CAT").setTint(Colors.HIGHLIGHT_YELLOW_BRIGHT);
+      }
+    }
+  }
+
+  /** Scroll the catalog list so the given category header appears at the top. */
+  private scrollCatalogToCategory(categoryId: string): void {
+    if (!this.catalogListContainer || !categoryId) return;
+
+    const rowIndex = this.catalogRowCategoryIds.findIndex(
+      (id) => id === categoryId,
+    );
+    if (rowIndex === -1) return;
+
+    const targetOffset = -(rowIndex * this.catalogRowHeight);
+    const minOffset = Math.min(
+      0,
+      this.catalogPanelHeight - this.catalogListContentHeight,
+    );
+    const clampedOffset = Math.max(minOffset, Math.min(0, targetOffset));
+    this.catalogListContainer.y = this.catalogListTop + clampedOffset;
   }
 }

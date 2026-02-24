@@ -18,6 +18,7 @@ type MockScene = {
   };
   textures: {
     exists: jest.Mock;
+    get: jest.Mock;
   };
   time: {
     addEvent: jest.Mock;
@@ -109,6 +110,9 @@ const createMockScene = (): MockScene => {
     },
     textures: {
       exists: jest.fn(() => false),
+      // has() delegates to exists() so mockReturnValue(true) on exists
+      // transparently makes both atlas-key and frame-name checks pass.
+      get: jest.fn(() => ({ has: jest.fn(() => false) })),
     },
     time: {
       addEvent: jest.fn(() => ({

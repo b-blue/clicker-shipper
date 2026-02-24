@@ -3,6 +3,7 @@ import { MenuItem } from '../types/GameTypes';
 import { GameManager } from '../managers/GameManager';
 import { Colors } from '../constants/Colors';
 import { normalizeItems } from '../utils/ItemAdapter';
+import { AssetLoader } from '../managers/AssetLoader';
 
 export class ItemManual extends Phaser.Scene {
   private items: MenuItem[] = [];
@@ -78,13 +79,13 @@ export class ItemManual extends Phaser.Scene {
       const iconX = iconFrameSize / 2 + 10 + offsetX;
       const iconY = rowY;
 
-      if (!row.isChild && this.textures.exists('frame')) {
-        const frameImage = this.add.image(iconX, iconY, 'frame').setScale(iconScale).setDepth(1);
+      if (!row.isChild && AssetLoader.textureExists(this, 'frame')) {
+        const frameImage = AssetLoader.createImage(this, iconX, iconY, 'frame').setScale(iconScale).setDepth(1);
         listContainer.add(frameImage);
       }
 
-      if (this.textures.exists(row.item.icon)) {
-        const iconImage = this.add.image(iconX, iconY, row.item.icon).setScale(iconScale).setDepth(2);
+      if (AssetLoader.textureExists(this, row.item.icon)) {
+        const iconImage = AssetLoader.createImage(this, iconX, iconY, row.item.icon).setScale(iconScale).setDepth(2);
         listContainer.add(iconImage);
       } else {
         const fallbackText = this.add.bitmapText(iconX, iconY, 'clicker', '?', 18)

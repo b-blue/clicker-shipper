@@ -23,7 +23,8 @@
         "test": "jest",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage",
-        "generate-font": "node scripts/generate_bitmap_font.js"
+        "generate-font": "node scripts/generate_bitmap_font.js",
+        "generate-atlases": "node scripts/generate_atlases.js"
     },
     "devDependencies": {
         "@types/jest": "^30.0.0",

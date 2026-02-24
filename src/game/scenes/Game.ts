@@ -211,6 +211,18 @@ export class Game extends Phaser.Scene {
 
       this.radialDial = new RadialDial(this, dialX, dialY, dialRootItems);
 
+      // ── Purge any stale handlers from a previous shift ──────────────────────
+      // Phaser 3 never calls the user-defined shutdown() method — it only calls
+      // init(), preload(), create(), and update() directly. Because scene.events
+      // is the same EventEmitter instance across scene restarts, every call to
+      // create() stacks a new anonymous handler on top of any surviving ones.
+      // Clearing before re-registering makes the handler count exactly 1
+      // regardless of how many times the scene has been started.
+      this.events.removeAllListeners('dial:itemConfirmed');
+      this.events.removeAllListeners('dial:actionConfirmed');
+      this.events.removeAllListeners('dial:levelChanged');
+      this.events.removeAllListeners('dial:goBack');
+
       // Listen for item confirmation — show terminal action dial
       this.events.on('dial:itemConfirmed', (data: { item: any }) => {
         if (this.radialDial) {
@@ -279,6 +291,11 @@ export class Game extends Phaser.Scene {
       this.events.on('dial:goBack', () => {
         console.log('Returned to main menu');
       });
+
+      // Wire up shutdown() so the timer and radialDial are actually cleaned up.
+      // Phaser emits a 'shutdown' event on scene.events when stopping a scene;
+      // without registering here, shutdown() is never invoked.
+      this.events.once('shutdown', this.shutdown, this);
     } catch (error) {
       console.error('Error creating Game scene:', error);
       this.add.bitmapText(50, 50, 'clicker', 'ERROR LOADING GAME DATA', 20);
@@ -751,23 +768,11 @@ export class Game extends Phaser.Scene {
   }
 
   shutdown() {
+    // Called via this.events.once('shutdown', this.shutdown, this) registered
+    // at the end of create(). Cleans up resources that Phaser won't auto-free.
     this.shiftTimerEvent?.remove();
     if (this.radialDial) {
       this.radialDial.destroy();
     }
-    // Remove dial event listeners added in create().
-    // IMPORTANT: events.off(event) with no fn argument is a no-op in eventemitter3 —
-    // it returns early without removing anything. Use removeAllListeners(event) instead,
-    // which actually clears every handler for the given event. Without this, each
-    // create() call stacks another anonymous handler and actions fire N times on the
-    // Nth shift.
-    this.events.removeAllListeners('dial:itemConfirmed');
-    this.events.removeAllListeners('dial:actionConfirmed');
-    this.events.removeAllListeners('dial:levelChanged');
-    this.events.removeAllListeners('dial:goBack');
-    // Remove scene-level input listeners that buildCatalogContent registers for
-    // scroll support. These are anonymous and can't be removed by reference, so
-    // clear them all; they are rebuilt fresh in the next create() call.
-    this.input.removeAllListeners();
   }
 }

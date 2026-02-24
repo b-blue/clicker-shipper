@@ -755,12 +755,19 @@ export class Game extends Phaser.Scene {
     if (this.radialDial) {
       this.radialDial.destroy();
     }
-    // Remove dial event listeners added in create(). Phaser reuses the scene
-    // instance on restart, so without this each create() stacks another handler
-    // and actions fire N times on the Nth shift.
-    this.events.off('dial:itemConfirmed');
-    this.events.off('dial:actionConfirmed');
-    this.events.off('dial:levelChanged');
-    this.events.off('dial:goBack');
+    // Remove dial event listeners added in create().
+    // IMPORTANT: events.off(event) with no fn argument is a no-op in eventemitter3 —
+    // it returns early without removing anything. Use removeAllListeners(event) instead,
+    // which actually clears every handler for the given event. Without this, each
+    // create() call stacks another anonymous handler and actions fire N times on the
+    // Nth shift.
+    this.events.removeAllListeners('dial:itemConfirmed');
+    this.events.removeAllListeners('dial:actionConfirmed');
+    this.events.removeAllListeners('dial:levelChanged');
+    this.events.removeAllListeners('dial:goBack');
+    // Remove scene-level input listeners that buildCatalogContent registers for
+    // scroll support. These are anonymous and can't be removed by reference, so
+    // clear them all; they are rebuilt fresh in the next create() call.
+    this.input.removeAllListeners();
   }
 }

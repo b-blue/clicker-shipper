@@ -20,9 +20,15 @@ export class DialCalibration extends Scene {
   create() {
     const gameWidth = this.cameras.main.width;
     const gameHeight = this.cameras.main.height;
-    const panelWidth = Math.min(gameWidth * 0.9, 600);
-    const panelHeight = Math.min(gameHeight * 0.65, 480);
-    const panelCenterY = gameHeight * 0.35;
+
+    // Panel — wider and taller to accommodate two-column layout
+    const panelWidth = Math.min(720, gameWidth - 40);
+    const panelHeight = Math.min(440, gameHeight * 0.74);
+    const panelCenterY = gameHeight * 0.40;
+
+    // Column centres — each sits at 1/4 and 3/4 of panel width
+    const leftCX = gameWidth / 2 - panelWidth / 4;
+    const rightCX = gameWidth / 2 + panelWidth / 4;
 
     // Background
     this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, Colors.BACKGROUND_DARK);
@@ -43,95 +49,51 @@ export class DialCalibration extends Scene {
     this.showOutline = currentSettings.showOutline ?? false;
     this.dialRadius = currentSettings.radius ?? 150;
 
-    // Dial Position Section
-    this.add.bitmapText(gameWidth / 2, gameHeight * 0.18, 'clicker', 'DIAL POSITION', 16)
-      .setOrigin(0.5);
+    // ── LEFT COLUMN: D-pad for position ──────────────────────────────────
+    const padCX = leftCX;
+    const padCY = panelCenterY - 10;
+    const padStep = 58; // button size 48 + 10 gap
 
-    this.add.bitmapText(gameWidth / 2, gameHeight * 0.22, 'clicker', 'ADJUST THE DIAL POSITION', 11)
-      .setOrigin(0.5);
-
-    // Horizontal position controls
-    const xLabelY = gameHeight * 0.29;
-    this.add.bitmapText(gameWidth / 2 - panelWidth / 2 + 40, xLabelY, 'clicker', 'HORIZONTAL', 14)
-      .setOrigin(0, 0.5);
-
-    this.createAdjustButton(
-      gameWidth / 2 - 80,
-      xLabelY,
-      'LT',
-      () => this.adjustDialPosition(-10, 0)
-    );
-
-    const xValueText = this.add.bitmapText(gameWidth / 2, xLabelY, 'clicker', `${this.dialX}`, 14)
+    this.add.bitmapText(padCX, gameHeight * 0.22, 'clicker', 'DIAL POSITION', 14)
       .setOrigin(0.5, 0.5);
 
-    this.createAdjustButton(
-      gameWidth / 2 + 80,
-      xLabelY,
-      'RT',
-      () => this.adjustDialPosition(10, 0)
-    );
+    // Cross pattern: UP top, DOWN bottom, LEFT left, RIGHT right
+    this.createAdjustButton(padCX,            padCY - padStep, 'UP', () => this.adjustDialPosition(0, -10));
+    this.createAdjustButton(padCX - padStep,  padCY,           'LT', () => this.adjustDialPosition(-10, 0));
+    this.createAdjustButton(padCX + padStep,  padCY,           'RT', () => this.adjustDialPosition(10, 0));
+    this.createAdjustButton(padCX,            padCY + padStep, 'DN', () => this.adjustDialPosition(0, 10));
 
-    // Vertical position controls
-    const yLabelY = gameHeight * 0.36;
-    this.add.bitmapText(gameWidth / 2 - panelWidth / 2 + 40, yLabelY, 'clicker', 'VERTICAL', 14)
-      .setOrigin(0, 0.5);
-
-    this.createAdjustButton(
-      gameWidth / 2 - 80,
-      yLabelY,
-      'UP',
-      () => this.adjustDialPosition(0, -10)
-    );
-
-    const yValueText = this.add.bitmapText(gameWidth / 2, yLabelY, 'clicker', `${this.dialY}`, 14)
+    // X / Y value readout below the D-pad
+    const xValueText = this.add.bitmapText(padCX, padCY + 90, 'clicker', `X: ${this.dialX}`, 12)
+      .setOrigin(0.5, 0.5);
+    const yValueText = this.add.bitmapText(padCX, padCY + 110, 'clicker', `Y: ${this.dialY}`, 12)
       .setOrigin(0.5, 0.5);
 
-    this.createAdjustButton(
-      gameWidth / 2 + 80,
-      yLabelY,
-      'DN',
-      () => this.adjustDialPosition(0, 10)
-    );
+    // ── RIGHT COLUMN: Dial size + outline toggle ──────────────────────────
+    const dialSizeLabelY  = panelCenterY - 75;
+    const dialSizeCtrlY   = panelCenterY - 35;
+    const btnOffset = 60;
 
-    // Dial Size controls
-    const rLabelY = gameHeight * 0.43;
-    this.add.bitmapText(gameWidth / 2 - panelWidth / 2 + 40, rLabelY, 'clicker', 'DIAL SIZE', 14)
-      .setOrigin(0, 0.5);
+    this.add.bitmapText(rightCX, dialSizeLabelY, 'clicker', 'DIAL SIZE', 14)
+      .setOrigin(0.5, 0.5);
 
-    this.createAdjustButton(
-      gameWidth / 2 - 80,
-      rLabelY,
-      'LT',
-      () => this.adjustDialRadius(-10)
-    );
-
-    const radiusValueText = this.add.bitmapText(gameWidth / 2, rLabelY, 'clicker', `${this.dialRadius}`, 14)
+    this.createAdjustButton(rightCX - btnOffset, dialSizeCtrlY, 'LT', () => this.adjustDialRadius(-10));
+    const radiusValueText = this.add.bitmapText(rightCX, dialSizeCtrlY, 'clicker', `${this.dialRadius}`, 14)
       .setOrigin(0.5);
+    this.createAdjustButton(rightCX + btnOffset, dialSizeCtrlY, 'RT', () => this.adjustDialRadius(10));
 
-    this.createAdjustButton(
-      gameWidth / 2 + 80,
-      rLabelY,
-      'RT',
-      () => this.adjustDialRadius(10)
-    );
+    const outlineLabelY  = panelCenterY + 40;
+    const outlineToggleY = panelCenterY + 75;
 
-    // Store references for updating
-    this.data.set('xValueText', xValueText);
-    this.data.set('yValueText', yValueText);
-    this.data.set('radiusValueText', radiusValueText);
+    this.add.bitmapText(rightCX, outlineLabelY, 'clicker', 'SHOW OUTLINE', 14)
+      .setOrigin(0.5, 0.5);
 
-    // Dial Outline Toggle
-    const toggleY = gameHeight * 0.50;
-    this.add.bitmapText(gameWidth / 2 - panelWidth / 2 + 40, toggleY, 'clicker', 'SHOW OUTLINE', 14)
-      .setOrigin(0, 0.5);
-
-    const toggleButton = this.add.rectangle(gameWidth / 2, toggleY, 60, 30, 
+    const toggleButton = this.add.rectangle(rightCX, outlineToggleY, 60, 30,
       this.showOutline ? Colors.SLICE_HIGHLIGHTED : Colors.PANEL_DARK, 0.8);
     toggleButton.setStrokeStyle(2, Colors.BORDER_BLUE);
     toggleButton.setInteractive();
 
-    const toggleText = this.add.bitmapText(gameWidth / 2, toggleY, 'clicker', this.showOutline ? 'ON' : 'OFF', 14)
+    const toggleText = this.add.bitmapText(rightCX, outlineToggleY, 'clicker', this.showOutline ? 'ON' : 'OFF', 14)
       .setOrigin(0.5);
 
     toggleButton.on('pointerdown', () => {
@@ -149,36 +111,21 @@ export class DialCalibration extends Scene {
       toggleButton.setFillStyle(this.showOutline ? Colors.SLICE_HIGHLIGHTED : Colors.PANEL_DARK, 0.8);
     });
 
+    // Store references for live updates
+    this.data.set('xValueText', xValueText);
+    this.data.set('yValueText', yValueText);
+    this.data.set('radiusValueText', radiusValueText);
+
     // Preview dial
     this.drawPreviewDial();
 
-    // Action buttons in single row: Reset, Cancel, Save
-    const buttonY = gameHeight * 0.58;
-    const buttonSpacing = 150;
-    
-    this.createButton(
-      gameWidth / 2 - buttonSpacing,
-      buttonY,
-      'RESET',
-      () => this.resetToDefaults(),
-      120
-    );
+    // ── ACTION BUTTONS ──────────────────────────────────────────────────
+    const buttonY = panelCenterY + panelHeight / 2 - 35;
+    const buttonSpacing = 110;
 
-    this.createButton(
-      gameWidth / 2,
-      buttonY,
-      'CANCEL',
-      () => this.scene.start('MainMenu'),
-      120
-    );
-
-    this.createButton(
-      gameWidth / 2 + buttonSpacing,
-      buttonY,
-      'SAVE',
-      () => this.saveAndClose(),
-      120
-    );
+    this.createButton(gameWidth / 2 - buttonSpacing, buttonY, 'RESET',  () => this.resetToDefaults(), 100);
+    this.createButton(gameWidth / 2,                 buttonY, 'CANCEL', () => this.scene.start('MainMenu'), 100);
+    this.createButton(gameWidth / 2 + buttonSpacing, buttonY, 'SAVE',   () => this.saveAndClose(), 100);
   }
 
   private adjustDialRadius(delta: number): void {
@@ -199,9 +146,9 @@ export class DialCalibration extends Scene {
     // Update text displays
     const xValueText = this.data.get('xValueText') as Phaser.GameObjects.BitmapText;
     const yValueText = this.data.get('yValueText') as Phaser.GameObjects.BitmapText;
-    
-    if (xValueText) xValueText.setText(`${this.dialX}`);
-    if (yValueText) yValueText.setText(`${this.dialY}`);
+
+    if (xValueText) xValueText.setText(`X: ${this.dialX}`);
+    if (yValueText) yValueText.setText(`Y: ${this.dialY}`);
 
     // Update preview
     this.drawPreviewDial();
@@ -244,8 +191,8 @@ export class DialCalibration extends Scene {
     const yValueText = this.data.get('yValueText') as Phaser.GameObjects.BitmapText;
     const radiusValueText = this.data.get('radiusValueText') as Phaser.GameObjects.BitmapText;
     
-    if (xValueText) xValueText.setText(`${this.dialX}`);
-    if (yValueText) yValueText.setText(`${this.dialY}`);
+    if (xValueText) xValueText.setText(`X: ${this.dialX}`);
+    if (yValueText) yValueText.setText(`Y: ${this.dialY}`);
     if (radiusValueText) radiusValueText.setText(`${this.dialRadius}`);
 
     this.drawPreviewDial();
@@ -270,7 +217,7 @@ export class DialCalibration extends Scene {
   }
 
   private createAdjustButton(x: number, y: number, direction: 'LT' | 'RT' | 'UP' | 'DN', callback: () => void): void {
-    const button = this.add.rectangle(x, y, 40, 40, Colors.PANEL_DARK, 0.8);
+    const button = this.add.rectangle(x, y, 48, 48, Colors.PANEL_DARK, 0.8);
     button.setStrokeStyle(2, Colors.BORDER_BLUE);
     button.setInteractive();
 
@@ -330,7 +277,7 @@ export class DialCalibration extends Scene {
 
     this.add.rectangle(x, y, width, buttonHeight).setStrokeStyle(2, Colors.HIGHLIGHT_YELLOW);
 
-    this.add.bitmapText(x, y, 'clicker', text, 18)
+    this.add.bitmapText(x, y, 'clicker', text, 14)
       .setOrigin(0.5);
   }
 }

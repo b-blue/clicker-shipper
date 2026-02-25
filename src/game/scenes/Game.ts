@@ -359,10 +359,14 @@ export class Game extends Phaser.Scene {
     if (!this.currentOrder) return 'wrong';
     const inOrder = this.currentOrder.requirements.some((r) => r.iconKey === slot.iconKey);
     if (!inOrder) return 'wrong';
-    const req = this.currentOrder.requirements[slotIndex];
-    // 'correct' (green) requires: right position AND required quantity met
-    if (req && req.iconKey === slot.iconKey && slot.placedQty >= req.quantity) return 'correct';
-    return 'misplaced';
+    // Find the requirement for this item by iconKey (position-independent)
+    const reqIndex = this.currentOrder.requirements.findIndex((r) => r.iconKey === slot.iconKey);
+    if (reqIndex === -1) return 'wrong'; // not in order
+    const req = this.currentOrder.requirements[reqIndex];
+    // Wrong quantity is always red, regardless of position
+    if (slot.placedQty !== req.quantity) return 'wrong';
+    // Correct quantity: green if at expected position, yellow if misplaced
+    return reqIndex === slotIndex ? 'correct' : 'misplaced';
   }
 
   /**

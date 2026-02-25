@@ -166,8 +166,10 @@ describe('Game scene — shutdown() is not called unless explicitly wired', () =
 // ---------------------------------------------------------------------------
 
 describe('Order row — slot evaluation algorithm', () => {
-  // Mirrors Game.evaluateSlot: determine correctness of slot[i] given requirements[].
-  // 'correct' (green) requires matching position AND placedQty >= required quantity.
+  // Mirrors Game.evaluateSlot.
+  // green  = right position + right quantity
+  // yellow = right quantity, wrong position
+  // red    = not in order OR wrong quantity
   function evaluate(
     slotIconKey: string | null,
     slotIndex: number,
@@ -175,11 +177,10 @@ describe('Order row — slot evaluation algorithm', () => {
     placedQty: number = 1,
   ): 'empty' | 'correct' | 'misplaced' | 'wrong' {
     if (slotIconKey === null) return 'empty';
-    const inOrder = requirements.some((r) => r.iconKey === slotIconKey);
-    if (!inOrder) return 'wrong';
-    const req = requirements[slotIndex];
-    if (req && req.iconKey === slotIconKey && placedQty >= (req.quantity ?? 1)) return 'correct';
-    return 'misplaced';
+    const reqIndex = requirements.findIndex((r) => r.iconKey === slotIconKey);
+    if (reqIndex === -1) return 'wrong'; // not in order
+    if (placedQty !== (requirements[reqIndex].quantity ?? 1)) return 'wrong'; // wrong qty → red
+    return reqIndex === slotIndex ? 'correct' : 'misplaced';
   }
 
   const reqs = [{ iconKey: 'iron' }, { iconKey: 'wood' }, { iconKey: 'stone' }];
@@ -210,14 +211,19 @@ describe('Order row — slot evaluation algorithm', () => {
     expect(evaluate('iron', 5, reqs)).toBe('misplaced');
   });
 
-  it('returns misplaced when item is at correct position but quantity is insufficient', () => {
+  it('returns wrong (red) when quantity is incorrect, regardless of position', () => {
     const reqsWithQty = [{ iconKey: 'iron', quantity: 3 }, { iconKey: 'wood', quantity: 2 }];
-    // placedQty 1 < required 3 → misplaced even though iconKey matches
-    expect(evaluate('iron', 0, reqsWithQty, 1)).toBe('misplaced');
-    // placedQty meets required 2 → correct
+    // Wrong quantity at correct position → red
+    expect(evaluate('iron', 0, reqsWithQty, 1)).toBe('wrong');
+    expect(evaluate('iron', 0, reqsWithQty, 4)).toBe('wrong');
+    // Wrong quantity at wrong position → also red
+    expect(evaluate('iron', 1, reqsWithQty, 1)).toBe('wrong');
+    // Correct quantity at correct position → green
     expect(evaluate('iron', 0, reqsWithQty, 3)).toBe('correct');
-    // placedQty exactly equal to required → correct
     expect(evaluate('wood', 1, reqsWithQty, 2)).toBe('correct');
+    // Correct quantity at wrong position → yellow
+    expect(evaluate('wood', 0, reqsWithQty, 2)).toBe('misplaced');
+    expect(evaluate('iron', 1, reqsWithQty, 3)).toBe('misplaced');
   });
 });
 
@@ -317,21 +323,23 @@ describe('Order row — completion check algorithm', () => {
     slotIconKey: string | null,
     slotIndex: number,
     requirements: Req[],
+    placedQty: number = 1,
   ): 'empty' | 'correct' | 'misplaced' | 'wrong' {
     if (slotIconKey === null) return 'empty';
-    const inOrder = requirements.some((r) => r.iconKey === slotIconKey);
-    if (!inOrder) return 'wrong';
-    return requirements[slotIndex]?.iconKey === slotIconKey ? 'correct' : 'misplaced';
+    const reqIndex = requirements.findIndex((r) => r.iconKey === slotIconKey);
+    if (reqIndex === -1) return 'wrong'; // not in order
+    if (placedQty !== requirements[reqIndex].quantity) return 'wrong'; // wrong qty → red
+    return reqIndex === slotIndex ? 'correct' : 'misplaced';
   }
 
   function isComplete(slots: Slot[], requirements: Req[]): boolean {
     // Red items block completion
     for (let i = 0; i < slots.length; i++) {
-      if (evaluate(slots[i].iconKey, i, requirements) === 'wrong') return false;
+      if (evaluate(slots[i].iconKey, i, requirements, slots[i].placedQty) === 'wrong') return false;
     }
-    // All requirements must be satisfied
+    // All requirements must be exactly satisfied
     return requirements.every((req) =>
-      slots.some((s) => s.iconKey === req.iconKey && s.placedQty >= req.quantity),
+      slots.some((s) => s.iconKey === req.iconKey && s.placedQty === req.quantity),
     );
   }
 

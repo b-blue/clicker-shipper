@@ -530,7 +530,7 @@ export class RadialDial {
     g.arc(dialX, dialY, arcRadius, terminalStartAngle, terminalStartAngle - arcSweep, true);
     g.strokePath();
 
-    // CW removal track: 1.5 slices dim red
+    // CW removal track: full 1.5 slices dim red from start angle
     g.lineStyle(8, 0x331111, 1.0);
     g.beginPath();
     g.arc(dialX, dialY, arcRadius, terminalStartAngle, terminalStartAngle + Math.PI / 2, false);
@@ -545,13 +545,13 @@ export class RadialDial {
       const fillEndAngle = terminalStartAngle - arcProgress * arcSweep;
       g.arc(dialX, dialY, arcRadius, terminalStartAngle, fillEndAngle, true);
       g.strokePath();
-    } else if (arcProgress < -0.2) {
-      // Removal zone fill starts half a slice CW from start (arcProgress -0.2 boundary)
-      // Draw from the half-slice CW boundary inward to the current trigger position.
-      const removalStartAngle = terminalStartAngle + 0.2 * arcSweep; // half-slice CW
-      g.lineStyle(8, 0xff2244, 1.0);
+    } else if (arcProgress < 0) {
+      // CW fill: cyan up to the half-slice tick (-0.2), red past it (removal zone)
+      const fillColor = arcProgress >= -0.2 ? 0x00cccc : 0xff2244;
+      const fillEndAngle = terminalStartAngle - arcProgress * arcSweep; // CW: end > start
+      g.lineStyle(8, fillColor, 1.0);
       g.beginPath();
-      g.arc(dialX, dialY, arcRadius, removalStartAngle, terminalStartAngle - arcProgress * arcSweep, false);
+      g.arc(dialX, dialY, arcRadius, terminalStartAngle, fillEndAngle, false);
       g.strokePath();
     }
 

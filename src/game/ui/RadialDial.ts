@@ -98,12 +98,18 @@ export class RadialDial {
         const dx = pointer.x - this.dialX;
         const dy = pointer.y - this.dialY;
         const pointerAngle = Math.atan2(dy, dx);
-        // Valid sweep: π radians CCW from start, plus π/6 CW for removal zone
-        const clampedAngle = Math.max(this.terminalStartAngle - Math.PI, Math.min(this.terminalStartAngle + Math.PI / 6, pointerAngle));
-        const angularTravel = this.terminalStartAngle - clampedAngle; // positive = CCW (add), negative = CW (remove)
-        // Map to [-1/6, 1]: negative means removal zone
-        this.arcProgress = Math.max(-1 / 6, Math.min(1, angularTravel / Math.PI));
-        this.currentQuantity = this.arcProgress < 0 ? 0 : Math.min(3, Math.floor(this.arcProgress * 3) + 1);
+        // Compute CCW angular travel from the arc start to the pointer.
+        // Normalize to (-π, π] first to handle the atan2 ±π seam (which would
+        // otherwise cause a jump when the pointer crosses the 9-o'clock axis).
+        let angularTravel = this.terminalStartAngle - pointerAngle;
+        while (angularTravel > Math.PI)  angularTravel -= 2 * Math.PI;
+        while (angularTravel < -Math.PI) angularTravel += 2 * Math.PI;
+        // Clamp: 1.5 slices CW for removal (π/2) to 2.5 slices CCW for qty 3 (5π/6)
+        angularTravel = Math.max(-Math.PI / 2, Math.min(5 * Math.PI / 6, angularTravel));
+        // Map travel onto [-0.6, 1.0]; negative = removal zone, 0 = start, 1 = qty-3 max
+        this.arcProgress = angularTravel / (5 * Math.PI / 6);
+        // Zone centres: qty1→0, qty2→0.4, qty3→0.8; boundaries at ±0.2, ±0.6
+        this.currentQuantity = Math.max(0, Math.min(3, Math.round(this.arcProgress * 2.5 + 1)));
         this.redrawDial();
       }
       return;
@@ -171,7 +177,7 @@ export class RadialDial {
 
     // Terminal mode: only the dynamic trigger button is interactive
     if (this.terminalItem) {
-      const triggerAngle = this.terminalStartAngle - this.arcProgress * Math.PI;
+      const triggerAngle = this.terminalStartAngle - this.arcProgress * (5 * Math.PI / 6);
       const triggerX = this.dialX + Math.cos(triggerAngle) * this.arcRadius;
       const triggerY = this.dialY + Math.sin(triggerAngle) * this.arcRadius;
       const tdx = pointer.x - triggerX;
@@ -442,8 +448,10 @@ export class RadialDial {
       } else {
         this.centerImage.setVisible(false);
       }
-      const isRemoval = this.arcProgress < 0;
-      const numeralColor = isRemoval ? 0xff2244 : (this.arcProgress < 1 / 3 ? 0x00cccc : (this.arcProgress < 2 / 3 ? 0xffd700 : 0xff8800));
+      // Removal zone starts half a slice CW from start (arcProgress < -0.2)
+      const isRemoval = this.arcProgress < -0.2;
+      // Match arc-fill colour thresholds exactly: 0.2 and 0.6
+      const numeralColor = isRemoval ? 0xff2244 : (this.arcProgress < 0.2 ? 0x00cccc : (this.arcProgress < 0.6 ? 0xffd700 : 0xff8800));
       if (this.quantityNumeral) {
         this.quantityNumeral.setText(String(this.currentQuantity));
         this.quantityNumeral.setTint(numeralColor);
@@ -507,48 +515,65 @@ export class RadialDial {
     this.arcFillGraphics = g;
 
     const { dialX, dialY, arcRadius, arcProgress, terminalStartAngle } = this;
+    // Arc spans 4 slices total: 2.5 slices CCW (qty 1-3) + 1.5 slices CW (removal).
+    // arcProgress ∈ [-0.6, 1.0]; zone centres: qty1→0, qty2→0.4, qty3→0.8.
+    const arcSweep = 5 * Math.PI / 6; // CCW portion = 2.5 × (π/3)
 
     // Dynamic trigger position
-    const triggerAngle = terminalStartAngle - arcProgress * Math.PI;
+    const triggerAngle = terminalStartAngle - arcProgress * arcSweep;
     const triggerX = dialX + Math.cos(triggerAngle) * arcRadius;
     const triggerY = dialY + Math.sin(triggerAngle) * arcRadius;
 
-    // Track arc: full dim semicircle from terminalStartAngle going CCW by π
+    // CCW quantity track: 2.5 slices dim
     g.lineStyle(8, 0x223344, 1.0);
     g.beginPath();
-    g.arc(dialX, dialY, arcRadius, terminalStartAngle, terminalStartAngle - Math.PI, true);
+    g.arc(dialX, dialY, arcRadius, terminalStartAngle, terminalStartAngle - arcSweep, true);
     g.strokePath();
 
-    // Removal extension track: small CW extension past start, dim red
+    // CW removal track: 1.5 slices dim red
     g.lineStyle(8, 0x331111, 1.0);
     g.beginPath();
-    g.arc(dialX, dialY, arcRadius, terminalStartAngle, terminalStartAngle + Math.PI / 6, false);
+    g.arc(dialX, dialY, arcRadius, terminalStartAngle, terminalStartAngle + Math.PI / 2, false);
     g.strokePath();
 
     // Fill arc
     if (arcProgress > 0) {
-      const arcColor = arcProgress < 1 / 3 ? 0x00cccc : (arcProgress < 2 / 3 ? 0xffd700 : 0xff8800);
+      // Colour by zone: cyan=qty1 (0–0.2), yellow=qty2 (0.2–0.6), orange=qty3 (0.6+)
+      const arcColor = arcProgress < 0.2 ? 0x00cccc : (arcProgress < 0.6 ? 0xffd700 : 0xff8800);
       g.lineStyle(8, arcColor, 1.0);
       g.beginPath();
-      const fillEndAngle = terminalStartAngle - arcProgress * Math.PI;
+      const fillEndAngle = terminalStartAngle - arcProgress * arcSweep;
       g.arc(dialX, dialY, arcRadius, terminalStartAngle, fillEndAngle, true);
       g.strokePath();
-    } else if (arcProgress < 0) {
-      // Removal zone fill: red CW extension
+    } else if (arcProgress < -0.2) {
+      // Removal zone fill starts half a slice CW from start (arcProgress -0.2 boundary)
+      // Draw from the half-slice CW boundary inward to the current trigger position.
+      const removalStartAngle = terminalStartAngle + 0.2 * arcSweep; // half-slice CW
       g.lineStyle(8, 0xff2244, 1.0);
       g.beginPath();
-      g.arc(dialX, dialY, arcRadius, terminalStartAngle, terminalStartAngle - arcProgress * Math.PI, false);
+      g.arc(dialX, dialY, arcRadius, removalStartAngle, terminalStartAngle - arcProgress * arcSweep, false);
       g.strokePath();
     }
 
-    // Zone threshold ticks at 1/3 and 2/3 of the CCW sweep
-    [terminalStartAngle - Math.PI / 3, terminalStartAngle - 2 * Math.PI / 3].forEach(angle => {
+    // Tick marks at absolute slice-divider angles falling inside the CCW sweep.
+    // Dividers: -π/2, -π/6, π/6, π/2, 5π/6, -5π/6 (60° apart from 12 o'clock).
+    const dividers = Array.from({ length: 6 }, (_, k) => -Math.PI / 2 + k * Math.PI / 3);
+    dividers.forEach(d => {
+      // CCW travel from terminalStartAngle to this divider, normalised to [0, 2π)
+      let t = terminalStartAngle - d;
+      while (t < 0)            t += 2 * Math.PI;
+      while (t >= 2 * Math.PI) t -= 2 * Math.PI;
+      // Draw ticks strictly inside the CCW sweep OR within the CW sweep (π/2 CW from start).
+      // CW distance from start = 2π − t; within π/2 CW means t > 2π − π/2 = 3π/2.
+      const inCCW = t > 0 && t < arcSweep;
+      const inCW  = t > (2 * Math.PI - Math.PI / 2); // within the 1.5-slice CW sweep
+      if (!inCCW && !inCW) return;
       const inner = arcRadius - 8;
       const outer = arcRadius + 8;
       g.lineStyle(2, 0xffffff, 0.5);
       g.beginPath();
-      g.moveTo(dialX + Math.cos(angle) * inner, dialY + Math.sin(angle) * inner);
-      g.lineTo(dialX + Math.cos(angle) * outer, dialY + Math.sin(angle) * outer);
+      g.moveTo(dialX + Math.cos(d) * inner, dialY + Math.sin(d) * inner);
+      g.lineTo(dialX + Math.cos(d) * outer, dialY + Math.sin(d) * outer);
       g.strokePath();
     });
 
@@ -696,15 +721,13 @@ export class RadialDial {
     this.terminalItem = item;
     this.terminalStartAngle = startAngle;
     this.isTriggerActive = false;
-    // Pre-position the arc at the midpoint of the current quantity zone.
-    // For a fresh item (existingQty=0) start at zone-1 midpoint so an
-    // immediate trigger press gives quantity 1. For existing quantities,
-    // centre the trigger in their zone so the player can drag either way.
-    // Zones: qty1 = [0, 1/3), qty2 = [1/3, 2/3), qty3 = [2/3, 1].
-    // Midpoints: qty1 → 1/6, qty2 → 1/2, qty3 → 5/6.
-    const startQty = Math.max(1, existingQty);
-    this.arcProgress = (startQty - 0.5) / 3;
-    this.currentQuantity = existingQty === 0 ? 1 : existingQty;
+    // Pre-position the trigger at the slice-centre for the existing quantity:
+    //   qty 0 or 1 → arcProgress 0    (trigger at startAngle, beneath finger)
+    //   qty 2      → arcProgress 0.4  (1 slice CCW, "10 o'clock relative")
+    //   qty 3      → arcProgress 0.8  (2 slices CCW, "8 o'clock relative")
+    // Zone centres: qty1→0, qty2→0.4, qty3→0.8  (each slice = π/3, sweep = 5π/6)
+    this.arcProgress = existingQty > 1 ? (existingQty - 1) / 2.5 : 0;
+    this.currentQuantity = Math.max(0, Math.min(3, Math.round(this.arcProgress * 2.5 + 1)));
     // Arc radius = midpoint between center dead-zone and outer slice ring
     this.arcRadius = (this.centerRadius + this.sliceRadius) / 2;
     this.highlightedSliceIndex = -1;

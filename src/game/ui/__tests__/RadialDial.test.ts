@@ -291,13 +291,14 @@ describe('RadialDial drag-to-center selection', () => {
 describe('RadialDial — quantity-selector mode', () => {
   // Dial center (100, 100), centerRadius=50, sliceRadius=150
   // arcRadius = (50+150)/2 = 100
-  // With existingQty=0 (fresh), startQty=1, arcProgress=(1-0.5)/3=1/6
-  // triggerAngle = π/2 - (1/6)*π = π/3
-  // triggerX = dialX + cos(π/3)*100 = 100 + 50 = 150
-  // triggerY = dialY + sin(π/3)*100 = 100 + 86.6 ≈ 187
+  // With existingQty=0 (fresh), arcProgress=0 (trigger sits exactly at startAngle)
+  // default startAngle = π/2 (6 o'clock)
+  // triggerAngle = π/2 - 0*π = π/2
+  // triggerX = dialX + cos(π/2)*100 = 100 + 0 = 100
+  // triggerY = dialY + sin(π/2)*100 = 100 + 100 = 200
   const dialX = 100;
   const dialY = 100;
-  const trigger = { x: 150, y: 187 }; // zone-1 midpoint trigger position for fresh dial
+  const trigger = { x: 100, y: 200 }; // fresh dial trigger at the arc start (6 o'clock)
 
   it('emits dial:quantityConfirmed with quantity 1 on trigger press + immediate release', () => {
     const scene = createMockScene();
@@ -319,7 +320,7 @@ describe('RadialDial — quantity-selector mode', () => {
     });
   });
 
-  it('emits dial:quantityConfirmed with quantity 2 when finger moves to 3 o’clock (zone 2)', () => {
+  it('emits dial:quantityConfirmed with quantity 2 when finger moves to 4 o’clock (zone 2)', () => {
     const scene = createMockScene();
     const items = createMockItems();
     scene.textures.exists.mockReturnValue(true);
@@ -329,10 +330,11 @@ describe('RadialDial — quantity-selector mode', () => {
     dial.showTerminalDial(fakeItem as any);
     scene.events.emit.mockClear();
 
-    // Press trigger, move to 3 o'clock (angle = 0, arcProgress = 0.5 → qty 2)
+    // Press trigger, move to 4 o'clock (angle = π/6, arcProgress = 0.4 → qty 2)
+    // angle π/6: x = 100+cos(π/6)*100 ≈ 187, y = 100+sin(π/6)*100 = 150
     (dial as any).handlePointerDown(trigger);
-    (dial as any).handleMouseMove({ x: dialX + 100, y: dialY }); // 3 o'clock on arcRadius
-    (dial as any).handlePointerUp({ x: dialX + 150, y: dialY });
+    (dial as any).handleMouseMove({ x: 187, y: 150 }); // 4 o'clock on arcRadius
+    (dial as any).handlePointerUp({ x: 187, y: 150 });
 
     expect(scene.events.emit).toHaveBeenCalledWith('dial:quantityConfirmed', {
       item: fakeItem,
@@ -413,9 +415,9 @@ describe('RadialDial — quantity-selector mode', () => {
     // Activate the trigger directly (bypassing hit-test precision concerns)
     (dial as any).isTriggerActive = true;
 
-    // Drag CW past 6 o'clock: dx=-20, dy=100 → angle ≈ 1.77 (just past π/2) → removal zone
-    (dial as any).handleMouseMove({ x: dialX - 20, y: dialY + 100 });
-    (dial as any).handlePointerUp({ x: dialX - 20, y: dialY + 100 });
+    // Drag to 9 o'clock (angle=π, CW from startAngle=π/2): angularTravel=-π/2, arcProgress=-0.6 → qty 0
+    (dial as any).handleMouseMove({ x: dialX - 100, y: dialY });
+    (dial as any).handlePointerUp({ x: dialX - 100, y: dialY });
 
     expect(scene.events.emit).toHaveBeenCalledWith('dial:quantityConfirmed', {
       item: fakeItem,
@@ -432,9 +434,9 @@ describe('RadialDial — quantity-selector mode', () => {
     const fakeItem = { id: 'test-item', name: 'TEST', icon: 'test-icon' };
     dial.showTerminalDial(fakeItem as any, 2);
 
-    // arcProgress = (2-0.5)/3 = 0.5, triggerAngle = π/2 - 0.5*π = 0 (3 o'clock)
-    // trigger should be at (dialX + arcRadius, dialY) = (200, 100)
-    const expectedArcProgress = (2 - 0.5) / 3; // 0.5
+    // arcProgress = (2-1)/2.5 = 0.4, triggerAngle = π/2 - 0.4*(5π/6) = π/6 (4 o'clock)
+    // trigger should be at (dialX + cos(π/6)*arcRadius, dialY + sin(π/6)*arcRadius) ≈ (187, 150)
+    const expectedArcProgress = (2 - 1) / 2.5; // 0.4
     expect((dial as any).arcProgress).toBeCloseTo(expectedArcProgress, 5);
     expect((dial as any).currentQuantity).toBe(2);
   });
@@ -688,14 +690,14 @@ describe('RadialDial — terminalStartAngle positioning', () => {
     const dial = new RadialDial(scene as any, dialX, dialY, items);
 
     const fakeItem = { id: 'sub1', name: 'Sub 1', icon: 'icon1', cost: 10 };
-    // startAngle = 0 (3 o'clock)
+    // startAngle = 0 (3 o'clock), existingQty = 0 → arcProgress = 0
     dial.showTerminalDial(fakeItem as any, 0, 0);
 
     // arcRadius = (centerRadius + sliceRadius) / 2 = (50 + 150) / 2 = 100
-    // arcProgress = (max(1,0) - 0.5) / 3 = 1/6
-    // triggerAngle = 0 - (1/6)*π = -π/6
+    // arcProgress = 0
+    // triggerAngle = 0 - 0*π = 0
     const arcRadius = 100;
-    const arcProgress = 0.5 / 3;
+    const arcProgress = 0;
     const expectedTriggerAngle = 0 - arcProgress * Math.PI;
     const triggerX = dialX + Math.cos(expectedTriggerAngle) * arcRadius;
     const triggerY = dialY + Math.sin(expectedTriggerAngle) * arcRadius;

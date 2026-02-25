@@ -167,15 +167,19 @@ describe('Game scene — shutdown() is not called unless explicitly wired', () =
 
 describe('Order row — slot evaluation algorithm', () => {
   // Mirrors Game.evaluateSlot: determine correctness of slot[i] given requirements[].
+  // 'correct' (green) requires matching position AND placedQty >= required quantity.
   function evaluate(
     slotIconKey: string | null,
     slotIndex: number,
-    requirements: { iconKey: string }[],
+    requirements: { iconKey: string; quantity?: number }[],
+    placedQty: number = 1,
   ): 'empty' | 'correct' | 'misplaced' | 'wrong' {
     if (slotIconKey === null) return 'empty';
     const inOrder = requirements.some((r) => r.iconKey === slotIconKey);
     if (!inOrder) return 'wrong';
-    return requirements[slotIndex]?.iconKey === slotIconKey ? 'correct' : 'misplaced';
+    const req = requirements[slotIndex];
+    if (req && req.iconKey === slotIconKey && placedQty >= (req.quantity ?? 1)) return 'correct';
+    return 'misplaced';
   }
 
   const reqs = [{ iconKey: 'iron' }, { iconKey: 'wood' }, { iconKey: 'stone' }];
@@ -204,6 +208,16 @@ describe('Order row — slot evaluation algorithm', () => {
   it('handles an out-of-bounds slotIndex gracefully (treats as misplaced)', () => {
     // No requirement exists at index 5, so the item is in-order but position unknown → misplaced
     expect(evaluate('iron', 5, reqs)).toBe('misplaced');
+  });
+
+  it('returns misplaced when item is at correct position but quantity is insufficient', () => {
+    const reqsWithQty = [{ iconKey: 'iron', quantity: 3 }, { iconKey: 'wood', quantity: 2 }];
+    // placedQty 1 < required 3 → misplaced even though iconKey matches
+    expect(evaluate('iron', 0, reqsWithQty, 1)).toBe('misplaced');
+    // placedQty meets required 2 → correct
+    expect(evaluate('iron', 0, reqsWithQty, 3)).toBe('correct');
+    // placedQty exactly equal to required → correct
+    expect(evaluate('wood', 1, reqsWithQty, 2)).toBe('correct');
   });
 });
 

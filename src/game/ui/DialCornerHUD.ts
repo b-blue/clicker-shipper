@@ -123,6 +123,8 @@ export class DialCornerHUD {
     this.isTerminal = false;
     // Only capture the category item at B-level so the badge always shows the
     // root-category icon regardless of how deep we subsequently drill (C, D…).
+    // Catalog button is now active at any depth >= 1 so the root category
+    // must be locked in on the first drill and never overwritten.
     if (depth === 1) this.activeCategoryItem = item;
     this.redraw();
   }
@@ -154,7 +156,7 @@ export class DialCornerHUD {
   // ── Private helpers ──────────────────────────────────────────────────────
 
   private isCatalogActive(): boolean {
-    return this.currentDepth === 1 && !this.isTerminal;
+    return this.currentDepth >= 1 && !this.isTerminal;
   }
 
   private onCatalogTap(): void {

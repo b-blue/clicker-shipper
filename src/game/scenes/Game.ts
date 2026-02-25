@@ -5,6 +5,7 @@ import { SettingsManager } from "../managers/SettingsManager";
 import {
   ProgressionManager,
   ALL_CATEGORY_IDS,
+  CATEGORY_ICON_KEYS,
 } from "../managers/ProgressionManager";
 import { AssetLoader } from "../managers/AssetLoader";
 import { Colors } from "../constants/Colors";
@@ -57,13 +58,14 @@ export class Game extends Phaser.Scene {
 
   // Corner HUD (level badge + catalog shortcut anchored to the dial)
   private cornerHUD: DialCornerHUD | null = null;
-  // Catalog scroll state (populated inside buildCatalogContent)
-  private catalogListContainer: Phaser.GameObjects.Container | null = null;
-  private catalogListTop: number = 0;
-  private catalogPanelHeight: number = 0;
-  private catalogRowHeight: number = 60;
-  private catalogListContentHeight: number = 0;
-  private catalogRowCategoryIds: string[] = [];
+  // Catalog tabs — one scroll-offset per category in ALL_CATEGORY_IDS order.
+  // Index mirrors ALL_CATEGORY_IDS: 0=resources, 1=armaments, …
+  private catalogTabScrollOffsets: number[] = [];
+  private catalogTabContainers: Phaser.GameObjects.Container[] = [];
+  private catalogTabMinOffsets: number[] = [];
+  private catalogActiveTabIndex: number = 0;
+  private catalogPanelWidth: number = 0;
+  private catalogTabBarHeight: number = 44;
 
   constructor() {
     super("Game");
@@ -305,7 +307,7 @@ export class Game extends Phaser.Scene {
 
     this.radialDial = new RadialDial(this, dialX, dialY, dialRootItems);
     this.cornerHUD = new DialCornerHUD(this, dialX, dialY, dialRadius, {
-      openCatalog: (id) => { this.scrollCatalogToCategory(id); this.switchToCatalogTab?.(); },
+      openCatalog: (id) => { this.openCatalogToCategory(id); },
       closeCatalog: () => this.switchToOrdersTab?.(),
       openMenu: () => this.scene.start('MainMenu'),
     });
@@ -319,6 +321,7 @@ export class Game extends Phaser.Scene {
     this.events.removeAllListeners("dial:quantityConfirmed");
     this.events.removeAllListeners("dial:levelChanged");
     this.events.removeAllListeners("dial:goBack");
+    this.events.removeAllListeners("catalog:tabActivated");
 
     this.events.on("dial:itemConfirmed", (data: { item: any; sliceCenterAngle?: number }) => {
       const iconKey: string = data.item.icon || data.item.id;
@@ -516,158 +519,344 @@ export class Game extends Phaser.Scene {
     height: number,
     items: any,
   ): void {
-    const catalogCategories = getCatalogRows(items);
+    const tabBarH = this.catalogTabBarHeight;   // 44 px
+    const listAreaTop = y + tabBarH;
+    const listAreaH = height - tabBarH;
     const listLeft = x - width / 2;
-    const listTop = y;
     const rowHeight = 60;
     const iconFrameSize = 48;
     const iconScale = 1.3;
+    const progression = ProgressionManager.getInstance();
 
-    // Store scroll state on the instance so scrollCatalogToCategory() can use it
-    this.catalogListTop = listTop;
-    this.catalogRowHeight = rowHeight;
-    this.catalogPanelHeight = height;
+    // Store panel width for switchCatalogTab() slide distance
+    this.catalogPanelWidth = width;
 
-    const listContainer = this.add.container(listLeft, listTop);
-    this.catalogListContainer = listContainer;
-    const maskGraphic = this.add.graphics();
-    maskGraphic.fillStyle(0xffffff, 1);
-    maskGraphic.fillRect(listLeft, listTop, width, height);
-    listContainer.setMask(maskGraphic.createGeometryMask());
-    maskGraphic.setVisible(false);
+    // Initialise per-tab state arrays
+    this.catalogTabScrollOffsets = ALL_CATEGORY_IDS.map(() => 0);
+    this.catalogTabMinOffsets    = ALL_CATEGORY_IDS.map(() => 0);
+    this.catalogTabContainers    = [];
+    this.catalogActiveTabIndex   = 0;  // resources starts active
 
-    // Flatten categories into display rows: header row then one row per item
-    type DisplayRow = { item: MenuItem; isHeader: boolean };
-    const rows: DisplayRow[] = [];
-    const rowCatIds: string[] = [];
-    catalogCategories.forEach(({ category, items: catItems }) => {
-      rows.push({ item: category, isHeader: true });
-      rowCatIds.push(category.id);
-      catItems.forEach((item) => {
-        rows.push({ item, isHeader: false });
-        rowCatIds.push(category.id);
-      });
-    });
-    this.catalogRowCategoryIds = rowCatIds;
+    // ── Shared clip mask for the list area ──────────────────────────────
+    const maskG = this.add.graphics();
+    maskG.fillStyle(0xffffff, 1);
+    maskG.fillRect(listLeft, listAreaTop, width, listAreaH);
+    maskG.setVisible(false);
+    const mask = maskG.createGeometryMask();
 
-    rows.forEach((row, index) => {
-      const rowY = index * rowHeight + rowHeight / 2;
-      const bgColor = index % 2 === 0 ? Colors.PANEL_DARK : Colors.PANEL_MEDIUM;
+    // ── Build one scrollable list per category ───────────────────────────
+    // getCatalogRows returns categories with their items.
+    const allCatalogCategories = getCatalogRows(items);
+    const catMap = new Map(allCatalogCategories.map((c) => [c.category.id, c]));
 
-      const bg = this.add.rectangle(
-        width / 2,
-        rowY,
-        width,
-        rowHeight - 8,
-        bgColor,
-        0.75,
-      );
-      listContainer.add(bg);
+    ALL_CATEGORY_IDS.forEach((catId, tabIndex) => {
+      const isUnlocked = progression.isUnlocked(catId);
+      const catData = catMap.get(catId);
 
-      const iconX = iconFrameSize / 2 + 10;
-      const iconY = rowY;
+      // Per-tab container positioned so listLeft,listAreaTop is its origin
+      const listContainer = this.add.container(listLeft, listAreaTop);
+      listContainer.setMask(mask);
+      listContainer.setVisible(tabIndex === 0); // resources is default
+      this.catalogTabContainers.push(listContainer);
+      container.add(listContainer);
 
-      // Draw icon frame background (all rows) then icon on top
-      if (row.isHeader) {
-        const frameBg = this.add.graphics();
-        frameBg.fillStyle(Colors.PANEL_MEDIUM, 1);
-        frameBg.fillRect(
-          iconX - iconFrameSize / 2 + 2,
-          iconY - iconFrameSize / 2 + 2,
-          iconFrameSize - 4,
-          iconFrameSize - 4,
-        );
-        frameBg.lineStyle(2, Colors.BORDER_BLUE, 0.9);
-        frameBg.strokeRect(
-          iconX - iconFrameSize / 2 + 2,
-          iconY - iconFrameSize / 2 + 2,
-          iconFrameSize - 4,
-          iconFrameSize - 4,
-        );
-        listContainer.add(frameBg);
+      if (!isUnlocked || !catData) {
+        // Locked tab — show a "locked" placeholder row
+        const lockBg = this.add.graphics();
+        lockBg.fillStyle(Colors.PANEL_DARK, 0.85);
+        lockBg.fillRect(0, 0, width, listAreaH);
+        listContainer.add(lockBg);
+
+        if (AssetLoader.textureExists(this, 'skill-blocked')) {
+          const lockIcon = AssetLoader.createImage(this, width / 2, listAreaH / 2 - 20, 'skill-blocked')
+            .setScale(1.2)
+            .setAlpha(0.5);
+          listContainer.add(lockIcon);
+        }
+        const lockLabel = this.add
+          .bitmapText(width / 2, listAreaH / 2 + 20, 'clicker', 'LOCKED', 12)
+          .setOrigin(0.5)
+          .setTint(0x556677);
+        listContainer.add(lockLabel);
+        return;
       }
 
-      if (AssetLoader.textureExists(this, row.item.icon)) {
-        const iconImage = AssetLoader.createImage(this, iconX, iconY, row.item.icon)
-          .setScale(iconScale)
-          .setDepth(2);
-        listContainer.add(iconImage);
-      }
+      // Build item rows: depth-aware walk, alphabetically sorted, no header
+      type CatalogEntry = { item: MenuItem; dialDepth: number };
+      const collectEntries = (node: MenuItem, depth: number, unlockedDepth: number): CatalogEntry[] => {
+        if (!node.children) return [];
+        const result: CatalogEntry[] = [];
+        node.children.forEach((child: MenuItem) => {
+          const downMatch = child.id.match(/_down_(\d+)$/);
+          if (downMatch) {
+            const levelN = parseInt(downMatch[1], 10);
+            if (levelN < unlockedDepth) {
+              result.push(...collectEntries(child, levelN + 1, unlockedDepth));
+            }
+            return;
+          }
+          const isNavDown = child.icon === 'skill-down' || child.id.includes('_down_');
+          if (!isNavDown && child.cost !== undefined) {
+            result.push({ item: child, dialDepth: depth });
+          }
+        });
+        return result;
+      };
+      const unlockedDepth = progression.getUnlockedDepth(catId);
+      const rootNode = catData?.category ?? null;
+      const entries: CatalogEntry[] = rootNode
+        ? collectEntries(rootNode, 1, unlockedDepth).sort((a, b) => a.item.name.localeCompare(b.item.name))
+        : [];
 
-      if (!row.isHeader) {
-        const cost = row.item.cost ?? 0;
-        const nameText = row.item.name.toUpperCase();
+      entries.forEach((entry, index) => {
+        const { item, dialDepth } = entry;
+        const rowY = index * rowHeight + rowHeight / 2;
+        const bgColor = index % 2 === 0 ? Colors.PANEL_DARK : Colors.PANEL_MEDIUM;
+
+        const bg = this.add.rectangle(width / 2, rowY, width, rowHeight - 8, bgColor, 0.75);
+        listContainer.add(bg);
+
+        const iconX = iconFrameSize / 2 + 10;
+        const iconY = rowY;
+
+        if (AssetLoader.textureExists(this, item.icon)) {
+          const iconImage = AssetLoader.createImage(this, iconX, iconY, item.icon).setScale(iconScale).setDepth(2);
+          listContainer.add(iconImage);
+        }
+
         const nameX = iconX + iconFrameSize / 2 + 20;
+        listContainer.add(
+          this.add.bitmapText(nameX, rowY, 'clicker', item.name.toUpperCase(), 10).setOrigin(0, 0.5).setMaxWidth(width - iconFrameSize - 90),
+        );
 
-        const childName = this.add
-          .bitmapText(nameX, rowY, "clicker", nameText, 10)
-          .setOrigin(0, 0.5)
-          .setMaxWidth(width - iconFrameSize - 90);
-        const childCost = this.add
-          .bitmapText(width - 12, rowY, "clicker", `Q${cost}`, 10)
-          .setOrigin(1, 0.5);
-        listContainer.add([childName, childCost]);
-      } else {
-        const textX = iconX + iconFrameSize / 2 + 20;
-        const title = this.add
-          .bitmapText(textX, rowY, "clicker", row.item.name.toUpperCase(), 11)
-          .setOrigin(0, 0.5);
-        listContainer.add(title);
-      }
+        // Level badge: mini version of the dial's lower-right corner badge
+        // Shows the category icon + dial-level letter (B, C, D…)
+        const badgeSize = 28;
+        const badgeR = badgeSize / 2;
+        const badgeX = width - badgeR - 10;
+        const badgeY = rowY;
+        const catIconKey = CATEGORY_ICON_KEYS[catId] ?? 'skill-diagram';
+
+        const badgeG = this.add.graphics();
+        badgeG.fillStyle(Colors.PANEL_MEDIUM, 1);
+        badgeG.fillCircle(badgeX, badgeY, badgeR);
+        badgeG.lineStyle(1, Colors.BORDER_BLUE, 0.7);
+        badgeG.strokeCircle(badgeX, badgeY, badgeR);
+        listContainer.add(badgeG);
+
+        if (AssetLoader.textureExists(this, catIconKey)) {
+          const catIcon = AssetLoader.createImage(this, badgeX, badgeY, catIconKey)
+            .setScale(0.55)
+            .setDepth(2);
+          listContainer.add(catIcon);
+        }
+
+        const levelLetter = String.fromCharCode(65 + dialDepth); // 1→'B', 2→'C', …
+        listContainer.add(
+          this.add.bitmapText(badgeX + badgeR - 5, badgeY - badgeR + 5, 'clicker', levelLetter, 8)
+            .setOrigin(0.5)
+            .setDepth(3)
+            .setTint(Colors.HIGHLIGHT_YELLOW),
+        );
+      });
+
+      const contentH = entries.length * rowHeight;
+      this.catalogTabMinOffsets[tabIndex] = Math.min(0, listAreaH - contentH);
     });
 
-    container.add(listContainer);
+    // ── Tab icon bar ─────────────────────────────────────────────────────
+    const tabCount = ALL_CATEGORY_IDS.length;
+    const tabIconSize = 32;
+    const tabBarPad   = 4;
+    const totalTabW   = tabCount * tabIconSize + (tabCount - 1) * tabBarPad;
+    const tabBarStartX = x - totalTabW / 2;
+    const tabBarCenterY = y + tabBarH / 2;
 
-    const listContentHeight = rows.length * rowHeight;
-    this.catalogListContentHeight = listContentHeight;
-    let scrollOffset = 0;
-    const minOffset = Math.min(0, height - listContentHeight);
+    // "CATALOG" label above the tab bar is drawn by existing panel title logic;
+    // draw a thin separator under the tab row
+    const tabBarSep = this.add.graphics();
+    tabBarSep.lineStyle(1, Colors.BORDER_BLUE, 0.45);
+    tabBarSep.lineBetween(listLeft, y + tabBarH - 2, listLeft + width, y + tabBarH - 2);
+    container.add(tabBarSep);
 
-    // Mouse wheel scroll
-    this.input.on(
-      "wheel",
-      (_pointer: Phaser.Input.Pointer, _go: any, _dx: number, dy: number) => {
-        if (!container.visible || listContentHeight <= height) return;
-        scrollOffset = Math.max(
-          minOffset,
-          Math.min(0, scrollOffset - dy * 0.4),
-        );
-        listContainer.y = listTop + scrollOffset;
-      },
-    );
+    // Highlight indicator (slides under active tab)
+    const tabHighlight = this.add.graphics();
+    container.add(tabHighlight);
 
-    // Touch / pointer drag scroll
+    const tabIconImages: Phaser.GameObjects.Image[] = [];
+    const tabBgRects: Phaser.GameObjects.Rectangle[] = [];
+
+    const redrawTabHighlight = (activeIdx: number) => {
+      tabHighlight.clear();
+      const tx = tabBarStartX + activeIdx * (tabIconSize + tabBarPad) + tabIconSize / 2;
+      tabHighlight.lineStyle(2, Colors.HIGHLIGHT_YELLOW, 0.9);
+      tabHighlight.strokeRect(tx - tabIconSize / 2 - 1, tabBarCenterY - tabIconSize / 2 - 1, tabIconSize + 2, tabIconSize + 2);
+    };
+
+    ALL_CATEGORY_IDS.forEach((catId, tabIndex) => {
+      const isUnlocked = progression.isUnlocked(catId);
+      const iconKey = CATEGORY_ICON_KEYS[catId] ?? 'skill-blocked';
+      const tx = tabBarStartX + tabIndex * (tabIconSize + tabBarPad) + tabIconSize / 2;
+
+      // Tab background
+      const tabBg = this.add.rectangle(tx, tabBarCenterY, tabIconSize, tabIconSize, Colors.PANEL_MEDIUM, 0.7);
+      tabBg.setStrokeStyle(1, Colors.BORDER_BLUE, isUnlocked ? 0.6 : 0.25);
+      container.add(tabBg);
+      tabBgRects.push(tabBg);
+
+      // Tab icon
+      let tabIcon: Phaser.GameObjects.Image | null = null;
+      if (AssetLoader.textureExists(this, iconKey)) {
+        tabIcon = AssetLoader.createImage(this, tx, tabBarCenterY, iconKey)
+          .setScale(0.75)
+          .setAlpha(isUnlocked ? 1.0 : 0.25);
+        container.add(tabIcon);
+      }
+      tabIconImages.push(tabIcon as Phaser.GameObjects.Image);
+
+      if (!isUnlocked) return;
+
+      // Interactive — unlocked tabs only
+      tabBg.setInteractive();
+      tabBg.on('pointerdown', () => this.switchCatalogTab(tabIndex, redrawTabHighlight));
+      tabBg.on('pointerover', () => tabBg.setFillStyle(Colors.BUTTON_HOVER, 0.85));
+      tabBg.on('pointerout',  () => tabBg.setFillStyle(Colors.PANEL_MEDIUM, 0.7));
+    });
+
+    redrawTabHighlight(0);
+
+    // Allow openCatalogToCategory() to update the highlight without a slide animation
+    this.events.on('catalog:tabActivated', (idx: number) => redrawTabHighlight(idx));
+
+    // ── Horizontal swipe gesture (unlocked tabs only) ─────────────────────
+    let swipeStartX = 0;
+    let swipeStartY = 0;
+    let isSwipeTracking = false;
+    let swipeConsumed = false;
+
+    this.input.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
+      if (!container.visible) return;
+      const inPanel = ptr.x >= listLeft && ptr.x <= listLeft + width
+                   && ptr.y >= y       && ptr.y <= y + tabBarH + listAreaH;
+      if (!inPanel) return;
+      swipeStartX = ptr.x;
+      swipeStartY = ptr.y;
+      isSwipeTracking = true;
+      swipeConsumed = false;
+    });
+    this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
+      if (!container.visible || !isSwipeTracking || swipeConsumed) return;
+      const dx = ptr.x - swipeStartX;
+      const dy = ptr.y - swipeStartY;
+      if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        swipeConsumed = true;
+        const direction = dx < 0 ? 1 : -1;
+        const cur = this.catalogActiveTabIndex;
+        let next = cur + direction;
+        // Skip locked tabs
+        while (next >= 0 && next < ALL_CATEGORY_IDS.length && !progression.isUnlocked(ALL_CATEGORY_IDS[next])) {
+          next += direction;
+        }
+        if (next >= 0 && next < ALL_CATEGORY_IDS.length && next !== cur) {
+          this.switchCatalogTab(next, redrawTabHighlight);
+        }
+      }
+    });
+    this.input.on('pointerup', () => { isSwipeTracking = false; });
+
+    // ── Vertical scroll (per-tab) ─────────────────────────────────────────
+    // Mouse wheel
+    this.input.on('wheel', (_ptr: Phaser.Input.Pointer, _go: any, _dx: number, dy: number) => {
+      if (!container.visible) return;
+      const ti = this.catalogActiveTabIndex;
+      const listC = this.catalogTabContainers[ti];
+      if (!listC) return;
+      const minOff = this.catalogTabMinOffsets[ti];
+      if (minOff >= 0) return; // content fits, no scroll needed
+      this.catalogTabScrollOffsets[ti] = Math.max(minOff, Math.min(0, this.catalogTabScrollOffsets[ti] - dy * 0.4));
+      listC.y = listAreaTop + this.catalogTabScrollOffsets[ti];
+    });
+
+    // Touch scroll
     let touchStartY = 0;
     let isTouchScrolling = false;
-    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+    this.input.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
       if (!container.visible) return;
-      const px = pointer.x,
-        py = pointer.y;
-      if (
-        px >= listLeft &&
-        px <= listLeft + width &&
-        py >= listTop &&
-        py <= listTop + height
-      ) {
-        touchStartY = py;
+      if (ptr.x >= listLeft && ptr.x <= listLeft + width && ptr.y >= listAreaTop && ptr.y <= listAreaTop + listAreaH) {
+        touchStartY = ptr.y;
         isTouchScrolling = true;
       }
     });
-    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
-      if (
-        !container.visible ||
-        !isTouchScrolling ||
-        listContentHeight <= height
-      )
-        return;
-      const dy = touchStartY - pointer.y;
-      touchStartY = pointer.y;
-      scrollOffset = Math.max(minOffset, Math.min(0, scrollOffset - dy));
-      listContainer.y = listTop + scrollOffset;
+    this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
+      if (!container.visible || !isTouchScrolling) return;
+      const ti = this.catalogActiveTabIndex;
+      const listC = this.catalogTabContainers[ti];
+      if (!listC) return;
+      const minOff = this.catalogTabMinOffsets[ti];
+      if (minOff >= 0) return;
+      const ddy = touchStartY - ptr.y;
+      touchStartY = ptr.y;
+      this.catalogTabScrollOffsets[ti] = Math.max(minOff, Math.min(0, this.catalogTabScrollOffsets[ti] - ddy));
+      listC.y = listAreaTop + this.catalogTabScrollOffsets[ti];
     });
-    this.input.on("pointerup", () => {
-      isTouchScrolling = false;
+    this.input.on('pointerup', () => { isTouchScrolling = false; });
+  }
+
+  /** Switch the visible catalog tab, firing a slide animation and updating the highlight. */
+  private switchCatalogTab(targetIndex: number, redrawHighlight?: (i: number) => void): void {
+    const oldIndex = this.catalogActiveTabIndex;
+    if (oldIndex === targetIndex) return;
+    const oldContainer = this.catalogTabContainers[oldIndex];
+    const newContainer = this.catalogTabContainers[targetIndex];
+    if (!oldContainer || !newContainer) return;
+
+    const slideW = this.catalogPanelWidth;
+    const direction = targetIndex > oldIndex ? 1 : -1;
+    // Use the outgoing container's current x as the canonical "home" position
+    // (containers are created at listLeft, not 0).
+    const homeX = oldContainer.x;
+
+    // Slide old out, new in
+    newContainer.x = homeX + direction * slideW;
+    newContainer.setVisible(true);
+
+    this.tweens.add({
+      targets: oldContainer,
+      x: homeX - direction * slideW,
+      duration: 150,
+      ease: 'Quad.easeOut',
+      onComplete: () => oldContainer.setVisible(false),
     });
+    this.tweens.add({
+      targets: newContainer,
+      x: homeX,
+      duration: 150,
+      ease: 'Quad.easeOut',
+    });
+
+    this.catalogActiveTabIndex = targetIndex;
+    if (redrawHighlight) redrawHighlight(targetIndex);
+  }
+
+  /**
+   * Switch to catalog tab for categoryId and show the catalog panel.
+   * The tab's scroll position is preserved (per-shift memory).
+   */
+  private openCatalogToCategory(categoryId: string): void {
+    const tabIndex = ALL_CATEGORY_IDS.indexOf(categoryId);
+    if (tabIndex !== -1 && tabIndex !== this.catalogActiveTabIndex) {
+      // Switch instantly (no slide) when opening from HUD button
+      const old = this.catalogTabContainers[this.catalogActiveTabIndex];
+      const homeX = old ? old.x : 0;
+      if (old) old.setVisible(false);
+      const next = this.catalogTabContainers[tabIndex];
+      if (next) { next.x = homeX; next.setVisible(true); }
+      this.catalogActiveTabIndex = tabIndex;
+      // Redraw highlight — find the graphics object in the catalog container
+      // by emitting a custom event that the tab bar listens to
+      this.events.emit('catalog:tabActivated', tabIndex);
+    }
+    this.switchToCatalogTab?.();
   }
 
   private buildSettingsContent(
@@ -1119,23 +1308,5 @@ export class Game extends Phaser.Scene {
     if (this.radialDial) {
       this.radialDial.destroy();
     }
-  }
-
-  /** Scroll the catalog list so the given category header appears at the top. */
-  private scrollCatalogToCategory(categoryId: string): void {
-    if (!this.catalogListContainer || !categoryId) return;
-
-    const rowIndex = this.catalogRowCategoryIds.findIndex(
-      (id) => id === categoryId,
-    );
-    if (rowIndex === -1) return;
-
-    const targetOffset = -(rowIndex * this.catalogRowHeight);
-    const minOffset = Math.min(
-      0,
-      this.catalogPanelHeight - this.catalogListContentHeight,
-    );
-    const clampedOffset = Math.max(minOffset, Math.min(0, targetOffset));
-    this.catalogListContainer.y = this.catalogListTop + clampedOffset;
   }
 }

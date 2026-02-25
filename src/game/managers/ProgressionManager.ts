@@ -23,6 +23,16 @@ export const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
   'nav_streetwear_root':  'STREETWEAR',
 };
 
+// Texture keys for the A-level category icons (matches items.json root node icon fields)
+export const CATEGORY_ICON_KEYS: Record<string, string> = {
+  'nav_resources_root':   'skill-chip',
+  'nav_armaments_root':   'skill-ranged',
+  'nav_melee_root':       'skill-melee',
+  'nav_radioactive_root': 'skill-radioactive',
+  'nav_mining_root':      'skill-drill',
+  'nav_streetwear_root':  'skill-character',
+};
+
 // Maximum depth accessible per category (items.json has 7 nav_down levels per category)
 const MAX_UNLOCK_DEPTH = 7;
 

@@ -58,6 +58,10 @@ export class Game extends Phaser.Scene {
 
   // Corner HUD (level badge + catalog shortcut anchored to the dial)
   private cornerHUD: DialCornerHUD | null = null;
+  // Persisted for alt-terminal toggle re-invocation
+  private lastTerminalItem: any = null;
+  private lastTerminalSliceAngle: number = Math.PI / 2;
+  private altTerminalModeActive: boolean = false;
   // Catalog tabs — one scroll-offset per category in ALL_CATEGORY_IDS order.
   // Index mirrors ALL_CATEGORY_IDS: 0=resources, 1=armaments, …
   private catalogTabScrollOffsets: number[] = [];
@@ -310,6 +314,12 @@ export class Game extends Phaser.Scene {
       openCatalog: (id) => { this.openCatalogToCategory(id); },
       closeCatalog: () => this.switchToOrdersTab?.(),
       openMenu: () => this.scene.start('MainMenu'),
+      onAltTerminalToggle: (altMode) => {
+        this.altTerminalModeActive = altMode;
+        if (!this.lastTerminalItem || !this.radialDial) return;
+        const angle = altMode ? Math.PI / 3 : this.lastTerminalSliceAngle;
+        this.radialDial.showTerminalDial(this.lastTerminalItem, 0, angle);
+      },
     });
   }
 
@@ -326,8 +336,12 @@ export class Game extends Phaser.Scene {
     this.events.on("dial:itemConfirmed", (data: { item: any; sliceCenterAngle?: number }) => {
       const iconKey: string = data.item.icon || data.item.id;
       const existingQty = this.getCurrentFulfilledQty(iconKey);
-      if (this.radialDial) this.radialDial.showTerminalDial(data.item, existingQty, data.sliceCenterAngle ?? Math.PI / 2);
+      this.lastTerminalItem = data.item;
+      this.lastTerminalSliceAngle = data.sliceCenterAngle ?? Math.PI / 2;
+      const angle = this.altTerminalModeActive ? Math.PI / 3 : this.lastTerminalSliceAngle;
+      if (this.radialDial) this.radialDial.showTerminalDial(data.item, existingQty, angle);
       this.cornerHUD?.onItemConfirmed();
+      this.switchToOrdersTab?.();
     });
 
     this.events.on("dial:quantityConfirmed", (data: { item: any; quantity: number }) => {

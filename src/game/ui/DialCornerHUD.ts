@@ -9,6 +9,12 @@ export interface CornerHudCallbacks {
   closeCatalog: () => void;
   /** Returns the player to the main menu scene. */
   openMenu: () => void;
+  /**
+   * Called when the alt-terminal toggle button is tapped.
+   * `altMode = true` → use fixed 5 o'clock start angle;
+   * `altMode = false` → restore the original slice angle.
+   */
+  onAltTerminalToggle?: (altMode: boolean) => void;
 }
 
 /**
@@ -33,6 +39,7 @@ export class DialCornerHUD {
   private isTerminal: boolean = false;
   private activeCategoryItem: any = null;
   private catalogOpen: boolean = false;
+  private altTerminalMode: boolean = false;
 
   // Cached geometry
   private readonly btnX: number;     // right-side X (catalog + level badge)
@@ -53,6 +60,10 @@ export class DialCornerHUD {
   // Menu button (lower-left)
   private readonly menuBg: Phaser.GameObjects.Graphics;
   private readonly menuIcon: Phaser.GameObjects.Image;
+
+  // Alt-terminal toggle button (upper-left) — visible only in terminal mode
+  private readonly altTermBg: Phaser.GameObjects.Graphics;
+  private readonly altTermIcon: Phaser.GameObjects.Image;
 
   constructor(
     scene: Phaser.Scene,
@@ -112,6 +123,20 @@ export class DialCornerHUD {
     this.menuBg.on('pointerdown', () => this.callbacks.openMenu());
     this.menuBg.on('pointerover', () => this.drawMenuBtn(true));
     this.menuBg.on('pointerout',  () => this.drawMenuBtn(false));
+
+    // ── Alt-terminal toggle button (upper-left) ──────────────────────────
+    this.altTermBg = scene.add.graphics().setDepth(20);
+    this.altTermIcon = AssetLoader.createImage(scene, menuBtnX, upperY, 'skill-gear')
+      .setScale(0.85)
+      .setDepth(21);
+
+    this.altTermBg.setInteractive(
+      new Phaser.Geom.Circle(menuBtnX, upperY, half),
+      Phaser.Geom.Circle.Contains,
+    );
+    this.altTermBg.on('pointerdown', () => this.onAltTermTap());
+    this.altTermBg.on('pointerover', () => this.drawAltTermBtn(true));
+    this.altTermBg.on('pointerout',  () => this.drawAltTermBtn(false));
 
     this.redraw();
   }
@@ -179,6 +204,7 @@ export class DialCornerHUD {
     if (!this.isCatalogActive() && this.catalogOpen) this.catalogOpen = false;
     this.drawCatalogBtn(this.isCatalogActive(), false);
     this.drawMenuBtn(false);
+    this.drawAltTermBtn(false);
   }
 
   private drawLevelBadge(): void {
@@ -242,5 +268,32 @@ export class DialCornerHUD {
     this.menuBg.lineStyle(2, Colors.BORDER_BLUE, 0.9);
     this.menuBg.strokeCircle(menuBtnX, lowerY, radius);
     this.menuIcon.setAlpha(1);
+  }
+
+  private onAltTermTap(): void {
+    if (!this.isTerminal) return;
+    this.altTerminalMode = !this.altTerminalMode;
+    this.callbacks.onAltTerminalToggle?.(this.altTerminalMode);
+    this.drawAltTermBtn(false);
+  }
+
+  private drawAltTermBtn(hovered: boolean): void {
+    const { menuBtnX, upperY, btnSize } = this;
+    const radius = btnSize / 2;
+    const active = this.isTerminal;
+
+    this.altTermBg.clear();
+    this.altTermBg.fillStyle(
+      hovered && active ? Colors.BUTTON_HOVER : Colors.PANEL_DARK,
+      active ? 0.9 : 0.1,
+    );
+    this.altTermBg.fillCircle(menuBtnX, upperY, radius);
+    this.altTermBg.lineStyle(
+      2,
+      this.altTerminalMode ? Colors.HIGHLIGHT_YELLOW : active ? Colors.BORDER_BLUE : 0x334455,
+      active ? 0.9 : 0.15,
+    );
+    this.altTermBg.strokeCircle(menuBtnX, upperY, radius);
+    this.altTermIcon.setAlpha(active ? 1 : 0.1);
   }
 }

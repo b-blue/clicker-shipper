@@ -397,3 +397,78 @@ describe('Order row — completion check algorithm', () => {
     expect(isComplete(slots, reqs)).toBe(true);
   });
 });
+
+describe('Order completion — accuracy bonus algorithm', () => {
+  type Slot = { iconKey: string | null; placedQty: number };
+  type Req  = { iconKey: string; quantity: number };
+
+  // Mirrors Game.completeOrder bonus logic:
+  // bonus = Math.round(budget * 0.5) when every filled slot is 'correct';
+  // zero otherwise.
+  function evaluate(
+    slotIconKey: string | null,
+    slotIndex: number,
+    requirements: Req[],
+    placedQty: number,
+  ): 'empty' | 'correct' | 'misplaced' | 'wrong' {
+    if (slotIconKey === null) return 'empty';
+    const reqIndex = requirements.findIndex((r) => r.iconKey === slotIconKey);
+    if (reqIndex === -1) return 'wrong';
+    if (placedQty !== requirements[reqIndex].quantity) return 'wrong';
+    return reqIndex === slotIndex ? 'correct' : 'misplaced';
+  }
+
+  function calcBonus(slots: Slot[], requirements: Req[], budget: number): number {
+    const filled = slots.filter((s) => s.iconKey !== null);
+    const allCorrect =
+      filled.length > 0 &&
+      filled.every((_, i) => evaluate(slots[i].iconKey, i, requirements, slots[i].placedQty) === 'correct');
+    return allCorrect ? Math.round(budget * 0.5) : 0;
+  }
+
+  const reqs: Req[] = [
+    { iconKey: 'iron', quantity: 2 },
+    { iconKey: 'wood', quantity: 1 },
+  ];
+
+  it('awards 50% of budget when all slots are green (correct position + correct qty)', () => {
+    const slots: Slot[] = [
+      { iconKey: 'iron', placedQty: 2 }, // correct
+      { iconKey: 'wood', placedQty: 1 }, // correct
+    ];
+    expect(calcBonus(slots, reqs, 100)).toBe(50);
+  });
+
+  it('awards no bonus when any slot is misplaced (yellow)', () => {
+    const slots: Slot[] = [
+      { iconKey: 'wood', placedQty: 1 }, // right qty, wrong position
+      { iconKey: 'iron', placedQty: 2 }, // right qty, wrong position
+    ];
+    expect(calcBonus(slots, reqs, 100)).toBe(0);
+  });
+
+  it('awards no bonus when any slot has wrong quantity', () => {
+    const slots: Slot[] = [
+      { iconKey: 'iron', placedQty: 1 }, // wrong qty
+      { iconKey: 'wood', placedQty: 1 },
+    ];
+    expect(calcBonus(slots, reqs, 100)).toBe(0);
+  });
+
+  it('rounds the bonus to the nearest integer', () => {
+    // budget 101 → 50.5 → rounds to 51
+    const slots: Slot[] = [
+      { iconKey: 'iron', placedQty: 2 },
+      { iconKey: 'wood', placedQty: 1 },
+    ];
+    expect(calcBonus(slots, reqs, 101)).toBe(51);
+  });
+
+  it('awards no bonus when there are no filled slots', () => {
+    const slots: Slot[] = [
+      { iconKey: null, placedQty: 0 },
+      { iconKey: null, placedQty: 0 },
+    ];
+    expect(calcBonus(slots, reqs, 100)).toBe(0);
+  });
+});

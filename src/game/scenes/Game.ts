@@ -993,9 +993,9 @@ export class Game extends Phaser.Scene {
     for (let i = 0; i < this.orderSlots.length; i++) {
       if (this.evaluateSlot(i) === 'wrong') return;
     }
-    // Every requirement must be satisfied by a placed item at the correct quantity
+    // Every requirement must be satisfied by a placed item at the exact quantity
     const allMet = this.currentOrder.requirements.every((req) =>
-      this.orderSlots.some((s) => s.iconKey === req.iconKey && s.placedQty >= req.quantity),
+      this.orderSlots.some((s) => s.iconKey === req.iconKey && s.placedQty === req.quantity),
     );
     if (!allMet) return;
     this.switchToOrdersTab?.();
@@ -1006,6 +1006,17 @@ export class Game extends Phaser.Scene {
     if (!this.currentOrder) return;
     const revenue = this.currentOrder.budget;
     this.shiftRevenue += revenue;
+
+    // Accuracy bonus: 50% of order budget when every filled slot is 'correct'
+    // (right position AND right quantity — all green, no yellow).
+    const filledSlots = this.orderSlots.filter((s) => s.iconKey !== null);
+    const allCorrect =
+      filledSlots.length > 0 &&
+      filledSlots.every((_, i) => this.evaluateSlot(i) === 'correct');
+    if (allCorrect) {
+      this.shiftBonus += Math.round(revenue * 0.5);
+    }
+
     this.revenueText?.setText(`Q${this.shiftRevenue}`);
     this.bonusText?.setText(`Q${this.shiftBonus}`);
     this.flashAndTransition();

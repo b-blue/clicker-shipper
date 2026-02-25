@@ -41,7 +41,7 @@
           "children": [
             {
               "id": "item_resources_006",
-              "name": "resource6",
+              "name": "PCIe RISER",
               "icon": "resource6",
               "type": "resources",
               "cost": 15
@@ -64,7 +64,7 @@
               "children": [
                 {
                   "id": "item_resources_011",
-                  "name": "resource11",
+                  "name": "DDR5 MODULE",
                   "icon": "resource11",
                   "type": "resources",
                   "cost": 14
@@ -87,7 +87,7 @@
                   "children": [
                     {
                       "id": "item_resources_016",
-                      "name": "resource16",
+                      "name": "ATX SHROUD",
                       "icon": "resource16",
                       "type": "resources",
                       "cost": 13
@@ -110,7 +110,7 @@
                       "children": [
                         {
                           "id": "item_resources_021",
-                          "name": "resource21",
+                          "name": "SERVER HBA CARD",
                           "icon": "resource21",
                           "type": "resources",
                           "cost": 12
@@ -133,7 +133,7 @@
                           "children": [
                             {
                               "id": "item_resources_026",
-                              "name": "resource26",
+                              "name": "MOLEX HARNESS",
                               "icon": "resource26",
                               "type": "resources",
                               "cost": 11
@@ -156,7 +156,7 @@
                               "children": [
                                 {
                                   "id": "item_resources_031",
-                                  "name": "resource31",
+                                  "name": "RF SHIELD BLANK",
                                   "icon": "resource31",
                                   "type": "resources",
                                   "cost": 10
@@ -179,35 +179,35 @@
                                   "children": [
                                     {
                                       "id": "item_resources_036",
-                                      "name": "resource36",
+                                      "name": "SATA POWER ADAPTER",
                                       "icon": "resource36",
                                       "type": "resources",
                                       "cost": 15
                                     },
                                     {
                                       "id": "item_resources_037",
-                                      "name": "resource37",
+                                      "name": "PCH HEATSINK",
                                       "icon": "resource37",
                                       "type": "resources",
                                       "cost": 10
                                     },
                                     {
                                       "id": "item_resources_038",
-                                      "name": "resource38",
+                                      "name": "FRONT PANEL HEADER",
                                       "icon": "resource38",
                                       "type": "resources",
                                       "cost": 11
                                     },
                                     {
                                       "id": "item_resources_039",
-                                      "name": "resource39",
+                                      "name": "JUMPER BLOCK",
                                       "icon": "resource39",
                                       "type": "resources",
                                       "cost": 12
                                     },
                                     {
                                       "id": "item_resources_040",
-                                      "name": "resource40",
+                                      "name": "VRM SPREADER",
                                       "icon": "resource40",
                                       "type": "resources",
                                       "cost": 13
@@ -216,28 +216,28 @@
                                 },
                                 {
                                   "id": "item_resources_032",
-                                  "name": "resource32",
+                                  "name": "SOLDER WICK",
                                   "icon": "resource32",
                                   "type": "resources",
                                   "cost": 11
                                 },
                                 {
                                   "id": "item_resources_033",
-                                  "name": "resource33",
+                                  "name": "OSCILLATOR MODULE",
                                   "icon": "resource33",
                                   "type": "resources",
                                   "cost": 12
                                 },
                                 {
                                   "id": "item_resources_034",
-                                  "name": "resource34",
+                                  "name": "EEPROM CHIP",
                                   "icon": "resource34",
                                   "type": "resources",
                                   "cost": 13
                                 },
                                 {
                                   "id": "item_resources_035",
-                                  "name": "resource35",
+                                  "name": "CMOS BATTERY",
                                   "icon": "resource35",
                                   "type": "resources",
                                   "cost": 14
@@ -246,28 +246,28 @@
                             },
                             {
                               "id": "item_resources_027",
-                              "name": "resource27",
+                              "name": "TDP SHIM",
                               "icon": "resource27",
                               "type": "resources",
                               "cost": 12
                             },
                             {
                               "id": "item_resources_028",
-                              "name": "resource28",
+                              "name": "BGA SOCKET",
                               "icon": "resource28",
                               "type": "resources",
                               "cost": 13
                             },
                             {
                               "id": "item_resources_029",
-                              "name": "resource29",
+                              "name": "CPU SOCKET CAP",
                               "icon": "resource29",
                               "type": "resources",
                               "cost": 14
                             },
                             {
                               "id": "item_resources_030",
-                              "name": "resource30",
+                              "name": "I/O BACKPLATE",
                               "icon": "resource30",
                               "type": "resources",
                               "cost": 15
@@ -276,28 +276,28 @@
                         },
                         {
                           "id": "item_resources_022",
-                          "name": "resource22",
+                          "name": "NVMe ADAPTER",
                           "icon": "resource22",
                           "type": "resources",
                           "cost": 13
                         },
                         {
                           "id": "item_resources_023",
-                          "name": "resource23",
+                          "name": "SAS EXPANDER",
                           "icon": "resource23",
                           "type": "resources",
                           "cost": 14
                         },
                         {
                           "id": "item_resources_024",
-                          "name": "resource24",
+                          "name": "DIMM BRACKET",
                           "icon": "resource24",
                           "type": "resources",
                           "cost": 15
                         },
                         {
                           "id": "item_resources_025",
-                          "name": "resource25",
+                          "name": "POWER DELIVERY IC",
                           "icon": "resource25",
                           "type": "resources",
                           "cost": 10
@@ -306,28 +306,28 @@
                     },
                     {
                       "id": "item_resources_017",
-                      "name": "resource17",
+                      "name": "COPPER SLUG",
                       "icon": "resource17",
                       "type": "resources",
                       "cost": 14
                     },
                     {
                       "id": "item_resources_018",
-                      "name": "resource18",
+                      "name": "FIBER PIGTAIL",
                       "icon": "resource18",
                       "type": "resources",
                       "cost": 15
                     },
                     {
                       "id": "item_resources_019",
-                      "name": "resource19",
+                      "name": "CABLE SLEEVE KIT",
                       "icon": "resource19",
                       "type": "resources",
                       "cost": 10
                     },
                     {
                       "id": "item_resources_020",
-                      "name": "resource20",
+                      "name": "PCI SLOT COVER",
                       "icon": "resource20",
                       "type": "resources",
                       "cost": 11
@@ -336,28 +336,28 @@
                 },
                 {
                   "id": "item_resources_012",
-                  "name": "resource12",
+                  "name": "THERMAL COMPOUND",
                   "icon": "resource12",
                   "type": "resources",
                   "cost": 15
                 },
                 {
                   "id": "item_resources_013",
-                  "name": "resource13",
+                  "name": "COAX ADAPTER",
                   "icon": "resource13",
                   "type": "resources",
                   "cost": 10
                 },
                 {
                   "id": "item_resources_014",
-                  "name": "resource14",
+                  "name": "SFP+ MODULE",
                   "icon": "resource14",
                   "type": "resources",
                   "cost": 11
                 },
                 {
                   "id": "item_resources_015",
-                  "name": "resource15",
+                  "name": "GPU BRACE",
                   "icon": "resource15",
                   "type": "resources",
                   "cost": 12
@@ -366,28 +366,28 @@
             },
             {
               "id": "item_resources_007",
-              "name": "resource7",
+              "name": "SATA III BRACKET",
               "icon": "resource7",
               "type": "resources",
               "cost": 10
             },
             {
               "id": "item_resources_008",
-              "name": "resource8",
+              "name": "M.2 HEATSINK",
               "icon": "resource8",
               "type": "resources",
               "cost": 11
             },
             {
               "id": "item_resources_009",
-              "name": "resource9",
+              "name": "RJ45 COUPLER",
               "icon": "resource9",
               "type": "resources",
               "cost": 12
             },
             {
               "id": "item_resources_010",
-              "name": "resource10",
+              "name": "USB-C SPLITTER",
               "icon": "resource10",
               "type": "resources",
               "cost": 13
@@ -488,7 +488,7 @@
               "children": [
                 {
                   "id": "item_armaments_011",
-                  "name": "arm11",
+                  "name": "KRAKEN MK-IV",
                   "icon": "arm11",
                   "type": "armaments",
                   "cost": 28
@@ -511,7 +511,7 @@
                   "children": [
                     {
                       "id": "item_armaments_016",
-                      "name": "arm16",
+                      "name": "IRONCLAD BREACH",
                       "icon": "arm16",
                       "type": "armaments",
                       "cost": 27
@@ -534,7 +534,7 @@
                       "children": [
                         {
                           "id": "item_armaments_021",
-                          "name": "arm21",
+                          "name": "FORGE NULLBORE",
                           "icon": "arm21",
                           "type": "armaments",
                           "cost": 26
@@ -557,7 +557,7 @@
                           "children": [
                             {
                               "id": "item_armaments_026",
-                              "name": "arm26",
+                              "name": "NEXUS SUPPRESSOR",
                               "icon": "arm26",
                               "type": "armaments",
                               "cost": 25
@@ -580,7 +580,7 @@
                               "children": [
                                 {
                                   "id": "item_armaments_031",
-                                  "name": "arm31",
+                                  "name": "KRAKEN WARHEAD",
                                   "icon": "arm31",
                                   "type": "armaments",
                                   "cost": 24
@@ -603,35 +603,35 @@
                                   "children": [
                                     {
                                       "id": "item_armaments_036",
-                                      "name": "arm36",
+                                      "name": "IRONCLAD SENTRY",
                                       "icon": "arm36",
                                       "type": "armaments",
                                       "cost": 29
                                     },
                                     {
                                       "id": "item_armaments_037",
-                                      "name": "arm37",
+                                      "name": "FORGE ELIMINATOR",
                                       "icon": "arm37",
                                       "type": "armaments",
                                       "cost": 24
                                     },
                                     {
                                       "id": "item_armaments_038",
-                                      "name": "arm38",
+                                      "name": "KRAKEN SHADOWSHIFT",
                                       "icon": "arm38",
                                       "type": "armaments",
                                       "cost": 25
                                     },
                                     {
                                       "id": "item_armaments_039",
-                                      "name": "arm39",
+                                      "name": "TETRAHEDRON WIDOWMAKER",
                                       "icon": "arm39",
                                       "type": "armaments",
                                       "cost": 26
                                     },
                                     {
                                       "id": "item_armaments_040",
-                                      "name": "arm40",
+                                      "name": "VORTEX ECLIPSE SX",
                                       "icon": "arm40",
                                       "type": "armaments",
                                       "cost": 27
@@ -640,28 +640,28 @@
                                 },
                                 {
                                   "id": "item_armaments_032",
-                                  "name": "arm32",
+                                  "name": "SYLVAN MARAUDER 6X70",
                                   "icon": "arm32",
                                   "type": "armaments",
                                   "cost": 25
                                 },
                                 {
                                   "id": "item_armaments_033",
-                                  "name": "arm33",
+                                  "name": "TETRAHEDRON CIPHER",
                                   "icon": "arm33",
                                   "type": "armaments",
                                   "cost": 26
                                 },
                                 {
                                   "id": "item_armaments_034",
-                                  "name": "arm34",
+                                  "name": "APEX STRIKEBACK",
                                   "icon": "arm34",
                                   "type": "armaments",
                                   "cost": 27
                                 },
                                 {
                                   "id": "item_armaments_035",
-                                  "name": "arm35",
+                                  "name": "NEXUS BURNKEEPER",
                                   "icon": "arm35",
                                   "type": "armaments",
                                   "cost": 28
@@ -670,28 +670,28 @@
                             },
                             {
                               "id": "item_armaments_027",
-                              "name": "arm27",
+                              "name": "VORTEX LONGBOW",
                               "icon": "arm27",
                               "type": "armaments",
                               "cost": 26
                             },
                             {
                               "id": "item_armaments_028",
-                              "name": "arm28",
+                              "name": "IRONCLAD OVERSEER",
                               "icon": "arm28",
                               "type": "armaments",
                               "cost": 27
                             },
                             {
                               "id": "item_armaments_029",
-                              "name": "arm29",
+                              "name": "FORGE DEVASTATOR",
                               "icon": "arm29",
                               "type": "armaments",
                               "cost": 28
                             },
                             {
                               "id": "item_armaments_030",
-                              "name": "arm30",
+                              "name": "T-144 RESONANCE",
                               "icon": "arm30",
                               "type": "armaments",
                               "cost": 29
@@ -700,28 +700,28 @@
                         },
                         {
                           "id": "item_armaments_022",
-                          "name": "arm22",
+                          "name": "T-99 ANTI-MASS",
                           "icon": "arm22",
                           "type": "armaments",
                           "cost": 27
                         },
                         {
                           "id": "item_armaments_023",
-                          "name": "arm23",
+                          "name": "KRAKEN DESOLATOR",
                           "icon": "arm23",
                           "type": "armaments",
                           "cost": 28
                         },
                         {
                           "id": "item_armaments_024",
-                          "name": "arm24",
+                          "name": "TETRAHEDRON COILGUN",
                           "icon": "arm24",
                           "type": "armaments",
                           "cost": 29
                         },
                         {
                           "id": "item_armaments_025",
-                          "name": "arm25",
+                          "name": "SYLVAN PRECISION MK3",
                           "icon": "arm25",
                           "type": "armaments",
                           "cost": 24
@@ -730,28 +730,28 @@
                     },
                     {
                       "id": "item_armaments_017",
-                      "name": "arm17",
+                      "name": "KRAKEN WARBRAND",
                       "icon": "arm17",
                       "type": "armaments",
                       "cost": 28
                     },
                     {
                       "id": "item_armaments_018",
-                      "name": "arm18",
+                      "name": "TETRAHEDRON NULLFIRE",
                       "icon": "arm18",
                       "type": "armaments",
                       "cost": 29
                     },
                     {
                       "id": "item_armaments_019",
-                      "name": "arm19",
+                      "name": "SYLVAN STORMCALLER",
                       "icon": "arm19",
                       "type": "armaments",
                       "cost": 24
                     },
                     {
                       "id": "item_armaments_020",
-                      "name": "arm20",
+                      "name": "APEX DARKSHOT",
                       "icon": "arm20",
                       "type": "armaments",
                       "cost": 25
@@ -760,28 +760,28 @@
                 },
                 {
                   "id": "item_armaments_012",
-                  "name": "arm12",
+                  "name": "FORGE REAPER",
                   "icon": "arm12",
                   "type": "armaments",
                   "cost": 29
                 },
                 {
                   "id": "item_armaments_013",
-                  "name": "arm13",
+                  "name": "APEX LONGSHOT",
                   "icon": "arm13",
                   "type": "armaments",
                   "cost": 24
                 },
                 {
                   "id": "item_armaments_014",
-                  "name": "arm14",
+                  "name": "NEXUS TORCHLIGHT",
                   "icon": "arm14",
                   "type": "armaments",
                   "cost": 25
                 },
                 {
                   "id": "item_armaments_015",
-                  "name": "arm15",
+                  "name": "VORTEX-7",
                   "icon": "arm15",
                   "type": "armaments",
                   "cost": 26
@@ -889,7 +889,7 @@
           "children": [
             {
               "id": "item_melee_006",
-              "name": "melee6",
+              "name": "PLASMA CLEAVER",
               "icon": "melee6",
               "type": "melee",
               "cost": 23
@@ -912,7 +912,7 @@
               "children": [
                 {
                   "id": "item_melee_011",
-                  "name": "melee11",
+                  "name": "GYRO BLADE",
                   "icon": "melee11",
                   "type": "melee",
                   "cost": 22
@@ -935,7 +935,7 @@
                   "children": [
                     {
                       "id": "item_melee_016",
-                      "name": "melee16",
+                      "name": "SHOCKBATON MK4",
                       "icon": "melee16",
                       "type": "melee",
                       "cost": 21
@@ -958,7 +958,7 @@
                       "children": [
                         {
                           "id": "item_melee_021",
-                          "name": "melee21",
+                          "name": "IMPACT HAMMER",
                           "icon": "melee21",
                           "type": "melee",
                           "cost": 20
@@ -981,7 +981,7 @@
                           "children": [
                             {
                               "id": "item_melee_026",
-                              "name": "melee26",
+                              "name": "VOLT REPEATER",
                               "icon": "melee26",
                               "type": "melee",
                               "cost": 19
@@ -1004,7 +1004,7 @@
                               "children": [
                                 {
                                   "id": "item_melee_031",
-                                  "name": "melee31",
+                                  "name": "SPLIT EDGE",
                                   "icon": "melee31",
                                   "type": "melee",
                                   "cost": 18
@@ -1027,35 +1027,35 @@
                                   "children": [
                                     {
                                       "id": "item_melee_036",
-                                      "name": "melee36",
+                                      "name": "PLASMA BATON",
                                       "icon": "melee36",
                                       "type": "melee",
                                       "cost": 23
                                     },
                                     {
                                       "id": "item_melee_037",
-                                      "name": "melee37",
+                                      "name": "SERVO PUNCH",
                                       "icon": "melee37",
                                       "type": "melee",
                                       "cost": 18
                                     },
                                     {
                                       "id": "item_melee_038",
-                                      "name": "melee38",
+                                      "name": "SPLICE EDGE",
                                       "icon": "melee38",
                                       "type": "melee",
                                       "cost": 19
                                     },
                                     {
                                       "id": "item_melee_039",
-                                      "name": "melee39",
+                                      "name": "MONO HAMMER",
                                       "icon": "melee39",
                                       "type": "melee",
                                       "cost": 20
                                     },
                                     {
                                       "id": "item_melee_040",
-                                      "name": "melee40",
+                                      "name": "VOIDBLADE",
                                       "icon": "melee40",
                                       "type": "melee",
                                       "cost": 21
@@ -1064,28 +1064,28 @@
                                 },
                                 {
                                   "id": "item_melee_032",
-                                  "name": "melee32",
+                                  "name": "FORCE BATON",
                                   "icon": "melee32",
                                   "type": "melee",
                                   "cost": 19
                                 },
                                 {
                                   "id": "item_melee_033",
-                                  "name": "melee33",
+                                  "name": "NEURAL BLADE",
                                   "icon": "melee33",
                                   "type": "melee",
                                   "cost": 20
                                 },
                                 {
                                   "id": "item_melee_034",
-                                  "name": "melee34",
+                                  "name": "SIGNAL KNIFE",
                                   "icon": "melee34",
                                   "type": "melee",
                                   "cost": 21
                                 },
                                 {
                                   "id": "item_melee_035",
-                                  "name": "melee35",
+                                  "name": "KINETIC CLEAVER",
                                   "icon": "melee35",
                                   "type": "melee",
                                   "cost": 22
@@ -1094,28 +1094,28 @@
                             },
                             {
                               "id": "item_melee_027",
-                              "name": "melee27",
+                              "name": "FRACTURE MAUL",
                               "icon": "melee27",
                               "type": "melee",
                               "cost": 20
                             },
                             {
                               "id": "item_melee_028",
-                              "name": "melee28",
+                              "name": "ARC FLAIL",
                               "icon": "melee28",
                               "type": "melee",
                               "cost": 21
                             },
                             {
                               "id": "item_melee_029",
-                              "name": "melee29",
+                              "name": "STATIC HOOK",
                               "icon": "melee29",
                               "type": "melee",
                               "cost": 22
                             },
                             {
                               "id": "item_melee_030",
-                              "name": "melee30",
+                              "name": "TESLA CLAW",
                               "icon": "melee30",
                               "type": "melee",
                               "cost": 23
@@ -1124,28 +1124,28 @@
                         },
                         {
                           "id": "item_melee_022",
-                          "name": "melee22",
+                          "name": "WIRE WHIP",
                           "icon": "melee22",
                           "type": "melee",
                           "cost": 21
                         },
                         {
                           "id": "item_melee_023",
-                          "name": "melee23",
+                          "name": "CRYO LANCE",
                           "icon": "melee23",
                           "type": "melee",
                           "cost": 22
                         },
                         {
                           "id": "item_melee_024",
-                          "name": "melee24",
+                          "name": "ZERO EDGE",
                           "icon": "melee24",
                           "type": "melee",
                           "cost": 23
                         },
                         {
                           "id": "item_melee_025",
-                          "name": "melee25",
+                          "name": "NANOFILAMENT BLADE",
                           "icon": "melee25",
                           "type": "melee",
                           "cost": 18
@@ -1154,28 +1154,28 @@
                     },
                     {
                       "id": "item_melee_017",
-                      "name": "melee17",
+                      "name": "RIVET SPIKE",
                       "icon": "melee17",
                       "type": "melee",
                       "cost": 22
                     },
                     {
                       "id": "item_melee_018",
-                      "name": "melee18",
+                      "name": "CERAM EDGE",
                       "icon": "melee18",
                       "type": "melee",
                       "cost": 23
                     },
                     {
                       "id": "item_melee_019",
-                      "name": "melee19",
+                      "name": "PULSE TETHER",
                       "icon": "melee19",
                       "type": "melee",
                       "cost": 18
                     },
                     {
                       "id": "item_melee_020",
-                      "name": "melee20",
+                      "name": "FLICKER BLADE",
                       "icon": "melee20",
                       "type": "melee",
                       "cost": 19
@@ -1184,28 +1184,28 @@
                 },
                 {
                   "id": "item_melee_012",
-                  "name": "melee12",
+                  "name": "HEX WRENCH",
                   "icon": "melee12",
                   "type": "melee",
                   "cost": 23
                 },
                 {
                   "id": "item_melee_013",
-                  "name": "melee13",
+                  "name": "THERMAL LANCE",
                   "icon": "melee13",
                   "type": "melee",
                   "cost": 18
                 },
                 {
                   "id": "item_melee_014",
-                  "name": "melee14",
+                  "name": "STUN ROD",
                   "icon": "melee14",
                   "type": "melee",
                   "cost": 19
                 },
                 {
                   "id": "item_melee_015",
-                  "name": "melee15",
+                  "name": "CARBON FIST",
                   "icon": "melee15",
                   "type": "melee",
                   "cost": 20
@@ -1214,28 +1214,28 @@
             },
             {
               "id": "item_melee_007",
-              "name": "melee7",
+              "name": "CHAIN FLAIL",
               "icon": "melee7",
               "type": "melee",
               "cost": 18
             },
             {
               "id": "item_melee_008",
-              "name": "melee8",
+              "name": "NEURAL WHIP",
               "icon": "melee8",
               "type": "melee",
               "cost": 19
             },
             {
               "id": "item_melee_009",
-              "name": "melee9",
+              "name": "SERRATED GAUNTLET",
               "icon": "melee9",
               "type": "melee",
               "cost": 20
             },
             {
               "id": "item_melee_010",
-              "name": "melee10",
+              "name": "VOLT SABER",
               "icon": "melee10",
               "type": "melee",
               "cost": 21
@@ -1313,7 +1313,7 @@
           "children": [
             {
               "id": "item_radioactive_006",
-              "name": "radioactive6",
+              "name": "NEUTRON FLASK",
               "icon": "radioactive6",
               "type": "radioactive",
               "cost": 37
@@ -1336,7 +1336,7 @@
               "children": [
                 {
                   "id": "item_radioactive_011",
-                  "name": "radioactive11",
+                  "name": "DECAY CYLINDER",
                   "icon": "radioactive11",
                   "type": "radioactive",
                   "cost": 36
@@ -1359,7 +1359,7 @@
                   "children": [
                     {
                       "id": "item_radioactive_016",
-                      "name": "radioactive16",
+                      "name": "ALPHA EMITTER",
                       "icon": "radioactive16",
                       "type": "radioactive",
                       "cost": 35
@@ -1382,7 +1382,7 @@
                       "children": [
                         {
                           "id": "item_radioactive_021",
-                          "name": "radioactive21",
+                          "name": "GAMMA SHIELDING",
                           "icon": "radioactive21",
                           "type": "radioactive",
                           "cost": 34
@@ -1405,7 +1405,7 @@
                           "children": [
                             {
                               "id": "item_radioactive_026",
-                              "name": "radioactive26",
+                              "name": "RADIANT SHARD",
                               "icon": "radioactive26",
                               "type": "radioactive",
                               "cost": 33
@@ -1428,7 +1428,7 @@
                               "children": [
                                 {
                                   "id": "item_radioactive_031",
-                                  "name": "radioactive31",
+                                  "name": "IRRADIUM CORE",
                                   "icon": "radioactive31",
                                   "type": "radioactive",
                                   "cost": 32
@@ -1451,35 +1451,35 @@
                                   "children": [
                                     {
                                       "id": "item_radioactive_036",
-                                      "name": "radioactive36",
+                                      "name": "ZIRCONIUM BLOCK",
                                       "icon": "radioactive36",
                                       "type": "radioactive",
                                       "cost": 37
                                     },
                                     {
                                       "id": "item_radioactive_037",
-                                      "name": "radioactive37",
+                                      "name": "CURIUM FLASK",
                                       "icon": "radioactive37",
                                       "type": "radioactive",
                                       "cost": 32
                                     },
                                     {
                                       "id": "item_radioactive_038",
-                                      "name": "radioactive38",
+                                      "name": "ISOTOPIC STRAND",
                                       "icon": "radioactive38",
                                       "type": "radioactive",
                                       "cost": 33
                                     },
                                     {
                                       "id": "item_radioactive_039",
-                                      "name": "radioactive39",
+                                      "name": "RADON PELLET",
                                       "icon": "radioactive39",
                                       "type": "radioactive",
                                       "cost": 34
                                     },
                                     {
                                       "id": "item_radioactive_040",
-                                      "name": "radioactive40",
+                                      "name": "FISSION CHARGE",
                                       "icon": "radioactive40",
                                       "type": "radioactive",
                                       "cost": 35
@@ -1488,28 +1488,28 @@
                                 },
                                 {
                                   "id": "item_radioactive_032",
-                                  "name": "radioactive32",
+                                  "name": "PLASMA SLUG",
                                   "icon": "radioactive32",
                                   "type": "radioactive",
                                   "cost": 33
                                 },
                                 {
                                   "id": "item_radioactive_033",
-                                  "name": "radioactive33",
+                                  "name": "XENON EMITTER",
                                   "icon": "radioactive33",
                                   "type": "radioactive",
                                   "cost": 34
                                 },
                                 {
                                   "id": "item_radioactive_034",
-                                  "name": "radioactive34",
+                                  "name": "STRONTIUM PELLET",
                                   "icon": "radioactive34",
                                   "type": "radioactive",
                                   "cost": 35
                                 },
                                 {
                                   "id": "item_radioactive_035",
-                                  "name": "radioactive35",
+                                  "name": "FALLOUT CAPSULE",
                                   "icon": "radioactive35",
                                   "type": "radioactive",
                                   "cost": 36
@@ -1518,28 +1518,28 @@
                             },
                             {
                               "id": "item_radioactive_027",
-                              "name": "radioactive27",
+                              "name": "URANIUM CARTRIDGE",
                               "icon": "radioactive27",
                               "type": "radioactive",
                               "cost": 34
                             },
                             {
                               "id": "item_radioactive_028",
-                              "name": "radioactive28",
+                              "name": "THORIUM BLOCK",
                               "icon": "radioactive28",
                               "type": "radioactive",
                               "cost": 35
                             },
                             {
                               "id": "item_radioactive_029",
-                              "name": "radioactive29",
+                              "name": "ACTINIDE CLUSTER",
                               "icon": "radioactive29",
                               "type": "radioactive",
                               "cost": 36
                             },
                             {
                               "id": "item_radioactive_030",
-                              "name": "radioactive30",
+                              "name": "CESIUM MODULE",
                               "icon": "radioactive30",
                               "type": "radioactive",
                               "cost": 37
@@ -1548,28 +1548,28 @@
                         },
                         {
                           "id": "item_radioactive_022",
-                          "name": "radioactive22",
+                          "name": "DEPLETED CELL",
                           "icon": "radioactive22",
                           "type": "radioactive",
                           "cost": 35
                         },
                         {
                           "id": "item_radioactive_023",
-                          "name": "radioactive23",
+                          "name": "RADON FLASK",
                           "icon": "radioactive23",
                           "type": "radioactive",
                           "cost": 36
                         },
                         {
                           "id": "item_radioactive_024",
-                          "name": "radioactive24",
+                          "name": "IRRADIATED ROD",
                           "icon": "radioactive24",
                           "type": "radioactive",
                           "cost": 37
                         },
                         {
                           "id": "item_radioactive_025",
-                          "name": "radioactive25",
+                          "name": "NEUTRONIUM CHIP",
                           "icon": "radioactive25",
                           "type": "radioactive",
                           "cost": 32
@@ -1578,28 +1578,28 @@
                     },
                     {
                       "id": "item_radioactive_017",
-                      "name": "radioactive17",
+                      "name": "BETA PELLET",
                       "icon": "radioactive17",
                       "type": "radioactive",
                       "cost": 36
                     },
                     {
                       "id": "item_radioactive_018",
-                      "name": "radioactive18",
+                      "name": "NEUTRON MATRIX",
                       "icon": "radioactive18",
                       "type": "radioactive",
                       "cost": 37
                     },
                     {
                       "id": "item_radioactive_019",
-                      "name": "radioactive19",
+                      "name": "COBALT SLUG",
                       "icon": "radioactive19",
                       "type": "radioactive",
                       "cost": 32
                     },
                     {
                       "id": "item_radioactive_020",
-                      "name": "radioactive20",
+                      "name": "FISSILE WAFER",
                       "icon": "radioactive20",
                       "type": "radioactive",
                       "cost": 33
@@ -1608,28 +1608,28 @@
                 },
                 {
                   "id": "item_radioactive_012",
-                  "name": "radioactive12",
+                  "name": "THERMAL ROD",
                   "icon": "radioactive12",
                   "type": "radioactive",
                   "cost": 37
                 },
                 {
                   "id": "item_radioactive_013",
-                  "name": "radioactive13",
+                  "name": "RADIANT COIL",
                   "icon": "radioactive13",
                   "type": "radioactive",
                   "cost": 32
                 },
                 {
                   "id": "item_radioactive_014",
-                  "name": "radioactive14",
+                  "name": "TRITIUM AMPOULE",
                   "icon": "radioactive14",
                   "type": "radioactive",
                   "cost": 33
                 },
                 {
                   "id": "item_radioactive_015",
-                  "name": "radioactive15",
+                  "name": "XENON CORE",
                   "icon": "radioactive15",
                   "type": "radioactive",
                   "cost": 34
@@ -1638,28 +1638,28 @@
             },
             {
               "id": "item_radioactive_007",
-              "name": "radioactive7",
+              "name": "GAMMA CELL",
               "icon": "radioactive7",
               "type": "radioactive",
               "cost": 32
             },
             {
               "id": "item_radioactive_008",
-              "name": "radioactive8",
+              "name": "FISSION SLAB",
               "icon": "radioactive8",
               "type": "radioactive",
               "cost": 33
             },
             {
               "id": "item_radioactive_009",
-              "name": "radioactive9",
+              "name": "PLASMA CAPSULE",
               "icon": "radioactive9",
               "type": "radioactive",
               "cost": 34
             },
             {
               "id": "item_radioactive_010",
-              "name": "radioactive10",
+              "name": "MUON FILTER",
               "icon": "radioactive10",
               "type": "radioactive",
               "cost": 35
@@ -1737,7 +1737,7 @@
           "children": [
             {
               "id": "item_mining_006",
-              "name": "mining6",
+              "name": "CORE SAMPLER",
               "icon": "mining6",
               "type": "mining",
               "cost": 20
@@ -1760,7 +1760,7 @@
               "children": [
                 {
                   "id": "item_mining_011",
-                  "name": "mining11",
+                  "name": "FISSURE GEL",
                   "icon": "mining11",
                   "type": "mining",
                   "cost": 19
@@ -1783,7 +1783,7 @@
                   "children": [
                     {
                       "id": "item_mining_016",
-                      "name": "mining16",
+                      "name": "VEIN LOCATOR",
                       "icon": "mining16",
                       "type": "mining",
                       "cost": 18
@@ -1806,7 +1806,7 @@
                       "children": [
                         {
                           "id": "item_mining_021",
-                          "name": "mining21",
+                          "name": "EXCAVATOR HOOK",
                           "icon": "mining21",
                           "type": "mining",
                           "cost": 17
@@ -1829,7 +1829,7 @@
                           "children": [
                             {
                               "id": "item_mining_026",
-                              "name": "mining26",
+                              "name": "HYDRO SHEAR",
                               "icon": "mining26",
                               "type": "mining",
                               "cost": 16
@@ -1852,21 +1852,21 @@
                               "children": [
                                 {
                                   "id": "item_mining_031",
-                                  "name": "mining31",
+                                  "name": "ROCK BURSTER",
                                   "icon": "mining31",
                                   "type": "mining",
                                   "cost": 15
                                 },
                                 {
                                   "id": "item_mining_032",
-                                  "name": "mining32",
+                                  "name": "ICE BORE AUGUR",
                                   "icon": "mining32",
                                   "type": "mining",
                                   "cost": 16
                                 },
                                 {
                                   "id": "item_mining_033",
-                                  "name": "mining33",
+                                  "name": "BEDROCK SPIKE",
                                   "icon": "mining33",
                                   "type": "mining",
                                   "cost": 17
@@ -1875,28 +1875,28 @@
                             },
                             {
                               "id": "item_mining_027",
-                              "name": "mining27",
+                              "name": "PERCUSSION DRILL",
                               "icon": "mining27",
                               "type": "mining",
                               "cost": 17
                             },
                             {
                               "id": "item_mining_028",
-                              "name": "mining28",
+                              "name": "MINERAL EXTRACTOR",
                               "icon": "mining28",
                               "type": "mining",
                               "cost": 18
                             },
                             {
                               "id": "item_mining_029",
-                              "name": "mining29",
+                              "name": "BORE MATRIX",
                               "icon": "mining29",
                               "type": "mining",
                               "cost": 19
                             },
                             {
                               "id": "item_mining_030",
-                              "name": "mining30",
+                              "name": "STRATA LASER",
                               "icon": "mining30",
                               "type": "mining",
                               "cost": 20
@@ -1905,28 +1905,28 @@
                         },
                         {
                           "id": "item_mining_022",
-                          "name": "mining22",
+                          "name": "CREVICE CHARGE",
                           "icon": "mining22",
                           "type": "mining",
                           "cost": 18
                         },
                         {
                           "id": "item_mining_023",
-                          "name": "mining23",
+                          "name": "CORE SPIKE",
                           "icon": "mining23",
                           "type": "mining",
                           "cost": 19
                         },
                         {
                           "id": "item_mining_024",
-                          "name": "mining24",
+                          "name": "BLAST MATRIX",
                           "icon": "mining24",
                           "type": "mining",
                           "cost": 20
                         },
                         {
                           "id": "item_mining_025",
-                          "name": "mining25",
+                          "name": "TUNNEL SENSOR",
                           "icon": "mining25",
                           "type": "mining",
                           "cost": 15
@@ -1935,28 +1935,28 @@
                     },
                     {
                       "id": "item_mining_017",
-                      "name": "mining17",
+                      "name": "ROCK CUTTER DISC",
                       "icon": "mining17",
                       "type": "mining",
                       "cost": 19
                     },
                     {
                       "id": "item_mining_018",
-                      "name": "mining18",
+                      "name": "SONIC PROBE",
                       "icon": "mining18",
                       "type": "mining",
                       "cost": 20
                     },
                     {
                       "id": "item_mining_019",
-                      "name": "mining19",
+                      "name": "CRUSH CAP",
                       "icon": "mining19",
                       "type": "mining",
                       "cost": 15
                     },
                     {
                       "id": "item_mining_020",
-                      "name": "mining20",
+                      "name": "THERMAL DRILL HEAD",
                       "icon": "mining20",
                       "type": "mining",
                       "cost": 16
@@ -1965,28 +1965,28 @@
                 },
                 {
                   "id": "item_mining_012",
-                  "name": "mining12",
+                  "name": "DEEP SENSOR",
                   "icon": "mining12",
                   "type": "mining",
                   "cost": 20
                 },
                 {
                   "id": "item_mining_013",
-                  "name": "mining13",
+                  "name": "DRILL SLEEVE",
                   "icon": "mining13",
                   "type": "mining",
                   "cost": 15
                 },
                 {
                   "id": "item_mining_014",
-                  "name": "mining14",
+                  "name": "TUNNEL BORE BIT",
                   "icon": "mining14",
                   "type": "mining",
                   "cost": 16
                 },
                 {
                   "id": "item_mining_015",
-                  "name": "mining15",
+                  "name": "IMPACT SPIKE",
                   "icon": "mining15",
                   "type": "mining",
                   "cost": 17
@@ -1995,28 +1995,28 @@
             },
             {
               "id": "item_mining_007",
-              "name": "mining7",
+              "name": "BLAST CAP",
               "icon": "mining7",
               "type": "mining",
               "cost": 15
             },
             {
               "id": "item_mining_008",
-              "name": "mining8",
+              "name": "CHEM DISSOLVER",
               "icon": "mining8",
               "type": "mining",
               "cost": 16
             },
             {
               "id": "item_mining_009",
-              "name": "mining9",
+              "name": "SEISMIC CHARGE",
               "icon": "mining9",
               "type": "mining",
               "cost": 17
             },
             {
               "id": "item_mining_010",
-              "name": "mining10",
+              "name": "BORE SLUG",
               "icon": "mining10",
               "type": "mining",
               "cost": 18
@@ -2094,7 +2094,7 @@
           "children": [
             {
               "id": "item_streetwear_006",
-              "name": "streetwear6",
+              "name": "VOLT UNDERSHIRT",
               "icon": "streetwear6",
               "type": "streetwear",
               "cost": 21
@@ -2117,7 +2117,7 @@
               "children": [
                 {
                   "id": "item_streetwear_011",
-                  "name": "streetwear11",
+                  "name": "RIVET BELT",
                   "icon": "streetwear11",
                   "type": "streetwear",
                   "cost": 20
@@ -2140,7 +2140,7 @@
                   "children": [
                     {
                       "id": "item_streetwear_016",
-                      "name": "streetwear16",
+                      "name": "MIRROR JACKET",
                       "icon": "streetwear16",
                       "type": "streetwear",
                       "cost": 19
@@ -2163,7 +2163,7 @@
                       "children": [
                         {
                           "id": "item_streetwear_021",
-                          "name": "streetwear21",
+                          "name": "PATCH JACKET",
                           "icon": "streetwear21",
                           "type": "streetwear",
                           "cost": 18
@@ -2186,7 +2186,7 @@
                           "children": [
                             {
                               "id": "item_streetwear_026",
-                              "name": "streetwear26",
+                              "name": "JOLT SNEAKERS",
                               "icon": "streetwear26",
                               "type": "streetwear",
                               "cost": 17
@@ -2209,7 +2209,7 @@
                               "children": [
                                 {
                                   "id": "item_streetwear_031",
-                                  "name": "streetwear31",
+                                  "name": "SIGNAL CAPE",
                                   "icon": "streetwear31",
                                   "type": "streetwear",
                                   "cost": 16
@@ -2232,35 +2232,35 @@
                                   "children": [
                                     {
                                       "id": "item_streetwear_036",
-                                      "name": "streetwear36",
+                                      "name": "GHOST JACKET",
                                       "icon": "streetwear36",
                                       "type": "streetwear",
                                       "cost": 21
                                     },
                                     {
                                       "id": "item_streetwear_037",
-                                      "name": "streetwear37",
+                                      "name": "SPLICE PANTS",
                                       "icon": "streetwear37",
                                       "type": "streetwear",
                                       "cost": 16
                                     },
                                     {
                                       "id": "item_streetwear_038",
-                                      "name": "streetwear38",
+                                      "name": "CHROME DUSTER",
                                       "icon": "streetwear38",
                                       "type": "streetwear",
                                       "cost": 17
                                     },
                                     {
                                       "id": "item_streetwear_039",
-                                      "name": "streetwear39",
+                                      "name": "REFLEX HOOD",
                                       "icon": "streetwear39",
                                       "type": "streetwear",
                                       "cost": 18
                                     },
                                     {
                                       "id": "item_streetwear_040",
-                                      "name": "streetwear40",
+                                      "name": "MESH BRACERS",
                                       "icon": "streetwear40",
                                       "type": "streetwear",
                                       "cost": 19
@@ -2269,28 +2269,28 @@
                                 },
                                 {
                                   "id": "item_streetwear_032",
-                                  "name": "streetwear32",
+                                  "name": "WIRE TROUSERS",
                                   "icon": "streetwear32",
                                   "type": "streetwear",
                                   "cost": 17
                                 },
                                 {
                                   "id": "item_streetwear_033",
-                                  "name": "streetwear33",
+                                  "name": "VOLT BOOTS",
                                   "icon": "streetwear33",
                                   "type": "streetwear",
                                   "cost": 18
                                 },
                                 {
                                   "id": "item_streetwear_034",
-                                  "name": "streetwear34",
+                                  "name": "CIRCUIT VEST",
                                   "icon": "streetwear34",
                                   "type": "streetwear",
                                   "cost": 19
                                 },
                                 {
                                   "id": "item_streetwear_035",
-                                  "name": "streetwear35",
+                                  "name": "DATA BRACERS",
                                   "icon": "streetwear35",
                                   "type": "streetwear",
                                   "cost": 20
@@ -2299,28 +2299,28 @@
                             },
                             {
                               "id": "item_streetwear_027",
-                              "name": "streetwear27",
+                              "name": "ARMOR VEST",
                               "icon": "streetwear27",
                               "type": "streetwear",
                               "cost": 18
                             },
                             {
                               "id": "item_streetwear_028",
-                              "name": "streetwear28",
+                              "name": "POLYCARB JACKET",
                               "icon": "streetwear28",
                               "type": "streetwear",
                               "cost": 19
                             },
                             {
                               "id": "item_streetwear_029",
-                              "name": "streetwear29",
+                              "name": "SYNTH DUSTER",
                               "icon": "streetwear29",
                               "type": "streetwear",
                               "cost": 20
                             },
                             {
                               "id": "item_streetwear_030",
-                              "name": "streetwear30",
+                              "name": "ECM GLOVES",
                               "icon": "streetwear30",
                               "type": "streetwear",
                               "cost": 21
@@ -2329,28 +2329,28 @@
                         },
                         {
                           "id": "item_streetwear_022",
-                          "name": "streetwear22",
+                          "name": "THERMAL WRAP",
                           "icon": "streetwear22",
                           "type": "streetwear",
                           "cost": 19
                         },
                         {
                           "id": "item_streetwear_023",
-                          "name": "streetwear23",
+                          "name": "CHROME CAP",
                           "icon": "streetwear23",
                           "type": "streetwear",
                           "cost": 20
                         },
                         {
                           "id": "item_streetwear_024",
-                          "name": "streetwear24",
+                          "name": "REFLEX COAT",
                           "icon": "streetwear24",
                           "type": "streetwear",
                           "cost": 21
                         },
                         {
                           "id": "item_streetwear_025",
-                          "name": "streetwear25",
+                          "name": "STATIC HARNESS",
                           "icon": "streetwear25",
                           "type": "streetwear",
                           "cost": 16
@@ -2359,28 +2359,28 @@
                     },
                     {
                       "id": "item_streetwear_017",
-                      "name": "streetwear17",
+                      "name": "SLICE BOOTS",
                       "icon": "streetwear17",
                       "type": "streetwear",
                       "cost": 20
                     },
                     {
                       "id": "item_streetwear_018",
-                      "name": "streetwear18",
+                      "name": "SPIKE BRACERS",
                       "icon": "streetwear18",
                       "type": "streetwear",
                       "cost": 21
                     },
                     {
                       "id": "item_streetwear_019",
-                      "name": "streetwear19",
+                      "name": "HOLOGRAM VEST",
                       "icon": "streetwear19",
                       "type": "streetwear",
                       "cost": 16
                     },
                     {
                       "id": "item_streetwear_020",
-                      "name": "streetwear20",
+                      "name": "FIBER TROUSERS",
                       "icon": "streetwear20",
                       "type": "streetwear",
                       "cost": 17
@@ -2389,28 +2389,28 @@
                 },
                 {
                   "id": "item_streetwear_012",
-                  "name": "streetwear12",
+                  "name": "NANO MASK",
                   "icon": "streetwear12",
                   "type": "streetwear",
                   "cost": 21
                 },
                 {
                   "id": "item_streetwear_013",
-                  "name": "streetwear13",
+                  "name": "SYNTH SCARF",
                   "icon": "streetwear13",
                   "type": "streetwear",
                   "cost": 16
                 },
                 {
                   "id": "item_streetwear_014",
-                  "name": "streetwear14",
+                  "name": "PLASMA CAP",
                   "icon": "streetwear14",
                   "type": "streetwear",
                   "cost": 17
                 },
                 {
                   "id": "item_streetwear_015",
-                  "name": "streetwear15",
+                  "name": "CARBON HOODIE",
                   "icon": "streetwear15",
                   "type": "streetwear",
                   "cost": 18
@@ -2419,28 +2419,28 @@
             },
             {
               "id": "item_streetwear_007",
-              "name": "streetwear7",
+              "name": "CHROME LEGGINGS",
               "icon": "streetwear7",
               "type": "streetwear",
               "cost": 16
             },
             {
               "id": "item_streetwear_008",
-              "name": "streetwear8",
+              "name": "CIRCUIT CARGOS",
               "icon": "streetwear8",
               "type": "streetwear",
               "cost": 17
             },
             {
               "id": "item_streetwear_009",
-              "name": "streetwear9",
+              "name": "DATA GLOVES",
               "icon": "streetwear9",
               "type": "streetwear",
               "cost": 18
             },
             {
               "id": "item_streetwear_010",
-              "name": "streetwear10",
+              "name": "STEEL BRACELET",
               "icon": "streetwear10",
               "type": "streetwear",
               "cost": 19

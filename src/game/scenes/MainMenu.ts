@@ -18,7 +18,7 @@ export class MainMenu extends Phaser.Scene {
     const availableWidth = gameWidth - margin;
 
     // Title with background
-    const titleText = 'CHIBA CITY SHIPPER';
+    const titleText = 'CYBERPUNK SHIPPER';
     const titleMaxWidth = gameWidth - margin * 2;
     const titleFontSize = fitFontSize(titleText, titleMaxWidth, 32);
     this.add.rectangle(gameWidth / 2, gameHeight * 0.15, titleMaxWidth, 50, Colors.PANEL_MEDIUM, 0.9);

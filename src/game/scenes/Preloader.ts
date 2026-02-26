@@ -11,9 +11,15 @@ export class Preloader extends Phaser.Scene {
     // Load config and items data
     this.load.json('config', 'data/config.json');
     this.load.json('items', 'data/items.json');
-    
+
     // Load bitmap font
     this.load.bitmapFont('clicker', 'assets/fonts/clicker.png', 'assets/fonts/clicker.fnt');
+
+    // Drone spritesheets (4 frames side-by-side, 48×48 each)
+    this.load.spritesheet('drone-771-idle', 'assets/drones/771-idle.png', {
+      frameWidth: 48,
+      frameHeight: 48,
+    });
   }
 
   async create() {

@@ -207,16 +207,18 @@ export class Game extends Phaser.Scene {
     // Tabbed panel controls (right-hand vertical tabs)
     const tabX = panelX + panelWidth / 2 + tabGap + tabWidth / 2;
     const tabStartY = panelTop + tabHeight / 2 + 4;
-    const tabKeys = ["ORDERS", "SETTINGS", "CATALOG"] as const;
+    const tabKeys = ["ORDERS", "SETTINGS", "CATALOG", "DRONES"] as const;
     // Content containers for each tab
     this.ordersContainer = this.add.container(0, 0);
     const settingsContainer = this.add.container(0, 0);
     const catalogContainer = this.add.container(0, 0);
+    const droneContainer = this.add.container(0, 0);
 
     const containers = {
       ORDERS: this.ordersContainer,
       SETTINGS: settingsContainer,
       CATALOG: catalogContainer,
+      DRONES: droneContainer,
     };
 
     // Store panel geometry for order rebuilding
@@ -249,6 +251,14 @@ export class Game extends Phaser.Scene {
       items,
     );
     catalogContainer.setVisible(false);
+    this.buildDroneContent(
+      droneContainer,
+      panelX,
+      panelTop + 36,
+      panelWidth - 20,
+      panelHeight - 50,
+    );
+    droneContainer.setVisible(false);
 
     const updateTabDisplay = (label: (typeof tabKeys)[number]) => {
       panelTitle.setText(label);
@@ -1313,6 +1323,209 @@ export class Game extends Phaser.Scene {
       bonus: this.shiftBonus,
       shiftsCompleted: progression.getShiftsCompleted(),
     });
+  }
+
+  /**
+   * Builds the Drones tab: animated sprite viewer with a browse carousel
+   * (left/right arrows slide between entries) and a vertical scale slider.
+   *
+   * To add a new drone animation:
+   *  1. Load it as a spritesheet in Preloader.preload() (frameWidth / frameHeight).
+   *  2. Push a new entry into DRONE_ANIMS below.
+   */
+  private buildDroneContent(
+    container: Phaser.GameObjects.Container,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ): void {
+    // ── Animation registry ─────────────────────────────────────────────────
+    // Add entries here to extend the browser. frameRate is in frames/second.
+    const DRONE_ANIMS: Array<{ key: string; label: string; frameRate: number }> = [
+      { key: 'drone-771-idle', label: '771', frameRate: 8 },
+    ];
+
+    // Register Phaser animations (idempotent — skipped if already created).
+    for (const entry of DRONE_ANIMS) {
+      if (!this.anims.exists(entry.key)) {
+        const tex = this.textures.get(entry.key);
+        const frameCount = tex.frameTotal - 1; // frameTotal includes __BASE
+        this.anims.create({
+          key: entry.key,
+          frames: this.anims.generateFrameNumbers(entry.key, { start: 0, end: frameCount - 1 }),
+          frameRate: entry.frameRate,
+          repeat: -1,
+        });
+      }
+    }
+
+    // ── Layout ─────────────────────────────────────────────────────────────
+    const left   = x - width / 2;
+    const right  = x + width / 2;
+    const top    = y;
+    const bottom = y + height;
+
+    // Right-hand slider strip
+    const sliderStripW = 32;
+    const trackX      = right - sliderStripW / 2;
+    const trackTopY   = top    + 24;
+    const trackBotY   = bottom - 28;
+    const trackH      = trackBotY - trackTopY;
+    const thumbW = 18;
+    const thumbH = 26;
+    const minScale = 0.5;
+    const maxScale = 6;
+    let thumbT       = 0.4;  // 0 = top (largest), 1 = bottom (smallest)
+    let currentScale = maxScale - thumbT * (maxScale - minScale); // ≈ 3.3
+
+    // Display viewport (everything left of the slider)
+    const arrowAreaH = 40;
+    const displayW   = width - sliderStripW - 16;
+    const displayCX  = left + displayW / 2;
+    const displayCY  = top + (height - arrowAreaH) / 2;
+    const arrowY     = bottom - arrowAreaH / 2;
+
+    // Geometry mask — clips sprites to the display viewport during transitions
+    const maskGfx = this.add.graphics();
+    maskGfx.fillStyle(0xffffff, 1);
+    maskGfx.fillRect(left, top, displayW, height - arrowAreaH);
+    maskGfx.setVisible(false);
+    const viewportMask = maskGfx.createGeometryMask();
+
+    // ── Slider ─────────────────────────────────────────────────────────────
+    const sliderG = this.add.graphics();
+
+    const drawSlider = (t: number, dragging = false): void => {
+      sliderG.clear();
+      sliderG.lineStyle(2, Colors.BORDER_BLUE, 0.55);
+      sliderG.lineBetween(trackX, trackTopY, trackX, trackBotY);
+      // Quarter-ticks
+      for (let i = 0; i <= 4; i++) {
+        const ty = trackTopY + (trackH * i) / 4;
+        sliderG.lineStyle(1, Colors.BORDER_BLUE, 0.3);
+        sliderG.lineBetween(trackX - 5, ty, trackX + 5, ty);
+      }
+      // Thumb
+      const ty = trackTopY + t * trackH;
+      sliderG.fillStyle(dragging ? Colors.BUTTON_HOVER : Colors.PANEL_MEDIUM, 1);
+      sliderG.fillRoundedRect(trackX - thumbW / 2, ty - thumbH / 2, thumbW, thumbH, 4);
+      sliderG.lineStyle(1, dragging ? Colors.HIGHLIGHT_YELLOW : Colors.BORDER_LIGHT_BLUE, 0.9);
+      sliderG.strokeRoundedRect(trackX - thumbW / 2, ty - thumbH / 2, thumbW, thumbH, 4);
+    };
+    drawSlider(thumbT);
+    container.add(sliderG);
+
+    // Scale readout below the track
+    const scaleLbl = this.add
+      .bitmapText(trackX, trackBotY + 14, 'clicker', `x${currentScale.toFixed(1)}`, 10)
+      .setOrigin(0.5)
+      .setTint(Colors.TEXT_MUTED_BLUE);
+    container.add(scaleLbl);
+
+    // Slider state
+    let isDraggingSlider = false;
+    let currentSprite: Phaser.GameObjects.Sprite | null = null;
+
+    const applyScale = (): void => { currentSprite?.setScale(currentScale); };
+
+    const sliderZone = this.add
+      .zone(trackX, (trackTopY + trackBotY) / 2, sliderStripW + 8, trackH + thumbH)
+      .setInteractive();
+
+    sliderZone.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
+      isDraggingSlider = true;
+      thumbT       = Phaser.Math.Clamp((ptr.y - trackTopY) / trackH, 0, 1);
+      currentScale = maxScale - thumbT * (maxScale - minScale);
+      applyScale();
+      drawSlider(thumbT, true);
+      scaleLbl.setText(`x${currentScale.toFixed(1)}`);
+    });
+    this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
+      if (!isDraggingSlider) return;
+      thumbT       = Phaser.Math.Clamp((ptr.y - trackTopY) / trackH, 0, 1);
+      currentScale = maxScale - thumbT * (maxScale - minScale);
+      applyScale();
+      drawSlider(thumbT, true);
+      scaleLbl.setText(`x${currentScale.toFixed(1)}`);
+    });
+    this.input.on('pointerup', () => {
+      if (!isDraggingSlider) return;
+      isDraggingSlider = false;
+      drawSlider(thumbT);
+    });
+    container.add(sliderZone);
+
+    // ── Carousel ───────────────────────────────────────────────────────────
+    let currentIndex = 0;
+    let isTransitioning = false;
+
+    const spawnSprite = (index: number, startX: number = displayCX): Phaser.GameObjects.Sprite => {
+      const spr = this.add
+        .sprite(startX, displayCY, DRONE_ANIMS[index].key)
+        .setScale(currentScale)
+        .setMask(viewportMask);
+      spr.play(DRONE_ANIMS[index].key);
+      container.add(spr);
+      return spr;
+    };
+    currentSprite = spawnSprite(0);
+
+    // Entry name label
+    const nameLabel = this.add
+      .bitmapText(displayCX, top + 14, 'clicker', DRONE_ANIMS[0].label, 12)
+      .setOrigin(0.5)
+      .setTint(Colors.HIGHLIGHT_YELLOW);
+    container.add(nameLabel);
+
+    // Navigate slides the current sprite out and the next one in
+    const navigate = (dir: 1 | -1): void => {
+      if (isTransitioning || DRONE_ANIMS.length <= 1) return;
+      isTransitioning = true;
+      const nextIndex = (currentIndex + dir + DRONE_ANIMS.length) % DRONE_ANIMS.length;
+      const outX    = displayCX - dir * (displayW + 40);
+      const startX  = displayCX + dir * (displayW + 40);
+      const oldSprite = currentSprite!;
+      const newSprite = spawnSprite(nextIndex, startX);
+      currentSprite = newSprite;
+      currentIndex  = nextIndex;
+      nameLabel.setText(DRONE_ANIMS[nextIndex].label);
+      this.tweens.add({
+        targets: oldSprite,
+        x: outX,
+        duration: 220,
+        ease: 'Cubic.easeIn',
+        onComplete: () => oldSprite.destroy(),
+      });
+      this.tweens.add({
+        targets: newSprite,
+        x: displayCX,
+        duration: 220,
+        ease: 'Cubic.easeOut',
+        onComplete: () => { isTransitioning = false; },
+      });
+    };
+
+    // ── Arrow buttons ──────────────────────────────────────────────────────
+    const multiEntry = DRONE_ANIMS.length > 1;
+    const makeArrow = (label: string, ax: number, dir: 1 | -1): void => {
+      const bg = this.add
+        .rectangle(ax, arrowY, 44, 28, Colors.PANEL_MEDIUM, multiEntry ? 0.85 : 0.3)
+        .setStrokeStyle(1, Colors.BORDER_BLUE, multiEntry ? 0.8 : 0.25);
+      const lbl = this.add
+        .bitmapText(ax, arrowY, 'clicker', label, 14)
+        .setOrigin(0.5)
+        .setTint(multiEntry ? Colors.HIGHLIGHT_YELLOW : Colors.BORDER_BLUE);
+      if (multiEntry) {
+        bg.setInteractive();
+        bg.on('pointerdown', () => navigate(dir));
+        bg.on('pointerover', () => bg.setFillStyle(Colors.BUTTON_HOVER, 0.95));
+        bg.on('pointerout',  () => bg.setFillStyle(Colors.PANEL_MEDIUM, 0.85));
+      }
+      container.add([bg, lbl]);
+    };
+    makeArrow('<', displayCX - 52, -1);
+    makeArrow('>', displayCX + 52, 1);
   }
 
   shutdown() {

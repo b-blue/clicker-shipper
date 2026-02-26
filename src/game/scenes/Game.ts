@@ -1341,22 +1341,53 @@ export class Game extends Phaser.Scene {
     height: number,
   ): void {
     // ── Animation registry ─────────────────────────────────────────────────
-    // Add entries here to extend the browser. frameRate is in frames/second.
+    // To add more entries: load the image in Preloader.preload() with a key
+    // matching the convention "drone-{id}-{animation}", then push a new row here.
     const DRONE_ANIMS: Array<{ key: string; label: string; frameRate: number }> = [
-      { key: 'drone-771-idle', label: '771', frameRate: 8 },
+      { key: 'drone-1-death',    label: '1 · Death',     frameRate: 8  },
+      { key: 'drone-1-idle',     label: '1 · Idle',      frameRate: 8  },
+      { key: 'drone-1-scan',     label: '1 · Scan',      frameRate: 10 },
+      { key: 'drone-1-walk',     label: '1 · Walk',      frameRate: 10 },
+      { key: 'drone-1-walkscan', label: '1 · Walk+Scan', frameRate: 10 },
+      { key: 'drone-2-bomb',     label: '2 · Bomb',      frameRate: 8  },
+      { key: 'drone-2-drop',     label: '2 · Drop',      frameRate: 8  },
+      { key: 'drone-3-back',     label: '3 · Back',      frameRate: 10 },
+      { key: 'drone-3-death',    label: '3 · Death',     frameRate: 8  },
+      { key: 'drone-3-fire1',    label: '3 · Fire 1',    frameRate: 12 },
+      { key: 'drone-3-fire2',    label: '3 · Fire 2',    frameRate: 12 },
+      { key: 'drone-3-fire3',    label: '3 · Fire 3',    frameRate: 12 },
+      { key: 'drone-3-forward',  label: '3 · Forward',   frameRate: 10 },
+      { key: 'drone-3-idle',     label: '3 · Idle',      frameRate: 8  },
+      { key: 'drone-4-death',    label: '4 · Death',     frameRate: 8  },
+      { key: 'drone-4-idle',     label: '4 · Idle',      frameRate: 8  },
+      { key: 'drone-4-landing',  label: '4 · Landing',   frameRate: 8  },
+      { key: 'drone-4-walk',     label: '4 · Walk',      frameRate: 10 },
+      { key: 'drone-5-death',    label: '5 · Death',     frameRate: 8  },
+      { key: 'drone-5-idle',     label: '5 · Idle',      frameRate: 8  },
+      { key: 'drone-5-walk',     label: '5 · Walk',      frameRate: 10 },
+      { key: 'drone-5b-death',   label: '5b · Death',    frameRate: 8  },
+      { key: 'drone-5b-idle',    label: '5b · Idle',     frameRate: 8  },
+      { key: 'drone-5b-walk',    label: '5b · Walk',     frameRate: 10 },
+      { key: 'drone-6-capsule',  label: '6 · Capsule',   frameRate: 8  },
+      { key: 'drone-6-drop',     label: '6 · Drop',      frameRate: 8  },
+      { key: 'drone-6-walk',     label: '6 · Walk',      frameRate: 10 },
+      { key: 'drone-6-walk2',    label: '6 · Walk 2',    frameRate: 10 },
     ];
 
     // Register Phaser animations (idempotent — skipped if already created).
+    // Images were loaded as plain textures; slice them into numbered frames here
+    // by assuming square frames: frameWidth = textureHeight.
     for (const entry of DRONE_ANIMS) {
       if (!this.anims.exists(entry.key)) {
         const tex = this.textures.get(entry.key);
-        const frameCount = tex.frameTotal - 1; // frameTotal includes __BASE
-        this.anims.create({
-          key: entry.key,
-          frames: this.anims.generateFrameNumbers(entry.key, { start: 0, end: frameCount - 1 }),
-          frameRate: entry.frameRate,
-          repeat: -1,
-        });
+        const src = tex.source[0];
+        const frameH     = src.height;
+        const frameCount = Math.max(1, Math.floor(src.width / frameH));
+        for (let i = 0; i < frameCount; i++) {
+          if (!tex.has(String(i))) tex.add(String(i), 0, i * frameH, 0, frameH, frameH);
+        }
+        const frames = Array.from({ length: frameCount }, (_, i) => ({ key: entry.key, frame: String(i) }));
+        this.anims.create({ key: entry.key, frames, frameRate: entry.frameRate, repeat: -1 });
       }
     }
 

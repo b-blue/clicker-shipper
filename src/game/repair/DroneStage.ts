@@ -17,6 +17,7 @@ export class DroneStage {
   private droneSprite: Phaser.GameObjects.Sprite | null = null;
   private topBounds: Bounds | null = null;
   private overlays: Phaser.GameObjects.Graphics[] = [];
+  private pendingKey: string | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -30,16 +31,49 @@ export class DroneStage {
     return this.droneSprite;
   }
 
-  /** Picks a random idle drone, tweens it in from off-screen left. */
+  /**
+   * Pre-selects a random drone key so callers can read the frame size
+   * (and therefore compute the icon count) before spawn() is called.
+   */
+  pickKey(): void {
+    this.pendingKey = IDLE_KEYS[Math.floor(Math.random() * IDLE_KEYS.length)];
+  }
+
+  /**
+   * Returns the pixel height of one frame for the currently-pending key.
+   * This is the sprite's natural frame size, used to derive icon count.
+   * Falls back to a medium value (64) if no key has been picked yet.
+   */
+  iconCountForCurrentKey(): number {
+    if (!this.pendingKey) return 4;
+    this.registerAnim(this.pendingKey);
+    const tex = this.scene.textures.get(this.pendingKey);
+    const frameH = tex.source[0].height;
+    // Small sprites (≤32 px tall): 2–3 icons
+    // Medium sprites (≤64 px):     4–5 icons
+    // Large sprites  (>64 px):     6–8 icons
+    if (frameH <= 32) return 2 + Math.floor(Math.random() * 2);      // 2 or 3
+    if (frameH <= 64) return 4 + Math.floor(Math.random() * 2);      // 4 or 5
+    return 6 + Math.floor(Math.random() * 3);                         // 6, 7, or 8
+  }
+
+  /** Picks a random idle drone (or uses pendingKey), tweens it in from off-screen left. */
   spawn(container: Phaser.GameObjects.Container): void {
     if (!this.topBounds) return;
     const { cx, cy, w, h } = this.topBounds;
 
-    const key = IDLE_KEYS[Math.floor(Math.random() * IDLE_KEYS.length)];
+    const key = this.pendingKey ?? IDLE_KEYS[Math.floor(Math.random() * IDLE_KEYS.length)];
+    this.pendingKey = null;
     this.registerAnim(key);
 
-    const startX = cx - w / 2 - 80;
-    const sprite = this.scene.add.sprite(startX, cy, key).setScale(3).setDepth(5);
+    // Compute scale so the sprite fits fully within the top section
+    const tex    = this.scene.textures.get(key);
+    const frameH = tex.source[0].height;
+    const maxScale = Math.min((w * 0.6) / frameH, (h * 0.85) / frameH);
+    const scale    = Math.max(1, Math.round(maxScale));
+
+    const startX = cx - w / 2 - frameH * scale;
+    const sprite = this.scene.add.sprite(startX, cy, key).setScale(scale).setDepth(5);
     sprite.play(key);
 
     // Diagnostic wireframe: Sobel edge-detection PostFX (WebGL only)
@@ -50,10 +84,9 @@ export class DroneStage {
     container.add(sprite);
     this.droneSprite = sprite;
 
-    // Static diagnostic overlays (scan lines + corner brackets)
+    // Corner brackets only (scanlines are handled by RepairPanel)
     this.clearOverlays();
-    this.addScanlines(container, cx, cy, w, h);
-    this.addCornerBrackets(container, cx, cy);
+    this.addCornerBrackets(container, cx, cy, h);
 
     this.scene.tweens.add({ targets: sprite, x: cx, duration: 600, ease: 'Cubic.easeOut' });
   }
@@ -98,48 +131,25 @@ export class DroneStage {
   }
 
   /**
-   * Horizontal scan-line stripes over the drone stage area — CRT / diagnostic look.
-   * Drawn at very low alpha so they don't obscure the wireframe edges.
-   */
-  private addScanlines(
-    container: Phaser.GameObjects.Container,
-    cx: number, cy: number, w: number, h: number
-  ): void {
-    const g = this.scene.add.graphics();
-    g.setDepth(6);
-    const top    = cy - h / 2;
-    const left   = cx - w / 2;
-    const step   = 5;
-    g.lineStyle(1, 0x00e864, 0.07);
-    for (let y = top; y < top + h; y += step) {
-      g.lineBetween(left, y, left + w, y);
-    }
-    container.add(g);
-    this.overlays.push(g);
-  }
-
-  /**
-   * Four L-shaped corner brackets around the drone centroid — targeting-reticle
-   * motif common to diagnostic / HUD displays.
+   * Four L-shaped corner brackets around the drone centroid.
+   * Sized to tightly contain the drone sprite within the top section.
    */
   private addCornerBrackets(
     container: Phaser.GameObjects.Container,
-    cx: number, cy: number
+    cx: number, cy: number, stageH: number
   ): void {
-    const ARM  = 18;   // px per bracket arm
-    const PAD  = 48;   // half-size of the bounding box
+    const PAD  = Math.min(stageH * 0.42, 40);
+    const ARM  = Math.max(10, PAD * 0.4);
     const g    = this.scene.add.graphics();
     g.setDepth(7);
     g.lineStyle(2, 0x00e864, 0.9);
 
     const corners: Array<[number, number, number, number]> = [
-      // [cornerX, cornerY, xDir, yDir]
       [cx - PAD, cy - PAD,  1,  1],
       [cx + PAD, cy - PAD, -1,  1],
       [cx - PAD, cy + PAD,  1, -1],
       [cx + PAD, cy + PAD, -1, -1],
     ];
-
     for (const [bx, by, dx, dy] of corners) {
       g.beginPath();
       g.moveTo(bx + dx * ARM, by);
@@ -147,7 +157,6 @@ export class DroneStage {
       g.lineTo(bx, by + dy * ARM);
       g.strokePath();
     }
-
     container.add(g);
     this.overlays.push(g);
   }

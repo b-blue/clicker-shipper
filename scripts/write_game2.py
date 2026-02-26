@@ -1,4 +1,7 @@
-import { RadialDial } from "../ui/RadialDial";
+#!/usr/bin/env python3
+import os, sys
+DEST = os.path.join(os.path.dirname(__file__), '..', 'src', 'game', 'scenes', 'Game.ts')
+CONTENT = r"""import { RadialDial } from "../ui/RadialDial";
 import { DialCornerHUD } from "../ui/DialCornerHUD";
 import { GameManager } from "../managers/GameManager";
 import { SettingsManager } from "../managers/SettingsManager";
@@ -404,3 +407,7 @@ export class Game extends Phaser.Scene {
     this.orderSlots = p.build(this.ordersContainer!, this.ordersPanelX, this.ordersPanelTop + 10, this.ordersPanelWidth - 20, this.ordersPanelHeight - 20, this.currentOrder);
   }
 }
+"""
+with open(DEST, 'w') as fh:
+    fh.write(CONTENT)
+print(f"Written {len(CONTENT)} chars to {DEST}")

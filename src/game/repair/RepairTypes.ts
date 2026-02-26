@@ -11,15 +11,3 @@ export interface RepairItem {
   iconObj: Phaser.GameObjects.Image;
   frameObj: Phaser.GameObjects.Graphics;
 }
-
-/**
- * Mutable shift-timer state shared between Game and SettingsPanel.
- * Both reads and writes go through this object by reference.
- */
-export interface ShiftTimerState {
-  timerPaused: boolean;
-  timerPausedAt: number;
-  shiftStartTime: number;
-  shiftDurationMs: number;
-  shiftTimerEvent: Phaser.Time.TimerEvent | null;
-}

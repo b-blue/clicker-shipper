@@ -1,4 +1,7 @@
-import Phaser from 'phaser';
+#!/usr/bin/env python3
+import os
+DEST = os.path.join(os.path.dirname(__file__), '..', 'src', 'game', 'repair', 'ReOrientMode.ts')
+CONTENT = r"""import Phaser from 'phaser';
 import { MenuItem } from '../types/GameTypes';
 import { Colors } from '../constants/Colors';
 import { AssetLoader } from '../managers/AssetLoader';
@@ -236,3 +239,7 @@ export class ReOrientMode {
     this.currentRepairItem = null;
   }
 }
+"""
+with open(DEST, 'w') as fh:
+    fh.write(CONTENT)
+print(f"Written {len(CONTENT)} chars to {DEST}")

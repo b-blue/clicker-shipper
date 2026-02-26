@@ -1,5 +1,4 @@
 import { Boot } from './scenes/Boot';
-import { EndShift } from './scenes/EndShift';
 import { Game as MainGame } from './scenes/Game';
 import { MainMenu } from './scenes/MainMenu';
 import { DialCalibration } from './scenes/DialCalibration';
@@ -34,7 +33,6 @@ const config: Phaser.Types.Core.GameConfig = {
         Preloader,
         MainMenu,
         MainGame,
-        EndShift,
         DialCalibration,
         ItemManual
     ]

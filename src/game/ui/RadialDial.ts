@@ -40,6 +40,13 @@ export class RadialDial {
   private arcFillGraphics: Phaser.GameObjects.Graphics | null = null;
   private quantityNumeral: Phaser.GameObjects.BitmapText | null = null;
 
+  // Repair dial mode (active when repairItem is set; mutually exclusive with terminalItem)
+  private repairItem: MenuItem | null = null;
+  private repairItemRotationDeg: number = 0;
+  private repairRingDragStartAngle: number = 0;
+  private repairRingDragStartRotationDeg: number = 0;
+  private repairFillGraphics: Phaser.GameObjects.Graphics | null = null;
+
   // Tap-to-confirm properties
   private dragStartSliceIndex: number = -1; // Index of slice where tap started
   private lastNonCenterSliceIndex: number = -1;
@@ -92,6 +99,21 @@ export class RadialDial {
   }
 
   private handleMouseMove(pointer: Phaser.Input.Pointer): void {
+    // Repair dial mode: ring drag tracking
+    if (this.repairItem) {
+      if (this.isTriggerActive) {
+        const dx = pointer.x - this.dialX;
+        const dy = pointer.y - this.dialY;
+        const newAngle = Math.atan2(dy, dx);
+        let delta = newAngle - this.repairRingDragStartAngle;
+        while (delta > Math.PI)  delta -= 2 * Math.PI;
+        while (delta < -Math.PI) delta += 2 * Math.PI;
+        this.repairItemRotationDeg = this.repairRingDragStartRotationDeg + delta * (180 / Math.PI);
+        this.scene.events.emit('dial:repairRotated', { rotation: this.repairItemRotationDeg });
+        this.redrawDial();
+      }
+      return;
+    }
     // Terminal mode: only update arc fill when trigger is held
     if (this.terminalItem) {
       if (this.isTriggerActive) {
@@ -175,6 +197,18 @@ export class RadialDial {
     this.activePointerId = pointer.pointerId; // claim this gesture for this pointer
     this.pointerConsumed = false; // genuine new gesture — allow next pointerup to process
 
+    // Repair dial mode: full annular ring is the drag surface
+    if (this.repairItem) {
+      const innerRing = this.centerRadius + 8;
+      const outerRing = this.sliceRadius - 8;
+      if (distance >= innerRing && distance <= outerRing) {
+        this.isTriggerActive = true;
+        this.repairRingDragStartAngle = Math.atan2(dy, dx);
+        this.repairRingDragStartRotationDeg = this.repairItemRotationDeg;
+        this.redrawDial();
+      }
+      return;
+    }
     // Terminal mode: only the dynamic trigger button is interactive
     if (this.terminalItem) {
       const triggerAngle = this.terminalStartAngle - this.arcProgress * (5 * Math.PI / 6);
@@ -231,6 +265,33 @@ export class RadialDial {
     const endDx = endX - this.dialX;
     const endDy = endY - this.dialY;
     const endDistance = Math.sqrt(endDx * endDx + endDy * endDy);
+
+    // Repair dial mode: settle rotation on finger-up, cancel on center tap
+    if (this.repairItem) {
+      if (this.isTriggerActive) {
+        this.isTriggerActive = false;
+        let normalized = this.repairItemRotationDeg % 360;
+        if (normalized > 180) normalized -= 360;
+        if (normalized <= -180) normalized += 360;
+        this.repairItemRotationDeg = normalized;
+        const success = Math.abs(normalized) <= 10;
+        this.scene.events.emit('dial:repairSettled', { success });
+        this.redrawDial();
+        return;
+      }
+      if (endDistance < this.centerRadius) {
+        this.repairItem = null;
+        this.isTriggerActive = false;
+        if (this.repairFillGraphics) { this.repairFillGraphics.destroy(); this.repairFillGraphics = null; }
+        this.centerImage.setAngle(0);
+        if (this.glowTimer) this.glowTimer.paused = false;
+        this.updateSliceCount();
+        this.redrawDial();
+        this.scene.events.emit('dial:goBack');
+        return;
+      }
+      return;
+    }
 
     // Terminal mode: emit quantity on trigger release, or cancel on center tap
     if (this.terminalItem) {
@@ -385,7 +446,9 @@ export class RadialDial {
     const sliceAngle = (Math.PI * 2) / this.sliceCount;
     this.drawDialFrame(sliceAngle);
     this.drawCenterIndicator();
-    if (this.terminalItem) {
+    if (this.repairItem) {
+      this.drawRepairFace();
+    } else if (this.terminalItem) {
       this.drawQuantityFace();
     } else {
       this.drawAllSlices(displayItems, sliceAngle);
@@ -416,8 +479,8 @@ export class RadialDial {
     this.dialFrameGraphic.strokeCircle(this.dialX, this.dialY, frameRadius);
     this.dialFrameGraphic.lineStyle(1, Colors.BORDER_BLUE, 0.7);
     this.dialFrameGraphic.strokeCircle(this.dialX, this.dialY, this.sliceRadius * 0.6);
-    // Slice dividers are not drawn in terminal (quantity-selector) mode
-    if (!this.terminalItem) {
+    // Slice dividers are not drawn in terminal or repair mode
+    if (!this.terminalItem && !this.repairItem) {
       this.dialFrameGraphic.beginPath();
       for (let i = 0; i < this.sliceCount; i++) {
         const angle = i * sliceAngle - Math.PI / 2;
@@ -436,6 +499,21 @@ export class RadialDial {
     this.centerGraphic.fillStyle(Colors.PANEL_DARK, 0.35);
     this.centerGraphic.fillCircle(this.dialX, this.dialY, this.centerRadius - 2);
 
+    if (this.repairItem) {
+      // Repair mode: show the item icon rotated to the current repair angle
+      this.centerGraphic.lineStyle(3, Colors.NEON_BLUE, 0.9);
+      this.centerGraphic.strokeCircle(this.dialX, this.dialY, this.centerRadius);
+      const repairIconKey = this.repairItem.icon || this.repairItem.id;
+      if (AssetLoader.textureExists(this.scene, repairIconKey)) {
+        this.setCenterTexture(repairIconKey);
+        this.centerImage.setPosition(this.dialX, this.dialY);
+        this.centerImage.setAngle(this.repairItemRotationDeg);
+        this.centerImage.setVisible(true);
+      } else {
+        this.centerImage.setVisible(false);
+      }
+      return;
+    }
     if (this.terminalItem) {
       // Quantity-selector mode: show item icon and quantity numeral, no glow animation
       this.centerGraphic.lineStyle(3, Colors.LIGHT_BLUE, 0.7);
@@ -586,6 +664,58 @@ export class RadialDial {
     }
   }
 
+  /**
+   * Draw the repair-dial face: a full 360° ring with a target tick at 12 o'clock
+   * and a draggable indicator dot at the item's current rotation.
+   */
+  private drawRepairFace(): void {
+    if (this.repairFillGraphics) {
+      this.repairFillGraphics.destroy();
+      this.repairFillGraphics = null;
+    }
+    const g = this.scene.add.graphics();
+    g.setDepth(1);
+    this.repairFillGraphics = g;
+
+    const { dialX, dialY, arcRadius } = this;
+
+    // Full 360° ring track
+    g.lineStyle(8, 0x223344, 1.0);
+    g.beginPath();
+    g.arc(dialX, dialY, arcRadius, 0, Math.PI * 2, false);
+    g.strokePath();
+
+    // Target indicator tick at 12 o'clock (−π/2 in screen coords)
+    const tickAngle = -Math.PI / 2;
+    const tickInner = arcRadius - 12;
+    const tickOuter = arcRadius + 12;
+    g.lineStyle(3, Colors.HIGHLIGHT_YELLOW, 1.0);
+    g.beginPath();
+    g.moveTo(dialX + Math.cos(tickAngle) * tickInner, dialY + Math.sin(tickAngle) * tickInner);
+    g.lineTo(dialX + Math.cos(tickAngle) * tickOuter, dialY + Math.sin(tickAngle) * tickOuter);
+    g.strokePath();
+
+    // Draggable indicator dot: position on ring corresponds to current rotation.
+    // 0° (upright) maps to 12 o'clock = −π/2 in screen (y-down) coords.
+    const currentAngle = this.repairItemRotationDeg * (Math.PI / 180) - Math.PI / 2;
+    const dotX = dialX + Math.cos(currentAngle) * arcRadius;
+    const dotY = dialY + Math.sin(currentAngle) * arcRadius;
+
+    // Colour feedback: green ≤10°, yellow ≤30°, muted otherwise
+    let normDeg = this.repairItemRotationDeg % 360;
+    if (normDeg > 180) normDeg -= 360;
+    if (normDeg <= -180) normDeg += 360;
+    const absDeg = Math.abs(normDeg);
+    const dotColor = absDeg <= 10 ? 0x44ff88 : (absDeg <= 30 ? 0xffd700 : 0xaaaacc);
+
+    g.fillStyle(dotColor, this.isTriggerActive ? 1.0 : 0.8);
+    g.fillCircle(dotX, dotY, this.triggerHitRadius);
+    if (this.isTriggerActive) {
+      g.lineStyle(2, Colors.WHITE, 0.9);
+      g.strokeCircle(dotX, dotY, this.triggerHitRadius + 4);
+    }
+  }
+
   /** Render every slice: glow, pie wedge, and item icon/label. */
   private drawAllSlices(displayItems: MenuItem[], sliceAngle: number): void {
     for (let i = 0; i < this.sliceCount; i++) {
@@ -698,6 +828,10 @@ export class RadialDial {
   public reset(): void {
     this.navigationController.reset();
     this.terminalItem = null;
+    this.repairItem = null;
+    this.repairItemRotationDeg = 0;
+    if (this.repairFillGraphics) { this.repairFillGraphics.destroy(); this.repairFillGraphics = null; }
+    this.centerImage.setAngle(0);
     this.isTriggerActive = false;
     this.arcProgress = 0;
     this.currentQuantity = 1;
@@ -738,6 +872,19 @@ export class RadialDial {
     this.redrawDial();
   }
 
+  public showRepairDial(item: MenuItem, currentRotationDeg: number): void {
+    this.repairItem = item;
+    this.terminalItem = null; // mutually exclusive with quantity-selector mode
+    this.repairItemRotationDeg = currentRotationDeg;
+    this.isTriggerActive = false;
+    this.arcRadius = (this.centerRadius + this.sliceRadius) / 2;
+    this.highlightedSliceIndex = -1;
+    this.selectedItem = null;
+    if (this.glowTimer) this.glowTimer.paused = true;
+    this.updateSliceCount();
+    this.redrawDial();
+  }
+
   private updateSliceCount(): void {
     const displayItems = this.getDisplayItems();
     const itemCount = displayItems.length;
@@ -759,6 +906,7 @@ export class RadialDial {
     this.sliceGlows.forEach(g => g.destroy());
     if (this.arcFillGraphics) { this.arcFillGraphics.destroy(); this.arcFillGraphics = null; }
     if (this.quantityNumeral) { this.quantityNumeral.destroy(); this.quantityNumeral = null; }
+    if (this.repairFillGraphics) { this.repairFillGraphics.destroy(); this.repairFillGraphics = null; }
     this.dialFrameGraphic.destroy();
     this.centerGraphic.destroy();
     this.centerImage.destroy();

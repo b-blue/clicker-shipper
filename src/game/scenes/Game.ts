@@ -32,6 +32,16 @@ interface OrderSlot {
   badgeText: Phaser.GameObjects.BitmapText | null;
 }
 
+/** A single damaged component in a drone repair arrangement. */
+interface RepairItem {
+  iconKey: string;
+  startRotationDeg: number;    // initial wrong angle
+  currentRotationDeg: number;  // updated live during ring drag
+  solved: boolean;
+  iconObj: Phaser.GameObjects.Image;
+  frameObj: Phaser.GameObjects.Graphics;
+}
+
 export class Game extends Phaser.Scene {
   private radialDial: RadialDial | null = null;
   private ordersContainer: Phaser.GameObjects.Container | null = null;
@@ -62,6 +72,17 @@ export class Game extends Phaser.Scene {
   private lastTerminalItem: any = null;
   private lastTerminalSliceAngle: number = Math.PI / 2;
   private altTerminalModeActive: boolean = false;
+  // Drone repair mode
+  private activeGameMode: 'repair' | 'orders' = 'repair';
+  private droneRepairContainer: Phaser.GameObjects.Container | null = null;
+  private droneRepairItems: RepairItem[] = [];
+  private droneSprite: Phaser.GameObjects.Sprite | null = null;
+  private currentRepairItem: RepairItem | null = null;
+  private droneRepairTopBounds: { cx: number; cy: number; w: number; h: number } | null = null;
+  private droneRepairBotBounds: { cx: number; cy: number; w: number; h: number } | null = null;
+  // Shift timer pause state
+  private timerPaused: boolean = false;
+  private timerPausedAt: number = 0;
   // Catalog tabs — one scroll-offset per category in ALL_CATEGORY_IDS order.
   // Index mirrors ALL_CATEGORY_IDS: 0=resources, 1=armaments, …
   private catalogTabScrollOffsets: number[] = [];
@@ -207,15 +228,17 @@ export class Game extends Phaser.Scene {
     // Tabbed panel controls (right-hand vertical tabs)
     const tabX = panelX + panelWidth / 2 + tabGap + tabWidth / 2;
     const tabStartY = panelTop + tabHeight / 2 + 4;
-    const tabKeys = ["ORDERS", "SETTINGS", "CATALOG", "DRONES"] as const;
+    const tabKeys = ["REPAIR", "SETTINGS", "CATALOG", "DRONES"] as const;
     // Content containers for each tab
-    this.ordersContainer = this.add.container(0, 0);
+    this.ordersContainer = this.add.container(0, 0); // kept off-screen; order logic retained for future use
+    const repairContainer = this.add.container(0, 0);
     const settingsContainer = this.add.container(0, 0);
     const catalogContainer = this.add.container(0, 0);
     const droneContainer = this.add.container(0, 0);
+    this.droneRepairContainer = repairContainer;
 
     const containers = {
-      ORDERS: this.ordersContainer,
+      REPAIR: repairContainer,
       SETTINGS: settingsContainer,
       CATALOG: catalogContainer,
       DRONES: droneContainer,
@@ -227,7 +250,7 @@ export class Game extends Phaser.Scene {
     this.ordersPanelTop = panelTop;
     this.ordersPanelHeight = panelHeight;
 
-    // Generate and display current order
+    // Generate current order silently (orders backgrounded; logic retained for later refactor)
     const currentOrder = buildOrder(items);
     this.currentOrder = currentOrder;
     this.orderSlots = this.buildOrderContent(
@@ -238,8 +261,18 @@ export class Game extends Phaser.Scene {
       panelHeight - 76,
       currentOrder,
     );
+    this.ordersContainer.setVisible(false);
 
-    // Settings tab: button to launch DialCalibration scene
+    // Repair tab (default)
+    this.buildRepairContent(
+      repairContainer,
+      panelX,
+      panelTop + 36,
+      panelWidth - 20,
+      panelHeight - 50,
+    );
+
+    // Settings tab
     this.buildSettingsContent(settingsContainer, panelX, panelWidth);
     settingsContainer.setVisible(false);
     this.buildCatalogContent(
@@ -262,12 +295,14 @@ export class Game extends Phaser.Scene {
 
     const updateTabDisplay = (label: (typeof tabKeys)[number]) => {
       panelTitle.setText(label);
-      statsContainer.setVisible(label === "ORDERS");
+      statsContainer.setVisible(label === "REPAIR");
+      if (label === "REPAIR") this.activeGameMode = 'repair';
       Object.keys(containers).forEach((key) => {
         containers[key as (typeof tabKeys)[number]].setVisible(key === label);
       });
     };
-    this.switchToOrdersTab = () => updateTabDisplay("ORDERS");
+    // Orders are backgrounded — redirect switchToOrdersTab back to REPAIR
+    this.switchToOrdersTab = () => updateTabDisplay("REPAIR");
     this.switchToCatalogTab = () => updateTabDisplay("CATALOG");
 
     tabKeys.forEach((label, index) => {
@@ -342,16 +377,31 @@ export class Game extends Phaser.Scene {
     this.events.removeAllListeners("dial:levelChanged");
     this.events.removeAllListeners("dial:goBack");
     this.events.removeAllListeners("catalog:tabActivated");
+    this.events.removeAllListeners("dial:repairRotated");
+    this.events.removeAllListeners("dial:repairSettled");
 
     this.events.on("dial:itemConfirmed", (data: { item: any; sliceCenterAngle?: number }) => {
       const iconKey: string = data.item.icon || data.item.id;
+      if (this.activeGameMode === 'repair') {
+        // Repair mode: look for a matching unsolved item in the arrangement
+        const match = this.droneRepairItems.find(r => r.iconKey === iconKey && !r.solved);
+        if (!match) {
+          // No match — silently reject, return dial to navigation
+          this.radialDial?.reset();
+          return;
+        }
+        this.radialDial?.showRepairDial(data.item, match.currentRotationDeg);
+        this.currentRepairItem = match;
+        this.cornerHUD?.onItemConfirmed();
+        return;
+      }
+      // Orders mode — existing quantity-selector path
       const existingQty = this.getCurrentFulfilledQty(iconKey);
       this.lastTerminalItem = data.item;
       this.lastTerminalSliceAngle = data.sliceCenterAngle ?? Math.PI / 2;
       const angle = this.altTerminalModeActive ? Math.PI / 3 : this.lastTerminalSliceAngle;
       if (this.radialDial) this.radialDial.showTerminalDial(data.item, existingQty, angle);
       this.cornerHUD?.onItemConfirmed();
-      this.switchToOrdersTab?.();
     });
 
     this.events.on("dial:quantityConfirmed", (data: { item: any; quantity: number }) => {
@@ -365,7 +415,34 @@ export class Game extends Phaser.Scene {
       (data: { depth: number; item: any }) => this.cornerHUD?.onLevelChanged(data.depth, data.item),
     );
 
-    this.events.on("dial:goBack", () => this.cornerHUD?.onGoBack());
+    this.events.on("dial:goBack", () => {
+      this.currentRepairItem = null;
+      this.cornerHUD?.onGoBack();
+    });
+
+    this.events.on("dial:repairRotated", (data: { rotation: number }) => {
+      if (!this.currentRepairItem) return;
+      this.currentRepairItem.currentRotationDeg = data.rotation;
+      this.currentRepairItem.iconObj.setAngle(data.rotation);
+    });
+
+    this.events.on("dial:repairSettled", (data: { success: boolean }) => {
+      if (!this.currentRepairItem) return;
+      if (data.success) {
+        this.currentRepairItem.currentRotationDeg = 0;
+        this.currentRepairItem.iconObj.setAngle(0);
+        this.currentRepairItem.solved = true;
+        const { iconObj, frameObj } = this.currentRepairItem;
+        frameObj.clear();
+        frameObj.lineStyle(3, 0x44ff88, 1.0);
+        frameObj.strokeCircle(iconObj.x, iconObj.y, 28);
+      }
+      this.currentRepairItem = null;
+      this.cornerHUD?.onGoBack();
+      if (this.droneRepairItems.length > 0 && this.droneRepairItems.every(r => r.solved)) {
+        this.handleAllRepaired();
+      }
+    });
   }
 
   /** Return how many units of iconKey are currently placed in the row. */
@@ -517,7 +594,10 @@ export class Game extends Phaser.Scene {
 
   update(): void {
     if (!this.shiftArcGraphic || this.shiftDurationMs <= 0) return;
-    const elapsed = Date.now() - this.shiftStartTime;
+    // Freeze arc visually while timer is paused
+    const elapsed = this.timerPaused
+      ? (this.timerPausedAt - this.shiftStartTime)
+      : (Date.now() - this.shiftStartTime);
     const fraction = Math.min(1, elapsed / this.shiftDurationMs);
     const r = this.shiftTimerRadius;
     this.shiftArcGraphic.clear();
@@ -957,7 +1037,7 @@ export class Game extends Phaser.Scene {
 
     // Shift duration presets
     const sm = SettingsManager.getInstance();
-    const durationLabelY = resetY + 52;
+    const durationLabelY = resetY + 96;
     const durationLbl = this.add
       .bitmapText(
         panelX - btnW / 2,
@@ -1037,6 +1117,35 @@ export class Game extends Phaser.Scene {
     });
 
     container.add([btn, btnLabel, resetBtn, resetLabel, durationLbl]);
+
+    // SHIFT TIMER toggle (inserted between reset and duration presets)
+    const timerToggleY = resetY + 44;
+    const timerToggleBg = this.add.rectangle(panelX, timerToggleY, btnW, 28, Colors.PANEL_DARK, 0.9);
+    timerToggleBg.setStrokeStyle(2, Colors.BORDER_BLUE);
+    timerToggleBg.setInteractive();
+    const timerToggleLbl = this.add
+      .bitmapText(panelX, timerToggleY, 'clicker', 'SHIFT TIMER: ON', 11)
+      .setOrigin(0.5);
+    const refreshTimerToggle = () => {
+      timerToggleLbl.setText(this.timerPaused ? 'SHIFT TIMER: OFF' : 'SHIFT TIMER: ON');
+      timerToggleLbl.setTint(this.timerPaused ? Colors.MUTED_BLUE : Colors.HIGHLIGHT_YELLOW);
+    };
+    timerToggleBg.on('pointerdown', () => {
+      if (!this.timerPaused) {
+        this.timerPaused = true;
+        this.timerPausedAt = Date.now();
+        if (this.shiftTimerEvent) this.shiftTimerEvent.paused = true;
+      } else {
+        // Shift the start-time reference forward so the arc doesn't jump
+        this.shiftStartTime += Date.now() - this.timerPausedAt;
+        this.timerPaused = false;
+        if (this.shiftTimerEvent) this.shiftTimerEvent.paused = false;
+      }
+      refreshTimerToggle();
+    });
+    timerToggleBg.on('pointerover', () => timerToggleBg.setFillStyle(Colors.BUTTON_HOVER, 0.95));
+    timerToggleBg.on('pointerout',  () => timerToggleBg.setFillStyle(Colors.PANEL_DARK, 0.9));
+    container.add([timerToggleBg, timerToggleLbl]);
   }
 
   private buildOrderContent(
@@ -1557,6 +1666,179 @@ export class Game extends Phaser.Scene {
     };
     makeArrow('<', displayCX - 52, -1);
     makeArrow('>', displayCX + 52, 1);
+  }
+
+  // ── Drone Repair ──────────────────────────────────────────────────────────
+
+  /** Splits the panel area into two halves and builds the repair screen. */
+  private buildRepairContent(
+    container: Phaser.GameObjects.Container,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ): void {
+    const halfH = height / 2;
+    const topCX = x;
+    const topCY = y + halfH / 2;
+    const botCX = x;
+    const botCY = y + halfH + halfH / 2;
+
+    this.droneRepairTopBounds = { cx: topCX, cy: topCY, w: width, h: halfH };
+    this.droneRepairBotBounds = { cx: botCX, cy: botCY, w: width, h: halfH };
+
+    // Top half — drone screen
+    const topBg = this.add.rectangle(topCX, topCY, width, halfH, Colors.PANEL_DARK, 0.6);
+    topBg.setStrokeStyle(1, Colors.BORDER_BLUE, 0.45);
+
+    // Bottom half — item arrangement area
+    const botBg = this.add.rectangle(botCX, botCY, width, halfH, Colors.PANEL_DARK, 0.3);
+    botBg.setStrokeStyle(1, Colors.BORDER_BLUE, 0.2);
+
+    container.add([topBg, botBg]);
+
+    this.spawnNextDrone(container);
+    this.buildRepairArrangement(container);
+  }
+
+  /**
+   * Recursively collects leaf items (no children) from nav_resources_root.
+   * These are the only items used in drone repair arrangements.
+   */
+  private getResourceLeafItems(): any[] {
+    const allItems = GameManager.getInstance().getItems() as any[];
+    const root = allItems.find((it: any) => it.id === 'nav_resources_root');
+    if (!root) return [];
+    const leaves: any[] = [];
+    const collect = (items: any[]) => {
+      for (const item of items) {
+        if (item.children && item.children.length > 0) {
+          collect(item.children);
+        } else {
+          leaves.push(item);
+        }
+      }
+    };
+    collect(root.children ?? []);
+    return leaves;
+  }
+
+  /** Picks a random drone idle animation and tweens it in from the left. */
+  private spawnNextDrone(container: Phaser.GameObjects.Container): void {
+    if (!this.droneRepairTopBounds) return;
+    const { cx, cy, w } = this.droneRepairTopBounds;
+
+    const idleKeys = [
+      'drone-1-idle', 'drone-3-idle', 'drone-4-idle',
+      'drone-5-idle', 'drone-5b-idle',
+    ];
+    const key = idleKeys[Math.floor(Math.random() * idleKeys.length)];
+
+    // Register animation if not yet created (same logic as buildDroneContent)
+    if (!this.anims.exists(key)) {
+      const tex = this.textures.get(key);
+      const src = tex.source[0];
+      const frameH = src.height;
+      const frameCount = Math.max(1, Math.floor(src.width / frameH));
+      for (let i = 0; i < frameCount; i++) {
+        if (!tex.has(String(i))) tex.add(String(i), 0, i * frameH, 0, frameH, frameH);
+      }
+      const frames = Array.from({ length: frameCount }, (_, i) => ({ key, frame: String(i) }));
+      this.anims.create({ key, frames, frameRate: 8, repeat: -1 });
+    }
+
+    const startX = cx - w / 2 - 80;
+    const sprite = this.add.sprite(startX, cy, key).setScale(3).setDepth(5);
+    sprite.play(key);
+    container.add(sprite);
+    this.droneSprite = sprite;
+
+    this.tweens.add({ targets: sprite, x: cx, duration: 600, ease: 'Cubic.easeOut' });
+  }
+
+  /**
+   * Destroys any existing repair items and builds a fresh polygon arrangement
+   * of 2–6 random resource-type icons with randomised wrong rotations.
+   */
+  private buildRepairArrangement(container: Phaser.GameObjects.Container): void {
+    // Clean up previous items
+    for (const ri of this.droneRepairItems) {
+      ri.iconObj.destroy();
+      ri.frameObj.destroy();
+    }
+    this.droneRepairItems = [];
+
+    if (!this.droneRepairBotBounds) return;
+    const { cx, cy, w, h } = this.droneRepairBotBounds;
+
+    const pool = this.getResourceLeafItems();
+    if (pool.length === 0) return;
+
+    const n = 2 + Math.floor(Math.random() * 5); // 2-6
+    const count = Math.min(n, pool.length);
+    const chosen = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
+
+    // Guaranteed-wrong starting angles: multiples of 30° excluding 0° / ±360°
+    const rotOptions = [30, 60, 90, 120, 135, 150, 180, 210, 240, 270, 300, 330];
+    const polygonRadius = Math.min(w, h) * 0.32;
+
+    for (let i = 0; i < chosen.length; i++) {
+      const item = chosen[i];
+      const angle = -Math.PI / 2 + (i / chosen.length) * 2 * Math.PI;
+      const vx = cx + Math.cos(angle) * polygonRadius;
+      const vy = cy + Math.sin(angle) * polygonRadius;
+      const startRot = rotOptions[Math.floor(Math.random() * rotOptions.length)];
+
+      // Frame circle
+      const frameG = this.add.graphics();
+      frameG.lineStyle(2, Colors.BORDER_BLUE, 0.8);
+      frameG.strokeCircle(vx, vy, 28);
+      frameG.setDepth(4);
+      container.add(frameG);
+
+      // Icon
+      const iconKey: string = item.icon || item.id;
+      let iconObj: Phaser.GameObjects.Image;
+      if (AssetLoader.textureExists(this, iconKey)) {
+        iconObj = AssetLoader.createImage(this, vx, vy, iconKey);
+      } else {
+        iconObj = this.add.image(vx, vy, '').setVisible(false);
+      }
+      iconObj.setAngle(startRot).setScale(0.9).setDepth(5);
+      container.add(iconObj);
+
+      this.droneRepairItems.push({
+        iconKey,
+        startRotationDeg: startRot,
+        currentRotationDeg: startRot,
+        solved: false,
+        iconObj,
+        frameObj: frameG,
+      });
+    }
+  }
+
+  /** Called when every item in the current arrangement has been correctly oriented. */
+  private handleAllRepaired(): void {
+    const earned = this.droneRepairItems.length * 10;
+    this.shiftRevenue += earned;
+    this.revenueText?.setText(`Q${this.shiftRevenue}`);
+
+    if (!this.droneSprite || !this.droneRepairTopBounds) return;
+    const exitX = this.droneRepairTopBounds.cx + this.droneRepairTopBounds.w / 2 + 80;
+    this.tweens.add({
+      targets: this.droneSprite,
+      x: exitX,
+      duration: 500,
+      ease: 'Cubic.easeIn',
+      onComplete: () => { this.droneSprite?.destroy(); this.droneSprite = null; },
+    });
+
+    this.time.delayedCall(700, () => {
+      if (!this.droneRepairContainer) return;
+      this.buildRepairArrangement(this.droneRepairContainer);
+      this.spawnNextDrone(this.droneRepairContainer);
+    });
   }
 
   shutdown() {

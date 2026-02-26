@@ -81,6 +81,7 @@ const createMockScene = (): MockScene => {
           setPosition: jest.fn(function () { return this; }),
           setTint: jest.fn(function () { return this; }),
           setAlpha: jest.fn(function () { return this; }),
+          setAngle: jest.fn(function () { return this; }),
           destroy: jest.fn(),
         };
         images.push(image);

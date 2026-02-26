@@ -1,0 +1,71 @@
+{
+  "actions": [
+    {
+      "id": "action_reorient",
+      "name": "RE-ORIENT",
+      "icon": "skill-gear",
+      "terminalMode": "reorient",
+      "enabled": true,
+      "itemSource": "nav_resources_root",
+      "layers": [
+        { "texture": "skill-gear", "depth": 3 },
+        { "texture": "frame",      "depth": 2 }
+      ]
+    },
+    {
+      "id": "action_replace",
+      "name": "REPLACE",
+      "icon": "skill-blocked",
+      "terminalMode": "replace",
+      "enabled": false,
+      "layers": [
+        { "texture": "skill-blocked", "depth": 3 },
+        { "texture": "frame",         "depth": 2 }
+      ]
+    },
+    {
+      "id": "action_rewire",
+      "name": "RE-WIRE",
+      "icon": "skill-blocked",
+      "terminalMode": "rewire",
+      "enabled": false,
+      "layers": [
+        { "texture": "skill-blocked", "depth": 3 },
+        { "texture": "frame",         "depth": 2 }
+      ]
+    },
+    {
+      "id": "action_rebuild",
+      "name": "REBUILD",
+      "icon": "skill-blocked",
+      "terminalMode": "rebuild",
+      "enabled": false,
+      "layers": [
+        { "texture": "skill-blocked", "depth": 3 },
+        { "texture": "frame",         "depth": 2 }
+      ]
+    },
+    {
+      "id": "action_refuel",
+      "name": "REFUEL",
+      "icon": "skill-blocked",
+      "terminalMode": "refuel",
+      "enabled": false,
+      "layers": [
+        { "texture": "skill-blocked", "depth": 3 },
+        { "texture": "frame",         "depth": 2 }
+      ]
+    },
+    {
+      "id": "action_recharge",
+      "name": "RECHARGE",
+      "icon": "skill-blocked",
+      "terminalMode": "recharge",
+      "enabled": false,
+      "layers": [
+        { "texture": "skill-blocked", "depth": 3 },
+        { "texture": "frame",         "depth": 2 }
+      ]
+    }
+  ]
+}

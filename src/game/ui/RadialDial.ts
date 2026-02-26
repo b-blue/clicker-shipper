@@ -819,6 +819,16 @@ export class RadialDial {
     }
   }
 
+  /** Returns the current navigation depth (0 = root). */
+  public getDepth(): number {
+    return this.navigationController.getDepth();
+  }
+
+  /** Returns the navigation path as an array of node ids from root to current. */
+  public getNavigationPath(): string[] {
+    return this.navigationController.getPath();
+  }
+
   public reset(): void {
     this.navigationController.reset();
     this.terminalItem = null;

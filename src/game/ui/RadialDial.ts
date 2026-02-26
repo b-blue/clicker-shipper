@@ -43,6 +43,8 @@ export class RadialDial {
   // Repair dial mode (active when repairItem is set; mutually exclusive with terminalItem)
   private repairItem: MenuItem | null = null;
   private repairItemRotationDeg: number = 0;
+  private repairTargetDeg: number = 0;           // randomized success angle
+  private repairNavMode: boolean = false;         // bypasses progression locks for resource nav
   private repairRingDragStartAngle: number = 0;
   private repairRingDragStartRotationDeg: number = 0;
   private repairFillGraphics: Phaser.GameObjects.Graphics | null = null;
@@ -337,7 +339,7 @@ export class RadialDial {
       if (confirmedSliceIndex < displayItems.length) {
         const confirmedItem = displayItems[confirmedSliceIndex];
 
-        if (this.isLockedNavItem(confirmedItem)) {
+        if (!this.repairNavMode && this.isLockedNavItem(confirmedItem)) {
           this.selectedItem = null;
           this.highlightedSliceIndex = -1;
           this.redrawDial();
@@ -414,6 +416,8 @@ export class RadialDial {
 
   private getDisplayItems(): MenuItem[] {
     const items = this.navigationController.getCurrentItems();
+    // Repair nav mode: all items always visible regardless of progression
+    if (this.repairNavMode) return items;
     // At A-level, locked placeholder slots are already in the items list (built in Game.ts)
     if (this.navigationController.getDepth() < 1) {
       return items;
@@ -685,23 +689,13 @@ export class RadialDial {
     g.arc(dialX, dialY, arcRadius, 0, Math.PI * 2, false);
     g.strokePath();
 
-    // Target indicator tick at 12 o'clock (−π/2 in screen coords)
-    const tickAngle = -Math.PI / 2;
-    const tickInner = arcRadius - 12;
-    const tickOuter = arcRadius + 12;
-    g.lineStyle(3, Colors.HIGHLIGHT_YELLOW, 1.0);
-    g.beginPath();
-    g.moveTo(dialX + Math.cos(tickAngle) * tickInner, dialY + Math.sin(tickAngle) * tickInner);
-    g.lineTo(dialX + Math.cos(tickAngle) * tickOuter, dialY + Math.sin(tickAngle) * tickOuter);
-    g.strokePath();
-
-    // Draggable indicator dot: position on ring corresponds to current rotation.
-    // 0° (upright) maps to 12 o'clock = −π/2 in screen (y-down) coords.
-    const currentAngle = this.repairItemRotationDeg * (Math.PI / 180) - Math.PI / 2;
+    // Draggable indicator dot: ring position is offset by repairTargetDeg so the
+    // green zone appears at a randomized spot. Success is always icon = 0° (upright).
+    const currentAngle = (this.repairItemRotationDeg + this.repairTargetDeg) * (Math.PI / 180) - Math.PI / 2;
     const dotX = dialX + Math.cos(currentAngle) * arcRadius;
     const dotY = dialY + Math.sin(currentAngle) * arcRadius;
 
-    // Colour feedback: green ≤10°, yellow ≤30°, muted otherwise
+    // Colour feedback: green ≤10° from upright (0°), yellow ≤30°, muted otherwise
     let normDeg = this.repairItemRotationDeg % 360;
     if (normDeg > 180) normDeg -= 360;
     if (normDeg <= -180) normDeg += 360;
@@ -830,6 +824,7 @@ export class RadialDial {
     this.terminalItem = null;
     this.repairItem = null;
     this.repairItemRotationDeg = 0;
+    this.repairTargetDeg = 0;
     if (this.repairFillGraphics) { this.repairFillGraphics.destroy(); this.repairFillGraphics = null; }
     this.centerImage.setAngle(0);
     this.isTriggerActive = false;
@@ -872,10 +867,16 @@ export class RadialDial {
     this.redrawDial();
   }
 
-  public showRepairDial(item: MenuItem, currentRotationDeg: number): void {
+  /** Enable/disable repair-nav mode — bypasses progression locks on all nav sub-levels. */
+  public setRepairNavMode(enabled: boolean): void {
+    this.repairNavMode = enabled;
+  }
+
+  public showRepairDial(item: MenuItem, currentRotationDeg: number, targetRotationDeg: number): void {
     this.repairItem = item;
     this.terminalItem = null; // mutually exclusive with quantity-selector mode
     this.repairItemRotationDeg = currentRotationDeg;
+    this.repairTargetDeg = targetRotationDeg;
     this.isTriggerActive = false;
     this.arcRadius = (this.centerRadius + this.sliceRadius) / 2;
     this.highlightedSliceIndex = -1;

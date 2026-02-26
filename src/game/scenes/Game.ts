@@ -36,6 +36,7 @@ interface OrderSlot {
 interface RepairItem {
   iconKey: string;
   startRotationDeg: number;    // initial wrong angle
+  targetRotationDeg: number;   // randomized target — turning green here = success
   currentRotationDeg: number;  // updated live during ring drag
   solved: boolean;
   iconObj: Phaser.GameObjects.Image;
@@ -297,6 +298,7 @@ export class Game extends Phaser.Scene {
       panelTitle.setText(label);
       statsContainer.setVisible(label === "REPAIR");
       if (label === "REPAIR") this.activeGameMode = 'repair';
+      this.radialDial?.setRepairNavMode(label === 'REPAIR');
       Object.keys(containers).forEach((key) => {
         containers[key as (typeof tabKeys)[number]].setVisible(key === label);
       });
@@ -355,6 +357,7 @@ export class Game extends Phaser.Scene {
     }
 
     this.radialDial = new RadialDial(this, dialX, dialY, dialRootItems);
+    this.radialDial.setRepairNavMode(true); // REPAIR is the default active tab
     this.cornerHUD = new DialCornerHUD(this, dialX, dialY, dialRadius, {
       openCatalog: (id) => { this.openCatalogToCategory(id); },
       closeCatalog: () => this.switchToOrdersTab?.(),
@@ -390,7 +393,7 @@ export class Game extends Phaser.Scene {
           this.radialDial?.reset();
           return;
         }
-        this.radialDial?.showRepairDial(data.item, match.currentRotationDeg);
+        this.radialDial?.showRepairDial(data.item, match.currentRotationDeg, match.targetRotationDeg);
         this.currentRepairItem = match;
         this.cornerHUD?.onItemConfirmed();
         return;
@@ -1788,6 +1791,9 @@ export class Game extends Phaser.Scene {
       const vx = cx + Math.cos(angle) * polygonRadius;
       const vy = cy + Math.sin(angle) * polygonRadius;
       const startRot = rotOptions[Math.floor(Math.random() * rotOptions.length)];
+      // Pick a target distinct from startRot so the item starts in the wrong position
+      let targetRot = rotOptions[Math.floor(Math.random() * rotOptions.length)];
+      while (targetRot === startRot) targetRot = rotOptions[Math.floor(Math.random() * rotOptions.length)];
 
       // Frame circle
       const frameG = this.add.graphics();
@@ -1810,6 +1816,7 @@ export class Game extends Phaser.Scene {
       this.droneRepairItems.push({
         iconKey,
         startRotationDeg: startRot,
+        targetRotationDeg: targetRot,
         currentRotationDeg: startRot,
         solved: false,
         iconObj,

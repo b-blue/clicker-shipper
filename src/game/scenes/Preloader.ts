@@ -1,6 +1,7 @@
 import { GameManager } from '../managers/GameManager';
 import { SettingsManager } from '../managers/SettingsManager';
 import { AssetLoader } from '../managers/AssetLoader';
+import { DiagnosticFXPipeline, DIAGNOSTIC_FX } from '../fx/DiagnosticFXPipeline';
 
 export class Preloader extends Phaser.Scene {
   constructor() {
@@ -56,6 +57,14 @@ export class Preloader extends Phaser.Scene {
 
   async create() {
     try {
+      // Register diagnostic wireframe PostFX pipeline (WebGL only — no-op in Canvas)
+      if (this.game.renderer.type === Phaser.WEBGL) {
+        const r = this.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer;
+        if (!r.pipelines.has(DIAGNOSTIC_FX)) {
+          r.pipelines.addPostPipeline(DIAGNOSTIC_FX, DiagnosticFXPipeline);
+        }
+      }
+
       // Initialize GameManager with loaded data
       const gameManager = GameManager.getInstance();
       await gameManager.initialize(this, 'data/config.json', 'data/items.json');

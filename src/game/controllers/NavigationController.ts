@@ -118,6 +118,6 @@ export class NavigationController {
    * @returns Scale multiplier for rendering at current depth
    */
   getScaleForDepth(): number {
-    return 1.4;
+    return 2.1;
   }
 }

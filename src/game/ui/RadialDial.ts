@@ -78,7 +78,7 @@ export class RadialDial {
     this.dialFrameGraphic = scene.add.graphics();
     this.dialFrameGraphic.setDepth(-2);
     this.centerGraphic = scene.add.graphics();
-    this.centerImage = scene.add.image(x, y, '').setScale(1.2).setOrigin(0.5);
+    this.centerImage = scene.add.image(x, y, '').setScale(1.8).setOrigin(0.5);
     this.centerImage.setDepth(10);
     
     // Create invisible zone for input detection

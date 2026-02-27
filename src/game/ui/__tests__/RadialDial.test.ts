@@ -199,7 +199,7 @@ describe('RadialDial drag-to-center selection', () => {
     expect(scene.events.emit).toHaveBeenCalledWith('dial:itemConfirmed', expect.anything());
   });
 
-  it('doubles center icon scale to 1.2', () => {
+  it('sets center icon scale to 1.8', () => {
     const scene = createMockScene();
     const items = createMockItems();
 

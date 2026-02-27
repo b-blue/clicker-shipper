@@ -366,38 +366,38 @@ describe('NavigationController', () => {
   });
 
   describe('getScaleForDepth', () => {
-    it('should return 1.4 at depth 0', () => {
-      expect(controller.getScaleForDepth()).toBe(1.4);
+    it('should return 2.1 at depth 0', () => {
+      expect(controller.getScaleForDepth()).toBe(2.1);
     });
 
-    it('should return 1.4 at depth 1', () => {
+    it('should return 2.1 at depth 1', () => {
       const item1 = rootItems[0];
       controller.drillDown(item1);
 
-      expect(controller.getScaleForDepth()).toBe(1.4);
+      expect(controller.getScaleForDepth()).toBe(2.1);
     });
 
-    it('should return 1.4 at depth 2', () => {
+    it('should return 2.1 at depth 2', () => {
       const item1 = rootItems[0];
       const item1_1 = item1.children![0];
 
       controller.drillDown(item1);
       controller.drillDown(item1_1);
 
-      expect(controller.getScaleForDepth()).toBe(1.4);
+      expect(controller.getScaleForDepth()).toBe(2.1);
     });
 
     it('should remain constant for each depth level', () => {
       const item1 = rootItems[0];
       const item1_1 = item1.children![0];
 
-      expect(controller.getScaleForDepth()).toBe(1.4);
+      expect(controller.getScaleForDepth()).toBe(2.1);
 
       controller.drillDown(item1);
-      expect(controller.getScaleForDepth()).toBe(1.4);
+      expect(controller.getScaleForDepth()).toBe(2.1);
 
       controller.drillDown(item1_1);
-      expect(controller.getScaleForDepth()).toBe(1.4);
+      expect(controller.getScaleForDepth()).toBe(2.1);
     });
 
     it('should not go below 0.6', () => {
@@ -430,7 +430,7 @@ describe('NavigationController', () => {
       }
 
       const scale = deepController.getScaleForDepth();
-      expect(scale).toBe(1.4);
+      expect(scale).toBe(2.1);
     });
   });
 

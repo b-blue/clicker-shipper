@@ -50,9 +50,24 @@ export class RepairPanel {
     const botCX = x;
     const botCY = y + topH + botH / 2;
 
-    // Pass bounds to sub-systems
+    // Bezel geometry — declared early so setBotBounds can use inner content area.
+    const B    = 14;   // top / bottom bar height (extends beyond the screen rect)
+    const sW   = 30;   // side bar width — 22 px overlap each side hides display edges
+    const ext  = 8;    // how far bezel protrudes beyond the screen rect left/right
+    const rail = 14;   // mid-rail height
+
+    // Pass bounds to sub-systems.
+    // reOrientMode receives the *inner* content area — inset past the side bars
+    // (sW − ext = 22 px each side) and the mid-rail overlap (rail/2 = 7 px at top).
+    const sideInset = sW - ext;     // 22 px each side
+    const topInset  = rail / 2;     //  7 px at top (half the mid-rail)
     this.droneStage.setTopBounds({ cx: topCX, cy: topCY, w: width, h: topH });
-    this.reOrientMode.setBotBounds({ cx: botCX, cy: botCY, w: width, h: botH });
+    this.reOrientMode.setBotBounds({
+      cx: botCX,
+      cy: botCY + topInset / 2,
+      w:  width - 2 * sideInset,
+      h:  botH  - topInset,
+    });
 
     // ── Top: dark fallback fill (visible when BG textures are missing) ────
     const topBg = this.scene.add.rectangle(topCX, topCY, width, topH, Colors.PANEL_DARK, 0.85);
@@ -107,11 +122,6 @@ export class RepairPanel {
     const right  = topLeft + width;
     const bottom = topTop  + height;
     const divY   = topTop  + topH;
-
-    const B    = 14;   // top / bottom bar height (extends beyond the screen rect)
-    const sW   = 30;   // side bar width — 22 px overlap each side hides display edges
-    const ext  = 8;    // how far bezel protrudes beyond the screen rect left/right
-    const rail = 14;   // mid-rail height
 
     const bL  = topLeft - ext;           // left edge of bezel
     const bR  = right   + ext;           // right edge of bezel

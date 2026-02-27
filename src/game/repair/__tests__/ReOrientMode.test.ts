@@ -30,14 +30,15 @@ jest.mock('../../managers/AssetLoader', () => ({
 }));
 
 import { ReOrientMode } from '../ReOrientMode';
+import { DroneWireframe } from '../DroneWireframe';
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
-// ── getPipelineInstance (static) ───────────────────────────────────────────
+// ── getPipelineInstance (static, now on DroneWireframe) ───────────────────
 
-describe('ReOrientMode.getPipelineInstance', () => {
+describe('DroneWireframe.getPipelineInstance', () => {
   const get = (sprite: any) =>
-    (ReOrientMode as any).getPipelineInstance(sprite, 'DiagnosticFX');
+    (DroneWireframe as any).getPipelineInstance(sprite, 'DiagnosticFX');
 
   it('returns null when getPostPipeline is not available', () => {
     expect(get({})).toBeNull();
@@ -112,8 +113,9 @@ describe('ReOrientMode.buildArrangement — wireframe pendingEdgeColor', () => {
     const spriteMock = {
       pendingEdgeColor: null as any,
       setPostPipeline: jest.fn(function (this: any) {
-        // Simulate what Phaser does: create a pipeline instance and store it
-        this._pipe = { pendingEdgeColor: null };
+        // Simulate what Phaser does: create a pipeline instance and store it.
+        // Include set3f + uniforms so getPipelineInstance's guard passes.
+        this._pipe = { pendingEdgeColor: null, set3f: jest.fn(), uniforms: {} };
       }),
       getPostPipeline: jest.fn(function (this: any) {
         return this._pipe ?? null;
@@ -121,6 +123,7 @@ describe('ReOrientMode.buildArrangement — wireframe pendingEdgeColor', () => {
       setDisplaySize: jest.fn().mockReturnThis(),
       setDepth: jest.fn().mockReturnThis(),
       setAlpha: jest.fn().mockReturnThis(),
+      setMask: jest.fn().mockReturnThis(),
       play: jest.fn().mockReturnThis(),
       _pipe: null as any,
     };
@@ -143,6 +146,7 @@ describe('ReOrientMode.buildArrangement — wireframe pendingEdgeColor', () => {
           moveTo: jest.fn().mockReturnThis(),
           lineTo: jest.fn().mockReturnThis(),
           strokePath: jest.fn().mockReturnThis(),
+          createGeometryMask: jest.fn().mockReturnValue({}),
           destroy: jest.fn(),
         }),
         image: jest.fn().mockReturnValue({
@@ -183,6 +187,15 @@ describe('ReOrientMode.buildArrangement — wireframe pendingEdgeColor', () => {
         on: jest.fn(),
         off: jest.fn(),
         once: jest.fn(),
+      },
+      make: {
+        graphics: jest.fn().mockReturnValue({
+          clear: jest.fn().mockReturnThis(),
+          fillStyle: jest.fn().mockReturnThis(),
+          fillRect: jest.fn().mockReturnThis(),
+          createGeometryMask: jest.fn().mockReturnValue({}),
+          destroy: jest.fn(),
+        }),
       },
     };
 

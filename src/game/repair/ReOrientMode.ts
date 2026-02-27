@@ -3,6 +3,7 @@ import { MenuItem } from '../types/GameTypes';
 import { Colors } from '../constants/Colors';
 import { AssetLoader } from '../managers/AssetLoader';
 import { RepairItem } from './RepairTypes';
+import { DroneWireframe } from './DroneWireframe';
 
 type Bounds = { cx: number; cy: number; w: number; h: number };
 
@@ -35,8 +36,8 @@ export class ReOrientMode {
   /** Container saved from buildArrangement — needed to add the repaired label. */
   private lastContainer: Phaser.GameObjects.Container | null = null;
   private repairedLabel: Phaser.GameObjects.BitmapText | null = null;
-  /** Wireframe (DiagnosticFX) drone sprite rendered behind the icon grid. */
-  private wireframeSprite: Phaser.GameObjects.Sprite | null = null;
+  /** Wireframe sprite shown in the diagnostic panel, managed by DroneWireframe. */
+  private wireframe: DroneWireframe | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -99,7 +100,7 @@ export class ReOrientMode {
       const { iconObj, frameObj } = this.currentRepairItem;
       frameObj.clear();
       frameObj.lineStyle(3, 0x44ff88, 1.0);
-      frameObj.strokeCircle(iconObj.x, iconObj.y, 28);
+      frameObj.strokeCircle(iconObj.x, iconObj.y, Math.round(iconObj.displayWidth / 2) + 2);
     }
     this.currentRepairItem = null;
     cornerHUD?.onGoBack();
@@ -139,7 +140,7 @@ export class ReOrientMode {
     const cellSize = Math.min(
       Math.floor((w - 20) / cols),
       Math.floor((h - 24) / rows),
-      52,      // cap so icons don't get enormous on wide panels
+      104,     // cap so icons don't get enormous on wide panels
     );
     const iconSize = Math.round(cellSize * 0.88);
     const GAP = 12;  // extra px between icon centres
@@ -152,22 +153,9 @@ export class ReOrientMode {
 
     // ── Wireframe drone — added FIRST so it renders behind all items ────────
     if (droneKey && this.scene.textures.exists(droneKey)) {
-      // Scale to near-fill the bottom panel: cap to 92% of each dimension
-      const dispSize = Math.round(Math.min(w * 0.92, h * 0.92));
-      const wf = this.scene.add.sprite(cx, cy, droneKey);
-      wf.setDisplaySize(dispSize, dispSize).setDepth(1).setAlpha(0);
-      if (typeof (wf as any).setPostPipeline === 'function') {
-        (wf as any).setPostPipeline('DiagnosticFX');
-        // Set pendingEdgeColor on the raw instance now — onBoot() reads it
-        // when the pipeline first draws, before this.uniforms exists.
-        const rawPipe = (wf as any).getPostPipeline?.('DiagnosticFX');
-        const inst = Array.isArray(rawPipe) ? rawPipe[0] : rawPipe;
-        if (inst) inst.pendingEdgeColor = [0.28, 0.40, 0.32];
-      }
-      // Animate to match the live drone at the top
-      if (this.scene.anims.exists(droneKey)) wf.play(droneKey);
-      container.add(wf);
-      this.wireframeSprite = wf;
+      this.wireframe = new DroneWireframe(
+        this.scene, container, cx, cy, w, h, droneKey,
+      );
     }
 
     for (let i = 0; i < chosen.length; i++) {
@@ -208,7 +196,7 @@ export class ReOrientMode {
       container.add(iconObj);
 
       // Action badge: small circle in the bottom-right corner showing the repair action icon
-      const badgeR  = 7;
+      const badgeR  = Math.round(r * 0.28);  // scales with icon size
       const badgeCx = vx + r * 0.62;
       const badgeCy = vy + r * 0.62;
       const badgeBg = this.scene.add.graphics();
@@ -253,16 +241,9 @@ export class ReOrientMode {
    * Brackets follow once all icons are visible.
    */
   materialize(): void {
-    // Wireframe drone fades in first (or simultaneously with items)
-    if (this.wireframeSprite) {
-      this.scene.tweens.add({
-        targets: this.wireframeSprite,
-        alpha: { from: 0, to: 0.35 },
-        duration: FADE_DUR,
-        delay: 0,
-        ease: 'Sine.easeOut',
-      });
-    }
+    // Wireframe: swipe-down reveal + animation start, both in sync with the
+    // live drone (frame 0 at the same game tick).
+    this.wireframe?.reveal();
     const targets = this.repairItems.flatMap(ri => [ri.bgObj, ri.frameObj, ri.iconObj, ri.badgeBg, ri.badgeIcon]);
     targets.forEach((obj, i) => {
       this.scene.tweens.add({
@@ -296,7 +277,7 @@ export class ReOrientMode {
     const allObjs: Phaser.GameObjects.GameObject[] = [
       ...this.bracketGraphics,
       ...this.repairItems.flatMap(ri => [ri.bgObj, ri.frameObj, ri.iconObj, ri.badgeBg, ri.badgeIcon]),
-      ...(this.wireframeSprite ? [this.wireframeSprite] : []),
+      ...(this.wireframe?.sprite ? [this.wireframe.sprite] : []),
     ].reverse();
 
     allObjs.forEach((obj, i) => {
@@ -389,29 +370,12 @@ export class ReOrientMode {
     }
     for (const g of this.bracketGraphics) g.destroy();
     this.repairedLabel?.destroy();
-    this.wireframeSprite?.destroy();
-    this.repairItems      = [];
-    this.bracketGraphics  = [];
-    this.repairedLabel    = null;
-    this.wireframeSprite  = null;
+    this.wireframe?.destroy();
+    this.repairItems       = [];
+    this.bracketGraphics   = [];
+    this.repairedLabel     = null;
+    this.wireframe         = null;
     this.currentRepairItem = null;
   }
 
-  /**
-   * Phaser 3.60+ getPostPipeline() can return an array; this helper always
-   * returns the single pipeline instance (or null if not found / not yet booted).
-   * Guards on `instance.uniforms` being populated — set3f crashes if called
-   * before onBoot() fires on first draw.
-   */
-  private static getPipelineInstance(
-    sprite: Phaser.GameObjects.Sprite,
-    name: string,
-  ): any {
-    const raw = (sprite as any).getPostPipeline?.(name);
-    if (!raw) return null;
-    const instance = Array.isArray(raw) ? raw[0] : raw;
-    // uniforms is only populated after onBoot — guard before calling set3f
-    return (instance && typeof instance.set3f === 'function' && instance.uniforms)
-      ? instance : null;
-  }
 }

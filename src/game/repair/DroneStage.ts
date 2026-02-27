@@ -66,8 +66,14 @@ export class DroneStage {
 
   /** Picks a random idle drone (or uses pendingKey), tweens it in from off-screen left.
    *  Fires onArrived (if provided) once the tween completes.
+   *  Pass a GeometryMask to clip the sprite to the top-area viewport so the drone
+   *  never bleeds outside the repair panel during its enter/exit tweens.
    */
-  spawn(container: Phaser.GameObjects.Container, onArrived?: () => void): void {
+  spawn(
+    container: Phaser.GameObjects.Container,
+    onArrived?: () => void,
+    mask?: Phaser.Display.Masks.GeometryMask,
+  ): void {
     if (!this.topBounds) return;
     const { cx, cy, w, h } = this.topBounds;
 
@@ -84,6 +90,7 @@ export class DroneStage {
 
     const startX = cx - w / 2 - frameH * scale;
     const sprite = this.scene.add.sprite(startX, cy, key).setScale(scale).setDepth(5);
+    if (mask) sprite.setMask(mask);
     sprite.play(key);
 
     container.add(sprite);

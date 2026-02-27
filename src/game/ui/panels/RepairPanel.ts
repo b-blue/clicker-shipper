@@ -2,11 +2,15 @@ import Phaser from 'phaser';
 import { Colors } from '../../constants/Colors';
 import { DroneStage } from '../../repair/DroneStage';
 import { ReOrientMode } from '../../repair/ReOrientMode';
+import { ParallaxBackground } from '../ParallaxBackground';
 
 /**
  * Builds the REPAIR tab visual structure:
- * - Top 2/5:  drone stage  (clean, no scanlines — drone always fully contained here)
+ * - Top 2/5:  drone stage  — parallax scrolling background + drone sprite
  * - Bottom 3/5: diagnostic panel (scanlines, corner brackets, icon grid via ReOrientMode)
+ *
+ * A random background variant (1 of 16: sets 1–8 × Day/Night) is selected once when
+ * the scene is created and scrolls continuously behind the drone.
  *
  * NOTE: buildArrangement() is NOT called here; it is called from Game.populateRepairPools
  * after the item pool has been assigned and a drone key has been pre-selected.
@@ -16,6 +20,8 @@ export class RepairPanel {
   private droneStage: DroneStage;
   private reOrientMode: ReOrientMode;
   private scanG: Phaser.GameObjects.Graphics | null = null;
+  private bgMaskGfx: Phaser.GameObjects.Graphics | null = null;
+  private bg: ParallaxBackground | null = null;
   private scanOffset: number = 0;
   private scanLeft: number = 0;
   private scanTop: number = 0;
@@ -39,6 +45,8 @@ export class RepairPanel {
     const botH  = height * 3 / 5;
     const topCX = x;
     const topCY = y + topH / 2;
+    const topLeft = x - width / 2;
+    const topTop  = y;         // topCY - topH/2
     const botCX = x;
     const botCY = y + topH + botH / 2;
 
@@ -46,9 +54,31 @@ export class RepairPanel {
     this.droneStage.setTopBounds({ cx: topCX, cy: topCY, w: width, h: topH });
     this.reOrientMode.setBotBounds({ cx: botCX, cy: botCY, w: width, h: botH });
 
-    // ── Top: clean dark stage for drone ──────────────────────────────────
-    const topBg = this.scene.add.rectangle(topCX, topCY, width, topH, Colors.PANEL_DARK, 0.7);
+    // ── Top: dark fallback fill (visible when BG textures are missing) ────
+    const topBg = this.scene.add.rectangle(topCX, topCY, width, topH, Colors.PANEL_DARK, 0.85);
     topBg.setStrokeStyle(1, Colors.BORDER_BLUE, 0.5);
+    container.add(topBg);
+
+    // ── Top: parallax background ──────────────────────────────────────────
+    // Pick one of the 16 variants randomly at scene-create time.
+    const choice = Math.floor(Math.random() * 16);
+    const setNum = (choice % 8) + 1;
+    const tod: 'day' | 'night' = choice < 8 ? 'day' : 'night';
+
+    // Geometry mask to clip tiles to the top area.
+    const maskGfx = this.scene.add.graphics();
+    maskGfx.fillStyle(0xffffff, 1);
+    maskGfx.fillRect(topLeft, topTop, width, topH);
+    maskGfx.setVisible(false);
+    this.bgMaskGfx = maskGfx;
+    const bgMask = maskGfx.createGeometryMask();
+
+    const bg = new ParallaxBackground(this.scene, topLeft, topTop, width, topH, setNum, tod);
+    this.bg = bg;
+    for (const tile of bg.tiles) {
+      tile.setMask(bgMask);
+      container.add(tile);          // behind botBg, scanlines, divider, and drone
+    }
 
     // ── Bottom: diagnostic panel ──────────────────────────────────────────
     const botBg = this.scene.add.rectangle(botCX, botCY, width, botH, Colors.PANEL_DARK, 0.4);
@@ -61,31 +91,138 @@ export class RepairPanel {
     this.scanBotH  = botH;
 
     const scanG = this.scene.add.graphics();
-    scanG.setDepth(2);
     this.scanG = scanG;
     this.drawScanlines();
 
-    container.add([topBg, botBg, scanG]);
+    container.add([botBg, scanG]);
     this.scene.events.on('update', this.onUpdate, this);
 
-    // Dividing line between top and bottom sections
-    const divG = this.scene.add.graphics();
-    divG.setDepth(3);
-    divG.lineStyle(1, Colors.BORDER_BLUE, 0.6);
-    divG.lineBetween(topCX - width / 2 + 4, topCY + topH / 2, topCX + width / 2 - 4, topCY + topH / 2);
-    container.add(divG);
+    // Spawn the drone — apply the viewport mask so the sprite is clipped to the
+    // top area during enter/exit tweens, preventing bleed onto tabs and other UI.
+    this.droneStage.spawn(container, () => this.reOrientMode.materialize(), bgMask);
 
-    // Spawn the drone; once it arrives materialize the icon grid
-    this.droneStage.spawn(container, () => this.reOrientMode.materialize());
+    // ── Bezel — solid chunky frame laid over the entire repair screen ────────
+    // Drawn last so it always renders above drone, BG tiles and scanlines.
+    // Five filled pieces: top bar · bottom bar · left side · right side · mid rail.
+    const right  = topLeft + width;
+    const bottom = topTop  + height;
+    const divY   = topTop  + topH;
+
+    const B    = 14;   // top / bottom bar height (extends beyond the screen rect)
+    const sW   = 18;   // side bar width — wide enough to visibly frame the display
+    const ext  = 4;    // how far bezel protrudes beyond the screen rect left/right
+    const rail = 14;   // mid-rail height
+
+    const bL  = topLeft - ext;           // left edge of bezel
+    const bR  = right   + ext;           // right edge of bezel
+    const bW  = width   + ext * 2;       // bezel total width
+    const bTopY = topTop - B;            // top edge of bezel
+    // right side-bar left edge (sW - ext pixels overlap into the screen)
+    const rBarX = right - (sW - ext);
+    // inner screen-facing edges of side bars
+    const lInner = topLeft + (sW - ext);
+    const rInner = right   - (sW - ext);
+
+    const BODY = Colors.PANEL_MEDIUM;
+    const HL   = Colors.BORDER_LIGHT_BLUE;
+    const YEL  = Colors.HIGHLIGHT_YELLOW;
+
+    const bezelG = this.scene.add.graphics();
+
+    // ── 1. Filled body pieces ─────────────────────────────────────────────
+    bezelG.fillStyle(BODY, 1);
+
+    // Top bar — B px above the screen + 1 px overlap onto top edge
+    bezelG.fillRoundedRect(bL, bTopY, bW, B + 1, { tl: 7, tr: 7, bl: 0, br: 0 });
+
+    // Bottom bar — 1 px overlap onto bottom edge + B px below
+    bezelG.fillRoundedRect(bL, bottom - 1, bW, B + 1, { tl: 0, tr: 0, bl: 7, br: 7 });
+
+    // Left side — upper segment (screen top → above mid rail)
+    bezelG.fillRect(bL,    topTop + 1,        sW, topH - 1 - rail / 2);
+    // Left side — lower segment (below mid rail → screen bottom)
+    bezelG.fillRect(bL,    divY + rail / 2,   sW, botH - rail / 2 - 1);
+
+    // Right side — mirrors of left
+    bezelG.fillRect(rBarX, topTop + 1,        sW, topH - 1 - rail / 2);
+    bezelG.fillRect(rBarX, divY + rail / 2,   sW, botH - rail / 2 - 1);
+
+    // Mid rail — full bezel width, merges seamlessly with both side bars
+    bezelG.fillRect(bL, divY - rail / 2, bW, rail);
+
+    // ── 2. Outer border — single rounded stroke around the whole frame ─────
+    bezelG.lineStyle(2, Colors.BORDER_BLUE, 1);
+    bezelG.strokeRoundedRect(bL - 1, bTopY - 1, bW + 2, B * 2 + height + 2, 9);
+
+    // ── 3. Inner edge highlights — lighter lines on screen-facing faces ────
+    bezelG.lineStyle(1, HL, 0.75);
+    // Bottom of top bar
+    bezelG.lineBetween(bL, topTop + 1, bR, topTop + 1);
+    // Top of bottom bar
+    bezelG.lineBetween(bL, bottom - 2, bR, bottom - 2);
+    // Right edge of left side bar (both segments)
+    bezelG.lineBetween(lInner, topTop + 1,      lInner, divY - rail / 2);
+    bezelG.lineBetween(lInner, divY + rail / 2, lInner, bottom - 2);
+    // Left edge of right side bar (both segments)
+    bezelG.lineBetween(rInner, topTop + 1,      rInner, divY - rail / 2);
+    bezelG.lineBetween(rInner, divY + rail / 2, rInner, bottom - 2);
+    // Top face of mid rail (catch-light running its full width)
+    bezelG.lineBetween(bL, divY - rail / 2 + 1, bR, divY - rail / 2 + 1);
+    // Bottom face of mid rail
+    bezelG.lineBetween(bL, divY + rail / 2 - 1, bR, divY + rail / 2 - 1);
+    // Top face of top bar (outer catch-light)
+    bezelG.lineStyle(1, HL, 0.35);
+    bezelG.lineBetween(bL + 8, bTopY + 1, bR - 8, bTopY + 1);
+
+    // ── 4. Corner L-bracket accents ───────────────────────────────────────
+    const cL = 9;   // arm length
+    const cI = 4;   // inset from outer corner
+    bezelG.lineStyle(2, YEL, 0.75);
+    // top-left
+    bezelG.lineBetween(bL + cI, bTopY + cI, bL + cI + cL, bTopY + cI);
+    bezelG.lineBetween(bL + cI, bTopY + cI, bL + cI,      bTopY + cI + cL);
+    // top-right
+    bezelG.lineBetween(bR - cI, bTopY + cI, bR - cI - cL, bTopY + cI);
+    bezelG.lineBetween(bR - cI, bTopY + cI, bR - cI,      bTopY + cI + cL);
+    // bottom-left
+    bezelG.lineBetween(bL + cI, bottom + B - cI, bL + cI + cL, bottom + B - cI);
+    bezelG.lineBetween(bL + cI, bottom + B - cI, bL + cI,      bottom + B - cI - cL);
+    // bottom-right
+    bezelG.lineBetween(bR - cI, bottom + B - cI, bR - cI - cL, bottom + B - cI);
+    bezelG.lineBetween(bR - cI, bottom + B - cI, bR - cI,      bottom + B - cI - cL);
+
+    // ── 5. Mid-rail centre notch — series of tick lines along the rail ────
+    const mx = topLeft + width / 2;
+    bezelG.lineStyle(1, YEL, 0.55);
+    bezelG.lineBetween(mx - 14, divY,     mx + 14, divY);
+    bezelG.lineBetween(mx -  9, divY - 3, mx +  9, divY - 3);
+    bezelG.lineBetween(mx -  9, divY + 3, mx +  9, divY + 3);
+
+    // ── 6. Rivet dots at the side-bar / mid-rail junctions ────────────────
+    const rV  = 2.5;
+    const lRX = bL     + sW / 2;   // x-centre of left rivets
+    const rRX = rBarX  + sW / 2;   // x-centre of right rivets
+    bezelG.fillStyle(HL, 0.75);
+    bezelG.fillCircle(lRX, divY - 5, rV);
+    bezelG.fillCircle(lRX, divY + 5, rV);
+    bezelG.fillCircle(rRX, divY - 5, rV);
+    bezelG.fillCircle(rRX, divY + 5, rV);
+
+    container.add(bezelG);
   }
 
   destroy(): void {
     this.scene.events.off('update', this.onUpdate, this);
+    this.bg?.destroy();
+    this.bg = null;
+    this.bgMaskGfx?.destroy();
+    this.bgMaskGfx = null;
     this.scanG?.destroy();
     this.scanG = null;
   }
 
-  private onUpdate(): void {
+  private onUpdate(_time: number, delta: number): void {
+    this.bg?.update(delta);
     this.scanOffset = (this.scanOffset + 0.4) % 5;
     this.drawScanlines();
   }
@@ -100,3 +237,4 @@ export class RepairPanel {
     }
   }
 }
+

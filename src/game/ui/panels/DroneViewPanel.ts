@@ -1,46 +1,21 @@
 import Phaser from 'phaser';
 import { Colors } from '../../constants/Colors';
+import { ParallaxBackground } from '../ParallaxBackground';
 
 /**
- * Builds the DRONES tab content: animated sprite carousel + scale slider.
+ * Builds the DRONES tab content: a parallax background preview carousel.
  *
- * To add a new drone animation:
- *  1. Load it as a spritesheet in Preloader.preload() (frameWidth / frameHeight).
- *  2. Push a new entry into DRONE_ANIMS below.
+ * Displays all 16 variants (8 sets × Day + Night) of the scrolling parallax
+ * background layers. The user cycles through them with the < > arrow buttons.
+ * The active variant auto-scrolls via the scene update event.
  */
 export class DroneViewPanel {
   private scene: Phaser.Scene;
 
-  /** All known drone animation entries, in carousel order. */
-  private static readonly DRONE_ANIMS: Array<{ key: string; label: string; frameRate: number }> = [
-    { key: 'drone-1-death',    label: '1 · Death',     frameRate: 8  },
-    { key: 'drone-1-idle',     label: '1 · Idle',      frameRate: 8  },
-    { key: 'drone-1-scan',     label: '1 · Scan',      frameRate: 10 },
-    { key: 'drone-1-walk',     label: '1 · Walk',      frameRate: 10 },
-    { key: 'drone-1-walkscan', label: '1 · Walk+Scan', frameRate: 10 },
-    { key: 'drone-2-bomb',     label: '2 · Bomb',      frameRate: 8  },
-    { key: 'drone-2-drop',     label: '2 · Drop',      frameRate: 8  },
-    { key: 'drone-3-back',     label: '3 · Back',      frameRate: 10 },
-    { key: 'drone-3-death',    label: '3 · Death',     frameRate: 8  },
-    { key: 'drone-3-fire1',    label: '3 · Fire 1',    frameRate: 12 },
-    { key: 'drone-3-fire2',    label: '3 · Fire 2',    frameRate: 12 },
-    { key: 'drone-3-fire3',    label: '3 · Fire 3',    frameRate: 12 },
-    { key: 'drone-3-forward',  label: '3 · Forward',   frameRate: 10 },
-    { key: 'drone-3-idle',     label: '3 · Idle',      frameRate: 8  },
-    { key: 'drone-4-death',    label: '4 · Death',     frameRate: 8  },
-    { key: 'drone-4-idle',     label: '4 · Idle',      frameRate: 8  },
-    { key: 'drone-4-landing',  label: '4 · Landing',   frameRate: 8  },
-    { key: 'drone-4-walk',     label: '4 · Walk',      frameRate: 10 },
-    { key: 'drone-5-death',    label: '5 · Death',     frameRate: 8  },
-    { key: 'drone-5-idle',     label: '5 · Idle',      frameRate: 8  },
-    { key: 'drone-5-walk',     label: '5 · Walk',      frameRate: 10 },
-    { key: 'drone-5b-death',   label: '5b · Death',    frameRate: 8  },
-    { key: 'drone-5b-idle',    label: '5b · Idle',     frameRate: 8  },
-    { key: 'drone-5b-walk',    label: '5b · Walk',     frameRate: 10 },
-    { key: 'drone-6-capsule',  label: '6 · Capsule',   frameRate: 8  },
-    { key: 'drone-6-drop',     label: '6 · Drop',      frameRate: 8  },
-    { key: 'drone-6-walk',     label: '6 · Walk',      frameRate: 10 },
-    { key: 'drone-6-walk2',    label: '6 · Walk 2',    frameRate: 10 },
+  /** All 16 background variants in carousel order (set 1 day → set 8 night). */
+  private static readonly BG_ENTRIES: Array<{ set: number; tod: 'day' | 'night' }> = [
+    ...Array.from({ length: 8 }, (_, i) => ({ set: i + 1, tod: 'day'  as const })),
+    ...Array.from({ length: 8 }, (_, i) => ({ set: i + 1, tod: 'night' as const })),
   ];
 
   constructor(scene: Phaser.Scene) {
@@ -54,159 +29,75 @@ export class DroneViewPanel {
     width: number,
     height: number,
   ): void {
-    const DRONE_ANIMS = DroneViewPanel.DRONE_ANIMS;
-
-    // ── Register Phaser animations (idempotent) ──────────────────────────
-    for (const entry of DRONE_ANIMS) {
-      if (!this.scene.anims.exists(entry.key)) {
-        const tex       = this.scene.textures.get(entry.key);
-        const src       = tex.source[0];
-        const frameH    = src.height;
-        const frameCount = Math.max(1, Math.floor(src.width / frameH));
-        for (let i = 0; i < frameCount; i++) {
-          if (!tex.has(String(i))) tex.add(String(i), 0, i * frameH, 0, frameH, frameH);
-        }
-        const frames = Array.from({ length: frameCount }, (_, i) => ({ key: entry.key, frame: String(i) }));
-        this.scene.anims.create({ key: entry.key, frames, frameRate: entry.frameRate, repeat: -1 });
-      }
-    }
-
-    // ── Layout ─────────────────────────────────────────────────────────────
-    const left   = x - width / 2;
-    const right  = x + width / 2;
-    const top    = y;
-    const bottom = y + height;
-
-    const sliderStripW = 32;
-    const trackX       = right - sliderStripW / 2;
-    const trackTopY    = top    + 24;
-    const trackBotY    = bottom - 28;
-    const trackH       = trackBotY - trackTopY;
-    const thumbW       = 18;
-    const thumbH       = 26;
-    const minScale     = 0.5;
-    const maxScale     = 6;
-    let thumbT          = 0.4;
-    let currentScale    = maxScale - thumbT * (maxScale - minScale);
-
+    const BG_ENTRIES  = DroneViewPanel.BG_ENTRIES;
+    const left        = x - width / 2;
+    const top         = y;
+    const bottom      = y + height;
     const arrowAreaH  = 40;
-    const displayW    = width - sliderStripW - 16;
-    const displayCX   = left + displayW / 2;
-    const displayCY   = top + (height - arrowAreaH) / 2;
+    const displayW    = width;
+    const displayH    = height - arrowAreaH;
     const arrowY      = bottom - arrowAreaH / 2;
 
-    // Geometry mask for viewport clipping
+    // Parallax display area is top-left anchored at (left, top).
+    let currentBg: ParallaxBackground | null = null;
+    let currentIndex = 0;
+    let isTransitioning = false;
+
+    // Geometry mask: clips TileSprites to the display rect.
     const maskGfx = this.scene.add.graphics();
     maskGfx.fillStyle(0xffffff, 1);
-    maskGfx.fillRect(left, top, displayW, height - arrowAreaH);
+    maskGfx.fillRect(left, top, displayW, displayH);
     maskGfx.setVisible(false);
     const viewportMask = maskGfx.createGeometryMask();
 
-    // ── Slider ─────────────────────────────────────────────────────────────
-    const sliderG = this.scene.add.graphics();
+    // Dark fallback fill so the area isn't blank on first frame.
+    const bgFill = this.scene.add.graphics();
+    bgFill.fillStyle(Colors.PANEL_DARK, 1);
+    bgFill.fillRect(left, top, displayW, displayH);
+    container.add(bgFill);
 
-    const drawSlider = (t: number, dragging = false): void => {
-      sliderG.clear();
-      sliderG.lineStyle(2, Colors.BORDER_BLUE, 0.55);
-      sliderG.lineBetween(trackX, trackTopY, trackX, trackBotY);
-      for (let i = 0; i <= 4; i++) {
-        const ty = trackTopY + (trackH * i) / 4;
-        sliderG.lineStyle(1, Colors.BORDER_BLUE, 0.3);
-        sliderG.lineBetween(trackX - 5, ty, trackX + 5, ty);
-      }
-      const ty = trackTopY + t * trackH;
-      sliderG.fillStyle(dragging ? Colors.BUTTON_HOVER : Colors.PANEL_MEDIUM, 1);
-      sliderG.fillRoundedRect(trackX - thumbW / 2, ty - thumbH / 2, thumbW, thumbH, 4);
-      sliderG.lineStyle(1, dragging ? Colors.HIGHLIGHT_YELLOW : Colors.BORDER_LIGHT_BLUE, 0.9);
-      sliderG.strokeRoundedRect(trackX - thumbW / 2, ty - thumbH / 2, thumbW, thumbH, 4);
-    };
-    drawSlider(thumbT);
-    container.add(sliderG);
-
-    const scaleLbl = this.scene.add.bitmapText(trackX, trackBotY + 14, 'clicker', `x${currentScale.toFixed(1)}`, 10)
-      .setOrigin(0.5).setTint(Colors.TEXT_MUTED_BLUE);
-    container.add(scaleLbl);
-
-    let isDraggingSlider = false;
-    let currentSprite: Phaser.GameObjects.Sprite | null = null;
-
-    const applyScale = (): void => { currentSprite?.setScale(currentScale); };
-
-    const sliderZone = this.scene.add
-      .zone(trackX, (trackTopY + trackBotY) / 2, sliderStripW + 8, trackH + thumbH)
-      .setInteractive();
-
-    sliderZone.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
-      isDraggingSlider = true;
-      thumbT        = Phaser.Math.Clamp((ptr.y - trackTopY) / trackH, 0, 1);
-      currentScale  = maxScale - thumbT * (maxScale - minScale);
-      applyScale();
-      drawSlider(thumbT, true);
-      scaleLbl.setText(`x${currentScale.toFixed(1)}`);
-    });
-    this.scene.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
-      if (!isDraggingSlider) return;
-      thumbT        = Phaser.Math.Clamp((ptr.y - trackTopY) / trackH, 0, 1);
-      currentScale  = maxScale - thumbT * (maxScale - minScale);
-      applyScale();
-      drawSlider(thumbT, true);
-      scaleLbl.setText(`x${currentScale.toFixed(1)}`);
-    });
-    this.scene.input.on('pointerup', () => {
-      if (!isDraggingSlider) return;
-      isDraggingSlider = false;
-      drawSlider(thumbT);
-    });
-    container.add(sliderZone);
-
-    // ── Carousel ───────────────────────────────────────────────────────────
-    let currentIndex    = 0;
-    let isTransitioning = false;
-
-    const spawnSprite = (index: number, startX: number = displayCX): Phaser.GameObjects.Sprite => {
-      const spr = this.scene.add
-        .sprite(startX, displayCY, DRONE_ANIMS[index].key)
-        .setScale(currentScale)
-        .setMask(viewportMask);
-      spr.play(DRONE_ANIMS[index].key);
-      container.add(spr);
-      return spr;
-    };
-    currentSprite = spawnSprite(0);
-
-    const nameLabel = this.scene.add.bitmapText(displayCX, top + 14, 'clicker', DRONE_ANIMS[0].label, 12)
-      .setOrigin(0.5).setTint(Colors.HIGHLIGHT_YELLOW);
+    const nameLabel = this.scene.add
+      .bitmapText(x, top + 14, 'clicker', '', 12)
+      .setOrigin(0.5)
+      .setTint(Colors.HIGHLIGHT_YELLOW);
     container.add(nameLabel);
 
-    const navigate = (dir: 1 | -1): void => {
-      if (isTransitioning || DRONE_ANIMS.length <= 1) return;
-      isTransitioning = true;
-      const nextIndex = (currentIndex + dir + DRONE_ANIMS.length) % DRONE_ANIMS.length;
-      const outX      = displayCX - dir * (displayW + 40);
-      const startX    = displayCX + dir * (displayW + 40);
-      const oldSprite = currentSprite!;
-      const newSprite = spawnSprite(nextIndex, startX);
-      currentSprite   = newSprite;
-      currentIndex    = nextIndex;
-      nameLabel.setText(DRONE_ANIMS[nextIndex].label);
-      this.scene.tweens.add({
-        targets: oldSprite,
-        x: outX,
-        duration: 220,
-        ease: 'Cubic.easeIn',
-        onComplete: () => oldSprite.destroy(),
-      });
-      this.scene.tweens.add({
-        targets: newSprite,
-        x: displayCX,
-        duration: 220,
-        ease: 'Cubic.easeOut',
-        onComplete: () => { isTransitioning = false; },
-      });
+    const spawnBg = (index: number): ParallaxBackground => {
+      const entry = BG_ENTRIES[index];
+      const bg = new ParallaxBackground(
+        this.scene, left, top, displayW, displayH, entry.set, entry.tod,
+      );
+      // Apply the viewport mask and add each tile to the container.
+      for (const tile of bg.tiles) {
+        tile.setMask(viewportMask);
+        container.add(tile);
+      }
+      nameLabel.setText(bg.label);
+      return bg;
     };
 
-    // ── Arrow buttons ──────────────────────────────────────────────────────
-    const multiEntry = DRONE_ANIMS.length > 1;
+    // Show the first variant.
+    currentBg = spawnBg(0);
+
+    // Advance scroll on every scene update tick.
+    const onUpdate = (_time: number, delta: number): void => {
+      currentBg?.update(delta);
+    };
+    this.scene.events.on('update', onUpdate);
+    // Clean up listener when the scene shuts down.
+    this.scene.events.once('shutdown', () => this.scene.events.off('update', onUpdate));
+
+    const navigate = (dir: 1 | -1): void => {
+      if (isTransitioning || BG_ENTRIES.length <= 1) return;
+      isTransitioning = true;
+      currentBg?.destroy();
+      currentIndex = (currentIndex + dir + BG_ENTRIES.length) % BG_ENTRIES.length;
+      currentBg = spawnBg(currentIndex);
+      isTransitioning = false;
+    };
+
+    // ── Arrow buttons ───────────────────────────────────────────────────
+    const multiEntry = BG_ENTRIES.length > 1;
     const makeArrow = (label: string, ax: number, dir: 1 | -1): void => {
       const bg = this.scene.add
         .rectangle(ax, arrowY, 44, 28, Colors.PANEL_MEDIUM, multiEntry ? 0.85 : 0.3)
@@ -223,7 +114,7 @@ export class DroneViewPanel {
       }
       container.add([bg, lbl]);
     };
-    makeArrow('<', displayCX - 52, -1);
-    makeArrow('>', displayCX + 52, 1);
+    makeArrow('<', x - 52, -1);
+    makeArrow('>', x + 52,  1);
   }
 }

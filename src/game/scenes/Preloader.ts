@@ -53,6 +53,19 @@ export class Preloader extends Phaser.Scene {
     for (const [key, path] of DRONE_FILE_MANIFEST) {
       this.load.image(key, path);
     }
+
+    // Parallax background layers — 8 sets × 2 time-of-day variants × 5 layers = 80 images.
+    // Key convention: `bg-{set}-{tod}-{layer}`  e.g. `bg-3-night-2`
+    for (let set = 1; set <= 8; set++) {
+      for (const tod of ['Day', 'Night'] as const) {
+        for (let layer = 1; layer <= 5; layer++) {
+          this.load.image(
+            `bg-${set}-${tod.toLowerCase()}-${layer}`,
+            `assets/backgrounds/${set}/${tod}/${layer}.png`,
+          );
+        }
+      }
+    }
   }
 
   async create() {

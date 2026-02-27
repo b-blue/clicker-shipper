@@ -11,8 +11,6 @@ const ROT_OPTIONS = [30, 60, 90, 120, 135, 150, 180, 210, 240, 270, 300, 330];
 /** Icon key for the re-orient action badge shown on each repair item card. */
 const REORIENT_ACTION_ICON = 'skill-gear';
 
-const ARM = 14;
-const PAD = 10;
 const STAGGER_MS        = 80;   // ms between each item appearing
 const FADE_DUR          = 260;  // ms per individual fade
 const REPAIRED_HOLD_MS  = 1400; // ms "DRONE REPAIRED" is visible
@@ -23,7 +21,7 @@ const REPAIRED_HOLD_MS  = 1400; // ms "DRONE REPAIRED" is visible
  * Sequence per repair event:
  *   buildArrangement() → materialize() → [player repairs] → dematerialize(cb)
  *
- * Items and brackets are created at alpha 0 so the panel is empty until
+ * Items are created at alpha 0 so the panel is empty until
  * the drone has arrived in the top section.
  */
 export class ReOrientMode {
@@ -32,7 +30,6 @@ export class ReOrientMode {
   private currentRepairItem: RepairItem | null = null;
   private botBounds: Bounds | null = null;
   private itemPool: any[] = [];
-  private bracketGraphics: Phaser.GameObjects.Graphics[] = [];
   /** Container saved from buildArrangement — needed to add the repaired label. */
   private lastContainer: Phaser.GameObjects.Container | null = null;
   private repairedLabel: Phaser.GameObjects.BitmapText | null = null;
@@ -196,7 +193,7 @@ export class ReOrientMode {
       container.add(iconObj);
 
       // Action badge: small circle in the bottom-right corner showing the repair action icon
-      const badgeR  = Math.round(r * 0.28);  // scales with icon size
+      const badgeR  = Math.round(r * 0.56);  // scales with icon size; doubled from 0.28
       const badgeCx = vx + r * 0.62;
       const badgeCy = vy + r * 0.62;
       const badgeBg = this.scene.add.graphics();
@@ -230,15 +227,12 @@ export class ReOrientMode {
       });
     }
 
-    // ── Corner brackets around the grid ──────────────────────────────────
-    this.drawGridBrackets(container, cx, cy, gridW, gridH);
   }
 
   // ── Transition helpers ────────────────────────────────────────────────
 
   /**
    * Staggered materialize: each icon + frame fades from alpha 0 → 1.
-   * Brackets follow once all icons are visible.
    */
   materialize(): void {
     // Wireframe: swipe-down reveal + animation start, both in sync with the
@@ -254,16 +248,6 @@ export class ReOrientMode {
         ease: 'Sine.easeOut',
       });
     });
-    const bracketDelay = targets.length * STAGGER_MS + FADE_DUR / 2;
-    this.bracketGraphics.forEach(g => {
-      this.scene.tweens.add({
-        targets: g,
-        alpha: { from: 0, to: 1 },
-        duration: FADE_DUR,
-        delay: bracketDelay,
-        ease: 'Sine.easeOut',
-      });
-    });
   }
 
   /**
@@ -275,7 +259,6 @@ export class ReOrientMode {
     const { cx, cy } = this.botBounds;
 
     const allObjs: Phaser.GameObjects.GameObject[] = [
-      ...this.bracketGraphics,
       ...this.repairItems.flatMap(ri => [ri.bgObj, ri.frameObj, ri.iconObj, ri.badgeBg, ri.badgeIcon]),
       ...(this.wireframe?.sprite ? [this.wireframe.sprite] : []),
     ].reverse();
@@ -329,50 +312,14 @@ export class ReOrientMode {
 
   // ── private ────────────────────────────────────────────────────────────
 
-  /**
-   * Draws L-shaped corner brackets (neon green) that tightly bound the icon grid.
-   * Created at alpha 0 — made visible by materialize().
-   */
-  private drawGridBrackets(
-    container: Phaser.GameObjects.Container,
-    cx: number, cy: number, gridW: number, gridH: number,
-  ): void {
-    const left  = cx - gridW / 2 - PAD;
-    const right = cx + gridW / 2 + PAD;
-    const top   = cy - gridH / 2 - PAD;
-    const bot   = cy + gridH / 2 + PAD;
-
-    const g = this.scene.add.graphics();
-    g.setDepth(8).setAlpha(0);
-    g.lineStyle(2, 0x00e864, 0.9);
-
-    const corners: Array<[number, number, number, number]> = [
-      [left,  top,   1,  1],
-      [right, top,  -1,  1],
-      [left,  bot,   1, -1],
-      [right, bot,  -1, -1],
-    ];
-    for (const [bx, by, dx, dy] of corners) {
-      g.beginPath();
-      g.moveTo(bx + dx * ARM, by);
-      g.lineTo(bx, by);
-      g.lineTo(bx, by + dy * ARM);
-      g.strokePath();
-    }
-    container.add(g);
-    this.bracketGraphics.push(g);
-  }
-
   private destroyItems(): void {
     for (const ri of this.repairItems) {
       ri.iconObj.destroy(); ri.frameObj.destroy();
       ri.bgObj.destroy(); ri.badgeBg.destroy(); ri.badgeIcon.destroy();
     }
-    for (const g of this.bracketGraphics) g.destroy();
     this.repairedLabel?.destroy();
     this.wireframe?.destroy();
     this.repairItems       = [];
-    this.bracketGraphics   = [];
     this.repairedLabel     = null;
     this.wireframe         = null;
     this.currentRepairItem = null;

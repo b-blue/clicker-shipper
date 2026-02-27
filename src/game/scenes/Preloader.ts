@@ -195,6 +195,14 @@ export class Preloader extends Phaser.Scene {
         }
       }
     }
+
+    // Artifact animations — 3 collections × 20 spritesheets each; 4 frames of 20×20 px.
+    // Keys: artifact-{collection}-{n}  (e.g. artifact-alpha-3)
+    for (let n = 1; n <= 20; n++) {
+      this.load.spritesheet(`artifact-root-${n}`,  `assets/artifacts/${n}.png`,        { frameWidth: 20, frameHeight: 20 });
+      this.load.spritesheet(`artifact-alpha-${n}`, `assets/artifacts/alpha/${n}.png`,  { frameWidth: 20, frameHeight: 20 });
+      this.load.spritesheet(`artifact-beta-${n}`,  `assets/artifacts/beta/${n}.png`,   { frameWidth: 20, frameHeight: 20 });
+    }
   }
 
   async create() {
@@ -235,6 +243,21 @@ export class Preloader extends Phaser.Scene {
         });
       });
       
+      // Register artifact animations (4-frame horizontal strips at 8 fps).
+      for (const col of ['root', 'alpha', 'beta']) {
+        for (let n = 1; n <= 20; n++) {
+          const key = `artifact-${col}-${n}`;
+          if (!this.anims.exists(key) && this.textures.exists(key)) {
+            this.anims.create({
+              key,
+              frames:    this.anims.generateFrameNumbers(key, { start: 0, end: 3 }),
+              frameRate: 8,
+              repeat:    -1,
+            });
+          }
+        }
+      }
+
       // Transition to MainMenu
       this.scene.start('MainMenu');
     } catch (error) {

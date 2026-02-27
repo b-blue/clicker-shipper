@@ -1,108 +1,79 @@
-import { Colors, toColorString } from '../constants/Colors';
-import { fitFontSize } from '../utils/UiUtils';
+import { toColorString } from '../constants/Colors';
+import { Colors } from '../constants/Colors';
+import { ParallaxBackground } from '../ui/ParallaxBackground';
+
+const ARTIFACT_COLLECTIONS = ['root', 'alpha', 'beta'] as const;
+const ARTIFACT_FRAMES = 20;
 
 export class MainMenu extends Phaser.Scene {
+  private bg: ParallaxBackground | null = null;
+
   constructor() {
     super('MainMenu');
   }
 
   create() {
-    // Get responsive viewport dimensions
-    const gameWidth = this.cameras.main.width;
-    const gameHeight = this.cameras.main.height;
+    const W = this.cameras.main.width;
+    const H = this.cameras.main.height;
 
-    // Background
-    this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, Colors.BACKGROUND_DARK);
+    // ── Parallax background — random set + time-of-day ────────────────────
+    const setNum = Math.floor(Math.random() * 8) + 1;
+    const tod: 'day' | 'night' = Math.random() < 0.5 ? 'day' : 'night';
+    this.bg = new ParallaxBackground(this, 0, 0, W, H, setNum, tod);
+    // Tiles are already added to the scene by ParallaxBackground (depths 1–5).
 
-    const margin = 20;
-    const availableWidth = gameWidth - margin;
+    // ── Upper 2/5: animated artifact ──────────────────────────────────────
+    const topCY = H * 0.2;
+    const collection = ARTIFACT_COLLECTIONS[Math.floor(Math.random() * ARTIFACT_COLLECTIONS.length)];
+    const n = Math.floor(Math.random() * ARTIFACT_FRAMES) + 1;
+    const animKey = `artifact-${collection}-${n}`;
 
-    // Title with background
-    const titleText = 'CYBERPUNK SHIPPER';
-    const titleMaxWidth = gameWidth - margin * 2;
-    const titleFontSize = fitFontSize(titleText, titleMaxWidth, 32);
-    this.add.rectangle(gameWidth / 2, gameHeight * 0.15, titleMaxWidth, 50, Colors.PANEL_MEDIUM, 0.9);
-    this.add.bitmapText(gameWidth / 2, gameHeight * 0.15, 'clicker', titleText, titleFontSize)
-      .setOrigin(0.5)
-      .setMaxWidth(titleMaxWidth);
+    const artifact = this.add.sprite(W / 2, topCY, animKey);
+    const maxSize = Math.round(H * 0.4 * 0.80);
+    artifact.setDisplaySize(maxSize, maxSize).setDepth(10);
+    if (this.anims.exists(animKey)) artifact.play(animKey);
 
-    // Subtitle with background
-    const subtitleText = 'ORDER FULFILLMENT TERMINAL';
-    const subtitleFontSize = fitFontSize(subtitleText, availableWidth, 16);
-    this.add.rectangle(gameWidth / 2, gameHeight * 0.25, Math.min(500, gameWidth - margin), 30, Colors.PANEL_MEDIUM, 0.85);
-    this.add.bitmapText(gameWidth / 2, gameHeight * 0.25, 'clicker', subtitleText, subtitleFontSize)
-      .setOrigin(0.5);
-
-    // Menu buttons
-    const buttonY = gameHeight * 0.45;
+    // ── Lower 3/5: buttons, centred in that zone ──────────────────────────
+    const botZoneTop    = H * 0.4;
+    const botZoneHeight = H * 0.6;
+    const botCY         = botZoneTop + botZoneHeight / 2;
     const buttonSpacing = 70;
+    const firstY        = botCY - buttonSpacing * 1.5;
 
-    // Start Shift button
-    this.createButton(gameWidth / 2, buttonY, 'START SHIFT', () => this.punchIn());
+    this.createButton(W / 2, firstY,                    'START SHIFT',    () => this.punchIn());
+    this.createButton(W / 2, firstY + buttonSpacing,    'UPGRADES',       () => this.openUpgrades());
+    this.createButton(W / 2, firstY + buttonSpacing * 2,'CALIBRATE DIAL', () => this.openSettings());
+    this.createButton(W / 2, firstY + buttonSpacing * 3,'EXIT',           () => this.exitGame());
 
-    // Upgrades button
-    this.createButton(gameWidth / 2, buttonY + buttonSpacing, 'UPGRADES', () => this.openUpgrades());
-
-    // Settings button
-    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 2, 'CALIBRATE DIAL', () => this.openSettings());
-
-    // Exit button
-    this.createButton(gameWidth / 2, buttonY + buttonSpacing * 3, 'EXIT', () => this.exitGame());
-
-    // Footer with background
-    const footerText = 'PRESS SPACE TO START SHIFT';
-    const footerFontSize = fitFontSize(footerText, availableWidth, 12);
-    this.add.rectangle(gameWidth / 2, gameHeight * 0.9, Math.min(400, gameWidth - margin), 24, Colors.PANEL_MEDIUM, 0.85);
-    this.add.bitmapText(gameWidth / 2, gameHeight * 0.9, 'clicker', footerText, footerFontSize)
-      .setOrigin(0.5);
-
-    // Keyboard shortcuts
+    // Keyboard shortcut unchanged
     this.input.keyboard?.on('keydown-SPACE', () => this.punchIn());
+
+    // ── Scroll update ─────────────────────────────────────────────────────
+    this.events.on('update', (_time: number, delta: number) => this.bg?.update(delta), this);
+    this.events.once('shutdown', () => {
+      this.bg = null;
+    }, this);
   }
 
   private createButton(x: number, y: number, text: string, callback: () => void, colorHex: string = toColorString(Colors.HIGHLIGHT_YELLOW)): void {
     const buttonWidth = 200;
     const buttonHeight = 50;
 
-    // Button background
     const buttonBg = this.add.rectangle(x, y, buttonWidth, buttonHeight, Colors.PANEL_DARK, 0.75);
-    buttonBg.setInteractive();
+    buttonBg.setDepth(10).setInteractive();
     buttonBg.on('pointerdown', callback);
-    buttonBg.on('pointerover', () => {
-      buttonBg.setFillStyle(Colors.BUTTON_HOVER, 0.9);
-    });
-    buttonBg.on('pointerout', () => {
-      buttonBg.setFillStyle(Colors.PANEL_DARK, 0.75);
-    });
+    buttonBg.on('pointerover', () => buttonBg.setFillStyle(Colors.BUTTON_HOVER, 0.9));
+    buttonBg.on('pointerout',  () => buttonBg.setFillStyle(Colors.PANEL_DARK, 0.75));
 
-    // Button border
     const color = parseInt(colorHex.replace('#', ''), 16);
-    this.add.rectangle(x, y, buttonWidth, buttonHeight).setStrokeStyle(2, color);
-
-    // Button text background
-    this.add.rectangle(x, y, buttonWidth - 10, 28, Colors.PANEL_MEDIUM, 0.8);
-    // Button text
-    this.add.bitmapText(x, y, 'clicker', text, 13)
-      .setOrigin(0.5);
+    this.add.rectangle(x, y, buttonWidth, buttonHeight).setStrokeStyle(2, color).setDepth(11);
+    this.add.rectangle(x, y, buttonWidth - 10, 28, Colors.PANEL_MEDIUM, 0.8).setDepth(12);
+    this.add.bitmapText(x, y, 'clicker', text, 13).setOrigin(0.5).setDepth(13);
   }
 
-  punchIn() {
-    // Transition to Game scene
-    this.scene.start('Game');
-  }
-
-  openUpgrades() {
-    // Open upgrades screen (no shift data — just browsing/spending quanta)
-    this.scene.start('EndShift', { revenue: 0, bonus: 0 });
-  }
-
-  openSettings() {
-    // Transition to Settings scene
-    this.scene.start('DialCalibration');
-  }
-
-  exitGame() {
-    // Return to main page or close game
-    window.location.href = '/';
-  }
+  punchIn()      { this.scene.start('Game'); }
+  openUpgrades() { this.scene.start('EndShift', { revenue: 0, bonus: 0 }); }
+  openSettings() { this.scene.start('DialCalibration'); }
+  exitGame()     { window.location.href = '/'; }
 }
+

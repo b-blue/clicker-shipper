@@ -1,5 +1,4 @@
 /** @jest-environment jsdom */
-import { Colors } from '../../constants/Colors';
 import { fitFontSize } from '../../utils/UiUtils';
 
 describe('MainMenu scene', () => {
@@ -15,53 +14,66 @@ describe('MainMenu scene', () => {
       setInteractive: jest.fn(),
       on: jest.fn(),
       setFillStyle: jest.fn(),
-      setStrokeStyle: jest.fn(),
-    }));
-    const text = jest.fn(() => ({
-      setOrigin: jest.fn().mockReturnThis(),
+      setStrokeStyle: jest.fn().mockReturnThis(),
+      setDepth: jest.fn().mockReturnThis(),
     }));
     const bitmapText = jest.fn(() => ({
       setOrigin: jest.fn().mockReturnThis(),
       setTint: jest.fn().mockReturnThis(),
-      setMaxWidth: jest.fn().mockReturnThis(),
+      setDepth: jest.fn().mockReturnThis(),
+    }));
+    const tileSprite = jest.fn(() => ({
+      setOrigin: jest.fn().mockReturnThis(),
+      setTileScale: jest.fn().mockReturnThis(),
+      setDepth: jest.fn().mockReturnThis(),
+      setMask: jest.fn().mockReturnThis(),
+    }));
+    const sprite = jest.fn(() => ({
+      setDisplaySize: jest.fn().mockReturnThis(),
+      setDepth: jest.fn().mockReturnThis(),
+      play: jest.fn().mockReturnThis(),
     }));
 
     (scene as any).add = {
       rectangle,
-      text,
       bitmapText,
+      tileSprite,
+      sprite,
+      existing: jest.fn(),
     };
+
+    (scene as any).textures = {
+      exists: jest.fn().mockReturnValue(true),
+      get: jest.fn(() => ({ source: [{ width: 100, height: 100 }] })),
+    };
+
+    (scene as any).anims = {
+      exists: jest.fn().mockReturnValue(true),
+    };
+
+    const eventsOn   = jest.fn();
+    const eventsOnce = jest.fn();
+    (scene as any).events = { on: eventsOn, once: eventsOnce };
 
     const keyboardOn = jest.fn();
-    (scene as any).input = {
-      keyboard: {
-        on: keyboardOn,
-      },
-    };
+    (scene as any).input = { keyboard: { on: keyboardOn } };
 
-    (scene as any).cameras = {
-      main: {
-        width: 800,
-        height: 600,
-      },
-    };
+    (scene as any).cameras = { main: { width: 800, height: 600 } };
+    (scene as any).scene   = { start: jest.fn(), launch: jest.fn() };
 
-    (scene as any).scene = {
-      start: jest.fn(),
-      launch: jest.fn(),
-    };
-
-    return { scene, rectangle, text, bitmapText, keyboardOn };
+    return { scene, rectangle, bitmapText, sprite, keyboardOn };
   };
 
-  it('renders the background and title', async () => {
-    const { scene, rectangle, bitmapText } = await createScene();
+  it('creates buttons for all four main menu options', async () => {
+    const { scene, bitmapText } = await createScene();
 
     scene.create();
 
-    expect(rectangle).toHaveBeenCalledWith(400, 300, 800, 600, Colors.BACKGROUND_DARK);
-    // At 800px width the title should use full max size (32)
-    expect(bitmapText).toHaveBeenCalledWith(400, expect.any(Number), 'clicker', 'CYBERPUNK SHIPPER', expect.any(Number));
+    const labels: string[] = bitmapText.mock.calls.map((c: any[]) => c[3]);
+    expect(labels).toContain('START SHIFT');
+    expect(labels).toContain('UPGRADES');
+    expect(labels).toContain('CALIBRATE DIAL');
+    expect(labels).toContain('EXIT');
   });
 
   it('wires keyboard shortcuts', async () => {

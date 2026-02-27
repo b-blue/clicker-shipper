@@ -290,6 +290,13 @@ export class Game extends Phaser.Scene {
 
     this.events.on("dial:repairSettled", (data: { success: boolean }) => {
       const allDone = this.reOrientMode?.onSettled(data, this.cornerHUD) ?? false;
+      if (data.success && !allDone) {
+        // Single item solved: onSettled called cornerHUD.onGoBack() once (terminal→item list).
+        // Return the player fully to the root-level nav dial.
+        this.radialDial?.reset();    // navigates back to depth 0 and redraws
+        this.cornerHUD?.onGoBack(); // HUD was at depth=1, !terminal → depth=0
+        this.activeAction = null;
+      }
       if (allDone && this.repairContainer && this.droneStage) {
         this.reOrientMode?.dematerialize(() => {
           this.droneStage?.exit(() => {

@@ -48,6 +48,13 @@ export class RadialDial {
   private repairRingDragStartAngle: number = 0;
   private repairRingDragStartRotationDeg: number = 0;
   private repairFillGraphics: Phaser.GameObjects.Graphics | null = null;
+  private repairWobblePhase: number = 0;
+  // Spatial frequency is a fixed integer (5) so the sine wave closes seamlessly at the
+  // theta=0 / theta=2π join point; only phase-advance speed varies with velocity.
+  private repairWobbleTimer: Phaser.Time.TimerEvent | null = null;
+  private repairPointerAngle: number = 0;        // last pointer angle relative to dial center (rad)
+  private repairPointerAngleTime: number = 0;    // ms timestamp of the last pointermove
+  private repairPointerAngVel: number = 0;       // rad/ms, EMA-smoothed angular velocity
 
   // Tap-to-confirm properties
   private dragStartSliceIndex: number = -1; // Index of slice where tap started
@@ -107,6 +114,18 @@ export class RadialDial {
         const dx = pointer.x - this.dialX;
         const dy = pointer.y - this.dialY;
         const newAngle = Math.atan2(dy, dx);
+
+        // Angular velocity: normalize the angle difference to avoid ±π seam jumps
+        const now = Date.now();
+        const dt = Math.max(1, now - this.repairPointerAngleTime);
+        let dAngle = newAngle - this.repairPointerAngle;
+        while (dAngle > Math.PI)  dAngle -= 2 * Math.PI;
+        while (dAngle < -Math.PI) dAngle += 2 * Math.PI;
+        const rawVel = Math.abs(dAngle) / dt;          // rad/ms
+        this.repairPointerAngVel = 0.5 * this.repairPointerAngVel + 0.5 * rawVel; // EMA smoothing
+        this.repairPointerAngle = newAngle;
+        this.repairPointerAngleTime = now;
+
         let delta = newAngle - this.repairRingDragStartAngle;
         while (delta > Math.PI)  delta -= 2 * Math.PI;
         while (delta < -Math.PI) delta += 2 * Math.PI;
@@ -207,6 +226,27 @@ export class RadialDial {
         this.isTriggerActive = true;
         this.repairRingDragStartAngle = Math.atan2(dy, dx);
         this.repairRingDragStartRotationDeg = this.repairItemRotationDeg;
+        this.repairWobblePhase = 0;
+        this.repairPointerAngle = Math.atan2(dy, dx);
+        this.repairPointerAngleTime = Date.now();
+        this.repairPointerAngVel = 0;
+        // Drive the wobble animation at ~60 fps for as long as the finger is held.
+        // Phase-advance rate and spatial frequency both scale with angular velocity.
+        this.repairWobbleTimer = this.scene.time.addEvent({
+          delay: 16,
+          loop: true,
+          callback: () => {
+            // Decay velocity so the wave eases back to the base rate when the finger stops.
+            this.repairPointerAngVel *= 0.90;
+            // tanh compresses outliers without hard-clamping.
+            // Multiplier 80 keeps typical dial angular velocities (0.001–0.015 rad/ms)
+            // across the responsive part of the curve rather than saturating immediately.
+            // Range: 0.03 (stopped) → 0.25 (fast swipe).
+            const phaseStep = 0.03 + 0.22 * Math.tanh(this.repairPointerAngVel * 80);
+            this.repairWobblePhase += phaseStep;
+            this.redrawDial();
+          },
+        });
         this.redrawDial();
       }
       return;
@@ -272,6 +312,8 @@ export class RadialDial {
     if (this.repairItem) {
       if (this.isTriggerActive) {
         this.isTriggerActive = false;
+        if (this.repairWobbleTimer) { this.repairWobbleTimer.remove(); this.repairWobbleTimer = null; }
+        this.repairWobblePhase = 0;
         let normalized = this.repairItemRotationDeg % 360;
         if (normalized > 180) normalized -= 360;
         if (normalized <= -180) normalized += 360;
@@ -284,6 +326,8 @@ export class RadialDial {
       if (endDistance < this.centerRadius) {
         this.repairItem = null;
         this.isTriggerActive = false;
+        if (this.repairWobbleTimer) { this.repairWobbleTimer.remove(); this.repairWobbleTimer = null; }
+        this.repairWobblePhase = 0;
         if (this.repairFillGraphics) { this.repairFillGraphics.destroy(); this.repairFillGraphics = null; }
         this.centerImage.setAngle(0);
         if (this.glowTimer) this.glowTimer.paused = false;
@@ -504,8 +548,8 @@ export class RadialDial {
     this.centerGraphic.fillCircle(this.dialX, this.dialY, this.centerRadius - 2);
 
     if (this.repairItem) {
-      // Repair mode: show the item icon rotated to the current repair angle
-      this.centerGraphic.lineStyle(3, Colors.NEON_BLUE, 0.9);
+      // Repair mode: tint the center perimeter with the same status colour as the ring
+      this.centerGraphic.lineStyle(3, this.getRepairStatusColor(), 0.9);
       this.centerGraphic.strokeCircle(this.dialX, this.dialY, this.centerRadius);
       const repairIconKey = this.repairItem.icon || this.repairItem.id;
       if (AssetLoader.textureExists(this.scene, repairIconKey)) {
@@ -668,9 +712,23 @@ export class RadialDial {
     }
   }
 
+  /** Returns the status colour for the repair ring / center perimeter based on how close the item is to upright (0°). */
+  private getRepairStatusColor(): number {
+    let normDeg = this.repairItemRotationDeg % 360;
+    if (normDeg > 180) normDeg -= 360;
+    if (normDeg <= -180) normDeg += 360;
+    const absDeg = Math.abs(normDeg);
+    return absDeg <= 10 ? 0x44ff88 : (absDeg <= 30 ? 0xffd700 : 0xaaaacc);
+  }
+
   /**
    * Draw the repair-dial face: a full 360° ring with a target tick at 12 o'clock
    * and a draggable indicator dot at the item's current rotation.
+   *
+   * While dragging (isTriggerActive) the ring wobbles with a sine wave whose phase
+   * advances on every pointermove, giving a rippling effect for as long as the
+   * finger is sliding. The ring and indicator dot both tint to the same status
+   * colour (green ≤10°, yellow ≤30°, muted otherwise).
    */
   private drawRepairFace(): void {
     if (this.repairFillGraphics) {
@@ -682,12 +740,30 @@ export class RadialDial {
     this.repairFillGraphics = g;
 
     const { dialX, dialY, arcRadius } = this;
+    const statusColor = this.getRepairStatusColor();
 
-    // Full 360° ring track
-    g.lineStyle(8, 0x223344, 1.0);
-    g.beginPath();
-    g.arc(dialX, dialY, arcRadius, 0, Math.PI * 2, false);
-    g.strokePath();
+    // Ring track — wobbles with a sine wave while dragging, smooth arc at rest
+    if (this.isTriggerActive) {
+      const AMPL = 6;  // px peak-to-peak wobble amplitude
+      const FREQ = 5;  // integer: ensures sin(FREQ*2π)=sin(0) so the ring closes without a seam kink
+      const N    = 64; // polygon segment count
+      g.lineStyle(8, statusColor, 0.9);
+      g.beginPath();
+      for (let j = 0; j <= N; j++) {
+        const theta = (j / N) * Math.PI * 2;
+        const r = arcRadius + AMPL * Math.sin(FREQ * theta + this.repairWobblePhase);
+        const px = dialX + Math.cos(theta) * r;
+        const py = dialY + Math.sin(theta) * r;
+        if (j === 0) g.moveTo(px, py); else g.lineTo(px, py);
+      }
+      g.closePath();
+      g.strokePath();
+    } else {
+      g.lineStyle(8, statusColor, 0.35);
+      g.beginPath();
+      g.arc(dialX, dialY, arcRadius, 0, Math.PI * 2, false);
+      g.strokePath();
+    }
 
     // Draggable indicator dot: ring position is offset by repairTargetDeg so the
     // green zone appears at a randomized spot. Success is always icon = 0° (upright).
@@ -695,14 +771,7 @@ export class RadialDial {
     const dotX = dialX + Math.cos(currentAngle) * arcRadius;
     const dotY = dialY + Math.sin(currentAngle) * arcRadius;
 
-    // Colour feedback: green ≤10° from upright (0°), yellow ≤30°, muted otherwise
-    let normDeg = this.repairItemRotationDeg % 360;
-    if (normDeg > 180) normDeg -= 360;
-    if (normDeg <= -180) normDeg += 360;
-    const absDeg = Math.abs(normDeg);
-    const dotColor = absDeg <= 10 ? 0x44ff88 : (absDeg <= 30 ? 0xffd700 : 0xaaaacc);
-
-    g.fillStyle(dotColor, this.isTriggerActive ? 1.0 : 0.8);
+    g.fillStyle(statusColor, this.isTriggerActive ? 1.0 : 0.8);
     g.fillCircle(dotX, dotY, this.triggerHitRadius);
     if (this.isTriggerActive) {
       g.lineStyle(2, Colors.WHITE, 0.9);
@@ -838,6 +907,9 @@ export class RadialDial {
     if (this.repairFillGraphics) { this.repairFillGraphics.destroy(); this.repairFillGraphics = null; }
     this.centerImage.setAngle(0);
     this.isTriggerActive = false;
+    this.repairWobblePhase = 0;
+    this.repairPointerAngVel = 0;
+    if (this.repairWobbleTimer) { this.repairWobbleTimer.remove(); this.repairWobbleTimer = null; }
     this.arcProgress = 0;
     this.currentQuantity = 1;
     if (this.arcFillGraphics) { this.arcFillGraphics.destroy(); this.arcFillGraphics = null; }
@@ -924,6 +996,10 @@ export class RadialDial {
     this.inputZone.destroy();
     if (this.glowTimer) {
       this.glowTimer.remove();
+    }
+    if (this.repairWobbleTimer) {
+      this.repairWobbleTimer.remove();
+      this.repairWobbleTimer = null;
     }
   }
 }

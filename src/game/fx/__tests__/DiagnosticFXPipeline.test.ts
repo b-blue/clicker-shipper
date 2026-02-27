@@ -1,8 +1,11 @@
 /**
  * Tests for DiagnosticFXPipeline.
  *
- * DiagnosticFXPipeline.ts uses Phaser as a global (no import statement), so we
- * install a lightweight stub on `global.Phaser` before requiring the module.
+ * DiagnosticFXPipeline.ts uses Phaser as a bare global (no import statement).
+ * We set global.Phaser synchronously before require()-ing the module so the
+ * class declaration "extends Phaser.…PostFXPipeline" resolves correctly.
+ * require() is used intentionally here — it's the only way to control module
+ * load order when the module under test relies on a bare global.
  */
 
 // ── Mock parent class ──────────────────────────────────────────────────────
@@ -25,19 +28,11 @@ class MockPostFXPipeline {
 
 // Install global BEFORE any module is required
 (global as any).Phaser = {
-  Renderer: {
-    WebGL: {
-      Pipelines: {
-        PostFXPipeline: MockPostFXPipeline,
-      },
-    },
-  },
+  Renderer: { WebGL: { Pipelines: { PostFXPipeline: MockPostFXPipeline } } },
 };
 
-// ── Dynamic require so the global is in place first ───────────────────────
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { DiagnosticFXPipeline, DIAGNOSTIC_FX } =
-  require('../DiagnosticFXPipeline') as typeof import('../DiagnosticFXPipeline');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { DiagnosticFXPipeline, DIAGNOSTIC_FX } = require('../DiagnosticFXPipeline') as typeof import('../DiagnosticFXPipeline');
 
 // ── Tests ─────────────────────────────────────────────────────────────────
 

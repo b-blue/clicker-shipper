@@ -7,6 +7,8 @@ import { RepairItem } from './RepairTypes';
 type Bounds = { cx: number; cy: number; w: number; h: number };
 
 const ROT_OPTIONS = [30, 60, 90, 120, 135, 150, 180, 210, 240, 270, 300, 330];
+/** Icon key for the re-orient action badge shown on each repair item card. */
+const REORIENT_ACTION_ICON = 'skill-gear';
 
 const ARM = 14;
 const PAD = 10;
@@ -180,6 +182,13 @@ export class ReOrientMode {
 
       const r = Math.round(iconSize / 2) + 2;
 
+      // Dark-panel background — visually lifts the icon from the wireframe behind it
+      const bgObj = this.scene.add.graphics();
+      bgObj.fillStyle(Colors.PANEL_DARK, 0.88);
+      bgObj.fillCircle(vx, vy, r + 1);
+      bgObj.setDepth(3).setAlpha(0);
+      container.add(bgObj);
+
       // Frame circle
       const frameG = this.scene.add.graphics();
       frameG.lineStyle(2, Colors.BORDER_BLUE, 0.8);
@@ -198,6 +207,27 @@ export class ReOrientMode {
       iconObj.setAngle(startRot).setDisplaySize(iconSize, iconSize).setDepth(5).setAlpha(0);
       container.add(iconObj);
 
+      // Action badge: small circle in the bottom-right corner showing the repair action icon
+      const badgeR  = 7;
+      const badgeCx = vx + r * 0.62;
+      const badgeCy = vy + r * 0.62;
+      const badgeBg = this.scene.add.graphics();
+      badgeBg.fillStyle(Colors.PANEL_DARK, 0.95);
+      badgeBg.fillCircle(badgeCx, badgeCy, badgeR);
+      badgeBg.lineStyle(1, Colors.NEON_BLUE, 0.85);
+      badgeBg.strokeCircle(badgeCx, badgeCy, badgeR);
+      badgeBg.setDepth(7).setAlpha(0);
+      container.add(badgeBg);
+
+      let badgeIcon: Phaser.GameObjects.Image;
+      if (AssetLoader.textureExists(this.scene, REORIENT_ACTION_ICON)) {
+        badgeIcon = AssetLoader.createImage(this.scene, badgeCx, badgeCy, REORIENT_ACTION_ICON);
+      } else {
+        badgeIcon = this.scene.add.image(badgeCx, badgeCy, '').setVisible(false);
+      }
+      badgeIcon.setDisplaySize(badgeR * 1.5, badgeR * 1.5).setDepth(8).setAlpha(0);
+      container.add(badgeIcon);
+
       this.repairItems.push({
         iconKey,
         startRotationDeg: startRot,
@@ -206,6 +236,9 @@ export class ReOrientMode {
         solved: false,
         iconObj,
         frameObj: frameG,
+        bgObj,
+        badgeBg,
+        badgeIcon,
       });
     }
 
@@ -230,7 +263,7 @@ export class ReOrientMode {
         ease: 'Sine.easeOut',
       });
     }
-    const targets = this.repairItems.flatMap(ri => [ri.frameObj, ri.iconObj]);
+    const targets = this.repairItems.flatMap(ri => [ri.bgObj, ri.frameObj, ri.iconObj, ri.badgeBg, ri.badgeIcon]);
     targets.forEach((obj, i) => {
       this.scene.tweens.add({
         targets: obj,
@@ -262,7 +295,7 @@ export class ReOrientMode {
 
     const allObjs: Phaser.GameObjects.GameObject[] = [
       ...this.bracketGraphics,
-      ...this.repairItems.flatMap(ri => [ri.frameObj, ri.iconObj]),
+      ...this.repairItems.flatMap(ri => [ri.bgObj, ri.frameObj, ri.iconObj, ri.badgeBg, ri.badgeIcon]),
       ...(this.wireframeSprite ? [this.wireframeSprite] : []),
     ].reverse();
 
@@ -350,7 +383,10 @@ export class ReOrientMode {
   }
 
   private destroyItems(): void {
-    for (const ri of this.repairItems) { ri.iconObj.destroy(); ri.frameObj.destroy(); }
+    for (const ri of this.repairItems) {
+      ri.iconObj.destroy(); ri.frameObj.destroy();
+      ri.bgObj.destroy(); ri.badgeBg.destroy(); ri.badgeIcon.destroy();
+    }
     for (const g of this.bracketGraphics) g.destroy();
     this.repairedLabel?.destroy();
     this.wireframeSprite?.destroy();

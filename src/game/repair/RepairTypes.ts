@@ -10,4 +10,10 @@ export interface RepairItem {
   solved: boolean;
   iconObj: Phaser.GameObjects.Image;
   frameObj: Phaser.GameObjects.Graphics;
+  /** Dark-panel fill circle behind the icon — separates it from the wireframe bg. */
+  bgObj: Phaser.GameObjects.Graphics;
+  /** Small circular badge background in the bottom-right corner of each icon cell. */
+  badgeBg: Phaser.GameObjects.Graphics;
+  /** Action icon shown inside the badge (e.g. skill-gear for re-orient). */
+  badgeIcon: Phaser.GameObjects.Image;
 }

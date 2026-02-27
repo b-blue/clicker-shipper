@@ -133,6 +133,8 @@ describe('ReOrientMode.buildArrangement — wireframe pendingEdgeColor', () => {
         graphics: jest.fn().mockReturnValue({
           lineStyle: jest.fn().mockReturnThis(),
           strokeCircle: jest.fn().mockReturnThis(),
+          fillStyle: jest.fn().mockReturnThis(),
+          fillCircle: jest.fn().mockReturnThis(),
           setDepth: jest.fn().mockReturnThis(),
           setAlpha: jest.fn().mockReturnThis(),
           clear: jest.fn().mockReturnThis(),

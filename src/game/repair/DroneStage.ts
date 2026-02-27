@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { DIAGNOSTIC_FX } from '../fx/DiagnosticFXPipeline';
+
 
 type Bounds = { cx: number; cy: number; w: number; h: number };
 
@@ -18,6 +18,7 @@ export class DroneStage {
   private topBounds: Bounds | null = null;
   private overlays: Phaser.GameObjects.Graphics[] = [];
   private pendingKey: string | null = null;
+  private currentKey: string | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -31,12 +32,18 @@ export class DroneStage {
     return this.droneSprite;
   }
 
+  /** Returns the key that was most recently picked (set by pickKey). */
+  getCurrentKey(): string | null {
+    return this.currentKey;
+  }
+
   /**
    * Pre-selects a random drone key so callers can read the frame size
    * (and therefore compute the icon count) before spawn() is called.
    */
   pickKey(): void {
     this.pendingKey = IDLE_KEYS[Math.floor(Math.random() * IDLE_KEYS.length)];
+    this.currentKey = this.pendingKey;
   }
 
   /**
@@ -57,13 +64,16 @@ export class DroneStage {
     return 6 + Math.floor(Math.random() * 3);                         // 6, 7, or 8
   }
 
-  /** Picks a random idle drone (or uses pendingKey), tweens it in from off-screen left. */
-  spawn(container: Phaser.GameObjects.Container): void {
+  /** Picks a random idle drone (or uses pendingKey), tweens it in from off-screen left.
+   *  Fires onArrived (if provided) once the tween completes.
+   */
+  spawn(container: Phaser.GameObjects.Container, onArrived?: () => void): void {
     if (!this.topBounds) return;
     const { cx, cy, w, h } = this.topBounds;
 
     const key = this.pendingKey ?? IDLE_KEYS[Math.floor(Math.random() * IDLE_KEYS.length)];
     this.pendingKey = null;
+    this.currentKey = key;
     this.registerAnim(key);
 
     // Compute scale so the sprite fits fully within the top section
@@ -76,19 +86,14 @@ export class DroneStage {
     const sprite = this.scene.add.sprite(startX, cy, key).setScale(scale).setDepth(5);
     sprite.play(key);
 
-    // Diagnostic wireframe: Sobel edge-detection PostFX (WebGL only)
-    if (this.scene.game.renderer.type === Phaser.WEBGL) {
-      sprite.setPostPipeline(DIAGNOSTIC_FX);
-    }
-
     container.add(sprite);
     this.droneSprite = sprite;
-
-    // Corner brackets only (scanlines are handled by RepairPanel)
     this.clearOverlays();
-    this.addCornerBrackets(container, cx, cy, h);
 
-    this.scene.tweens.add({ targets: sprite, x: cx, duration: 600, ease: 'Cubic.easeOut' });
+    this.scene.tweens.add({
+      targets: sprite, x: cx, duration: 600, ease: 'Cubic.easeOut',
+      onComplete: () => onArrived?.(),
+    });
   }
 
   /**
@@ -128,37 +133,6 @@ export class DroneStage {
   private clearOverlays(): void {
     for (const g of this.overlays) g.destroy();
     this.overlays = [];
-  }
-
-  /**
-   * Four L-shaped corner brackets around the drone centroid.
-   * Sized to tightly contain the drone sprite within the top section.
-   */
-  private addCornerBrackets(
-    container: Phaser.GameObjects.Container,
-    cx: number, cy: number, stageH: number
-  ): void {
-    const PAD  = Math.min(stageH * 0.42, 40);
-    const ARM  = Math.max(10, PAD * 0.4);
-    const g    = this.scene.add.graphics();
-    g.setDepth(7);
-    g.lineStyle(2, 0x00e864, 0.9);
-
-    const corners: Array<[number, number, number, number]> = [
-      [cx - PAD, cy - PAD,  1,  1],
-      [cx + PAD, cy - PAD, -1,  1],
-      [cx - PAD, cy + PAD,  1, -1],
-      [cx + PAD, cy + PAD, -1, -1],
-    ];
-    for (const [bx, by, dx, dy] of corners) {
-      g.beginPath();
-      g.moveTo(bx + dx * ARM, by);
-      g.lineTo(bx, by);
-      g.lineTo(bx, by + dy * ARM);
-      g.strokePath();
-    }
-    container.add(g);
-    this.overlays.push(g);
   }
 
   /** Lazily registers a Phaser animation from a horizontal sprite strip (square frames). */

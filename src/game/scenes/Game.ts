@@ -30,6 +30,7 @@ export class Game extends Phaser.Scene {
   // ── Repair modules ────────────────────────────────────────────────────────
   private droneStage:       DroneStage   | null = null;
   private reOrientMode:     ReOrientMode | null = null;
+  private repairPanel:      RepairPanel  | null = null;
   private repairContainer:  Phaser.GameObjects.Container | null = null;
   private activeAction:     string | null = null;
 
@@ -63,6 +64,9 @@ export class Game extends Phaser.Scene {
 
       this.droneStage   = new DroneStage(this);
       this.reOrientMode = new ReOrientMode(this);
+      // Pre-select the drone key before buildPanelUI so spawn() and
+      // buildArrangement() both reference the same key on the first cycle.
+      this.droneStage.pickKey();
 
       this.buildPanelUI(gw, gh, dialY, dialR, items);
       this.buildDial(items, dialX, dialY, dialR);
@@ -79,6 +83,7 @@ export class Game extends Phaser.Scene {
     this.radialDial?.destroy();
     this.droneStage?.destroy();
     this.reOrientMode?.destroy();
+    this.repairPanel?.destroy();
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -123,6 +128,7 @@ export class Game extends Phaser.Scene {
     this.ordersContainer!.setVisible(false);
 
     const rPanel = new RepairPanel(this, this.droneStage!, this.reOrientMode!);
+    this.repairPanel = rPanel;
     rPanel.build(repairCtr, panelX, panelTop + 2, panelW - 20, panelH - 10);
 
     const sPanel = new SettingsPanel(this);
@@ -221,11 +227,11 @@ export class Game extends Phaser.Scene {
       if (root) pool = this.collectLeaves(root.children ?? []);
     }
     this.reOrientMode?.setPool(pool);
-    // Initial arrangement: pick a drone first, then match the icon count
+    // Initial arrangement: drone was already pre-picked in create() before
+    // buildPanelUI ran, so getCurrentKey() matches the spawned drone.
     if (this.repairContainer && this.droneStage) {
-      this.droneStage.pickKey();
       const count = this.droneStage.iconCountForCurrentKey();
-      this.reOrientMode?.buildArrangement(this.repairContainer, count);
+      this.reOrientMode?.buildArrangement(this.repairContainer, count, this.droneStage.getCurrentKey() ?? undefined);
     }
   }
 
@@ -285,12 +291,14 @@ export class Game extends Phaser.Scene {
     this.events.on("dial:repairSettled", (data: { success: boolean }) => {
       const allDone = this.reOrientMode?.onSettled(data, this.cornerHUD) ?? false;
       if (allDone && this.repairContainer && this.droneStage) {
-        this.droneStage.exit(() => {
-          if (!this.repairContainer || !this.droneStage) return;
-          this.droneStage.pickKey();
-          const count = this.droneStage.iconCountForCurrentKey();
-          this.reOrientMode?.buildArrangement(this.repairContainer, count);
-          this.droneStage.spawn(this.repairContainer);
+        this.reOrientMode?.dematerialize(() => {
+          this.droneStage?.exit(() => {
+            if (!this.repairContainer || !this.droneStage) return;
+            this.droneStage.pickKey();
+            const count = this.droneStage.iconCountForCurrentKey();
+            this.reOrientMode?.buildArrangement(this.repairContainer, count, this.droneStage.getCurrentKey() ?? undefined);
+            this.droneStage.spawn(this.repairContainer, () => this.reOrientMode?.materialize());
+          });
         });
       }
     });

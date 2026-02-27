@@ -15,6 +15,12 @@ export class RepairPanel {
   private scene: Phaser.Scene;
   private droneStage: DroneStage;
   private reOrientMode: ReOrientMode;
+  private scanG: Phaser.GameObjects.Graphics | null = null;
+  private scanOffset: number = 0;
+  private scanLeft: number = 0;
+  private scanTop: number = 0;
+  private scanWidth: number = 0;
+  private scanBotH: number = 0;
 
   constructor(scene: Phaser.Scene, droneStage: DroneStage, reOrientMode: ReOrientMode) {
     this.scene        = scene;
@@ -48,17 +54,19 @@ export class RepairPanel {
     const botBg = this.scene.add.rectangle(botCX, botCY, width, botH, Colors.PANEL_DARK, 0.4);
     botBg.setStrokeStyle(1, Colors.BORDER_BLUE, 0.35);
 
-    // Scanlines only on the bottom section
+    // Animated scanlines — stored so onUpdate can redraw them each frame
+    this.scanLeft  = botCX - width / 2;
+    this.scanTop   = botCY - botH / 2;
+    this.scanWidth = width;
+    this.scanBotH  = botH;
+
     const scanG = this.scene.add.graphics();
     scanG.setDepth(2);
-    scanG.lineStyle(1, 0x00e864, 0.07);
-    const scanTop  = botCY - botH / 2;
-    const scanLeft = botCX - width / 2;
-    for (let yy = scanTop; yy < scanTop + botH; yy += 5) {
-      scanG.lineBetween(scanLeft, yy, scanLeft + width, yy);
-    }
+    this.scanG = scanG;
+    this.drawScanlines();
 
     container.add([topBg, botBg, scanG]);
+    this.scene.events.on('update', this.onUpdate, this);
 
     // Dividing line between top and bottom sections
     const divG = this.scene.add.graphics();
@@ -67,7 +75,28 @@ export class RepairPanel {
     divG.lineBetween(topCX - width / 2 + 4, topCY + topH / 2, topCX + width / 2 - 4, topCY + topH / 2);
     container.add(divG);
 
-    // Spawn the drone into the top section (wireframe FX applied inside DroneStage)
-    this.droneStage.spawn(container);
+    // Spawn the drone; once it arrives materialize the icon grid
+    this.droneStage.spawn(container, () => this.reOrientMode.materialize());
+  }
+
+  destroy(): void {
+    this.scene.events.off('update', this.onUpdate, this);
+    this.scanG?.destroy();
+    this.scanG = null;
+  }
+
+  private onUpdate(): void {
+    this.scanOffset = (this.scanOffset + 0.4) % 5;
+    this.drawScanlines();
+  }
+
+  private drawScanlines(): void {
+    if (!this.scanG) return;
+    this.scanG.clear();
+    this.scanG.lineStyle(1, 0x00e864, 0.15);
+    const offset = this.scanOffset;
+    for (let yy = this.scanTop + offset; yy < this.scanTop + this.scanBotH; yy += 5) {
+      this.scanG.lineBetween(this.scanLeft, yy, this.scanLeft + this.scanWidth, yy);
+    }
   }
 }

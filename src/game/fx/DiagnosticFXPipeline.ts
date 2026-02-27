@@ -59,13 +59,21 @@ void main () {
 // ── Pipeline class ────────────────────────────────────────────────────────────
 
 export class DiagnosticFXPipeline extends Phaser.Renderer.WebGL.Pipelines.PostFXPipeline {
+  /**
+   * Set this property on the pipeline instance immediately after setPostPipeline()
+   * to override the default edge color. onBoot() reads it before uniforms exist,
+   * so this is the only safe way to configure the color per game-object.
+   */
+  pendingEdgeColor: [number, number, number] | null = null;
+
   constructor (game: Phaser.Game) {
     super({ game, name: DIAGNOSTIC_FX, fragShader: FRAG_SHADER });
   }
 
   /** Set default uniform values once the pipeline has booted. */
   onBoot (): void {
-    this.set3f('uEdgeColor', 0.0, 0.910, 0.392);  // #00e864 neon green
+    const c = this.pendingEdgeColor ?? [0.0, 0.910, 0.392];
+    this.set3f('uEdgeColor', c[0], c[1], c[2]);
     this.set1f('uThreshold', 0.22);
     this.set1f('uGain',      2.8);
   }

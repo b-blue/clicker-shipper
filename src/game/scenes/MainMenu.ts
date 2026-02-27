@@ -1,9 +1,10 @@
 import { toColorString } from '../constants/Colors';
 import { Colors } from '../constants/Colors';
 import { ParallaxBackground } from '../ui/ParallaxBackground';
+import { fitFontSize } from '../utils/UiUtils';
 
-const ARTIFACT_COLLECTIONS = ['root', 'alpha', 'beta'] as const;
 const ARTIFACT_FRAMES = 20;
+const SCROLL_SPEED = 55;  // px per second
 
 export class MainMenu extends Phaser.Scene {
   private bg: ParallaxBackground | null = null;
@@ -22,16 +23,42 @@ export class MainMenu extends Phaser.Scene {
     this.bg = new ParallaxBackground(this, 0, 0, W, H, setNum, tod);
     // Tiles are already added to the scene by ParallaxBackground (depths 1–5).
 
-    // ── Upper 2/5: animated artifact ──────────────────────────────────────
-    const topCY = H * 0.2;
-    const collection = ARTIFACT_COLLECTIONS[Math.floor(Math.random() * ARTIFACT_COLLECTIONS.length)];
-    const n = Math.floor(Math.random() * ARTIFACT_FRAMES) + 1;
-    const animKey = `artifact-${collection}-${n}`;
+    // ── Upper 2/5: two scrolling rows of artifacts ─────────────────────────────────
+    // Alpha row scrolls right, beta row scrolls left.
+    const spriteSize = Math.round(H * 0.08);          // ¼ of the old single-sprite size
+    const gap        = Math.round(spriteSize * 0.4);
+    const step       = spriteSize + gap;
+    const totalW     = ARTIFACT_FRAMES * step;        // full wrap width
 
-    const artifact = this.add.sprite(W / 2, topCY, animKey);
-    const maxSize = Math.round(H * 0.4 * 0.80);
-    artifact.setDisplaySize(maxSize, maxSize).setDepth(10);
-    if (this.anims.exists(animKey)) artifact.play(animKey);
+    const makeRow = (collection: 'alpha' | 'beta', y: number) => {
+      const sprs: Phaser.GameObjects.Sprite[] = [];
+      for (let n = 1; n <= ARTIFACT_FRAMES; n++) {
+        const key = `artifact-${collection}-${n}`;
+        const spr = this.add.sprite((n - 1) * step + spriteSize / 2, y, key);
+        spr.setDisplaySize(spriteSize, spriteSize).setDepth(10);
+        if (this.anims.exists(key)) spr.play(key);
+        sprs.push(spr);
+      }
+      return sprs;
+    };
+
+    const scrollRow = (sprs: Phaser.GameObjects.Sprite[], dx: number) => {
+      for (const spr of sprs) {
+        spr.x += dx;
+        if (dx > 0 && spr.x >  W + spriteSize / 2) spr.x -= totalW;
+        if (dx < 0 && spr.x < -spriteSize / 2)     spr.x += totalW;
+      }
+    };
+
+    const alphaRow = makeRow('alpha', H * 0.12);
+    const betaRow  = makeRow('beta',  H * 0.27);
+
+    // ── Title between the two rows ────────────────────────────────────────
+    const titleText = 'CYBERPUNKINGTON';
+    const titleSize = fitFontSize(titleText, W - 40, 24);
+    this.add.bitmapText(W / 2, H * 0.195, 'clicker', titleText, titleSize)
+      .setOrigin(0.5)
+      .setDepth(11);
 
     // ── Lower 3/5: buttons, centred in that zone ──────────────────────────
     const botZoneTop    = H * 0.4;
@@ -48,8 +75,13 @@ export class MainMenu extends Phaser.Scene {
     // Keyboard shortcut unchanged
     this.input.keyboard?.on('keydown-SPACE', () => this.punchIn());
 
-    // ── Scroll update ─────────────────────────────────────────────────────
-    this.events.on('update', (_time: number, delta: number) => this.bg?.update(delta), this);
+    // ── Update: parallax scroll + artifact rows ────────────────────────────────
+    this.events.on('update', (_time: number, delta: number) => {
+      this.bg?.update(delta);
+      const dx = SCROLL_SPEED * delta / 1000;
+      scrollRow(alphaRow,  dx);
+      scrollRow(betaRow,  -dx);
+    }, this);
     this.events.once('shutdown', () => {
       this.bg = null;
     }, this);

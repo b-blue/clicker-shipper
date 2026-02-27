@@ -64,6 +64,15 @@ describe('MainMenu scene', () => {
     return { scene, rectangle, bitmapText, sprite, keyboardOn };
   };
 
+  it('displays the game title CYBERPUNKINGTON', async () => {
+    const { scene, bitmapText } = await createScene();
+
+    scene.create();
+
+    const labels: string[] = bitmapText.mock.calls.map((c: any[]) => c[3]);
+    expect(labels).toContain('CYBERPUNKINGTON');
+  });
+
   it('creates buttons for all four main menu options', async () => {
     const { scene, bitmapText } = await createScene();
 

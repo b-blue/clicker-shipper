@@ -19,6 +19,8 @@ export class DroneStage {
   private overlays: Phaser.GameObjects.Graphics[] = [];
   private pendingKey: string | null = null;
   private currentKey: string | null = null;
+  /** Viewport mask applied to the drone sprite; remembered after first spawn. */
+  private droneMask: Phaser.Display.Masks.GeometryMask | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -90,7 +92,9 @@ export class DroneStage {
 
     const startX = cx - w / 2 - frameH * scale;
     const sprite = this.scene.add.sprite(startX, cy, key).setScale(scale).setDepth(5);
-    if (mask) sprite.setMask(mask);
+    // Persist the mask so every subsequent spawn (e.g. after drone cycle) is also clipped.
+    if (mask) this.droneMask = mask;
+    if (this.droneMask) sprite.setMask(this.droneMask);
     sprite.play(key);
 
     container.add(sprite);

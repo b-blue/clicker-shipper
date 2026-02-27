@@ -298,12 +298,17 @@ export class Game extends Phaser.Scene {
         this.activeAction = null;
       }
       if (allDone && this.repairContainer && this.droneStage) {
+        // Return player to root nav immediately on full-drone completion.
+        this.radialDial?.reset();
+        this.cornerHUD?.onGoBack();
+        this.activeAction = null;
         this.reOrientMode?.dematerialize(() => {
           this.droneStage?.exit(() => {
             if (!this.repairContainer || !this.droneStage) return;
             this.droneStage.pickKey();
             const count = this.droneStage.iconCountForCurrentKey();
             this.reOrientMode?.buildArrangement(this.repairContainer, count, this.droneStage.getCurrentKey() ?? undefined);
+            // mask is omitted — DroneStage reuses the stored droneMask automatically
             this.droneStage.spawn(this.repairContainer, () => this.reOrientMode?.materialize());
           });
         });

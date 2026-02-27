@@ -109,8 +109,8 @@ export class RepairPanel {
     const divY   = topTop  + topH;
 
     const B    = 14;   // top / bottom bar height (extends beyond the screen rect)
-    const sW   = 18;   // side bar width — wide enough to visibly frame the display
-    const ext  = 4;    // how far bezel protrudes beyond the screen rect left/right
+    const sW   = 30;   // side bar width — 22 px overlap each side hides display edges
+    const ext  = 8;    // how far bezel protrudes beyond the screen rect left/right
     const rail = 14;   // mid-rail height
 
     const bL  = topLeft - ext;           // left edge of bezel

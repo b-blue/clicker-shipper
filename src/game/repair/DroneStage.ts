@@ -4,8 +4,15 @@ import Phaser from 'phaser';
 type Bounds = { cx: number; cy: number; w: number; h: number };
 
 const IDLE_KEYS = [
-  'drone-1-idle', 'drone-3-idle', 'drone-4-idle',
-  'drone-5-idle', 'drone-5b-idle',
+  // Drones 1-15 (drone-6 has no Idle)
+  'drone-1-idle',  'drone-2-idle',  'drone-3-idle',  'drone-4-idle',
+  'drone-5-idle',  'drone-7-idle',  'drone-8-idle',  'drone-9-idle',
+  'drone-10-idle', 'drone-11-idle', 'drone-12-idle', 'drone-13-idle',
+  'drone-14-idle', 'drone-15-idle',
+  // Robots 1-10
+  'robot-1-idle',  'robot-2-idle',  'robot-3-idle',  'robot-4-idle',
+  'robot-5-idle',  'robot-6-idle',  'robot-7-idle',  'robot-8-idle',
+  'robot-9-idle',  'robot-10-idle',
 ];
 
 /**
@@ -95,7 +102,10 @@ export class DroneStage {
     // Persist the mask so every subsequent spawn (e.g. after drone cycle) is also clipped.
     if (mask) this.droneMask = mask;
     if (this.droneMask) sprite.setMask(this.droneMask);
-    sprite.play(key);
+
+    // Use the walk/run animation while sliding in; switch to idle on arrival.
+    const moveKey = this.moveKeyFor(key);
+    sprite.play(moveKey);
 
     container.add(sprite);
     this.droneSprite = sprite;
@@ -103,7 +113,10 @@ export class DroneStage {
 
     this.scene.tweens.add({
       targets: sprite, x: cx, duration: 600, ease: 'Cubic.easeOut',
-      onComplete: () => onArrived?.(),
+      onComplete: () => {
+        sprite.play(key);
+        onArrived?.();
+      },
     });
   }
 
@@ -116,6 +129,11 @@ export class DroneStage {
       this.clearOverlays();
       onComplete();
       return;
+    }
+    // Switch to walk/run for the exit slide.
+    if (this.currentKey) {
+      const moveKey = this.moveKeyFor(this.currentKey);
+      this.droneSprite.play(moveKey);
     }
     const exitX = this.topBounds.cx + this.topBounds.w / 2 + 80;
     this.scene.tweens.add({
@@ -144,6 +162,23 @@ export class DroneStage {
   private clearOverlays(): void {
     for (const g of this.overlays) g.destroy();
     this.overlays = [];
+  }
+
+  /**
+   * Given an idle key (e.g. `drone-7-idle`), returns the best walking/running
+   * animation key for that character.  Preference order: -walk → -run → idle key.
+   * Registers the chosen animation if not already registered.
+   */
+  private moveKeyFor(idleKey: string): string {
+    const base = idleKey.replace(/-idle$/, '');
+    for (const suffix of ['-walk', '-run']) {
+      const candidate = base + suffix;
+      if (this.scene.textures.exists(candidate)) {
+        this.registerAnim(candidate);
+        return candidate;
+      }
+    }
+    return idleKey;   // no walk/run available — stay on idle
   }
 
   /** Lazily registers a Phaser animation from a horizontal sprite strip (square frames). */

@@ -126,6 +126,11 @@ export class RadialDial {
   }
 
   public reset(): void {
+    // Preserve the repair nav mode so the new root face behaves the same way
+    // the one we are discarding did (repair:noMatch must not silently disable
+    // the mode, which would allow shouldLockNavItem to hide skill-down icons).
+    const prevRepairNavMode = this.findRootNavFace()?.repairNavMode ?? false;
+
     // Clear the whole stack
     while (this.faceStack.length > 0) {
       const f = this.faceStack.pop()!;
@@ -135,8 +140,8 @@ export class RadialDial {
     this.rootActionId = null;
     this.centerImage.setAngle(0);
     if (this.glowTimer) this.glowTimer.paused = false;
-    // Push a fresh root nav face
-    this.pushFace(new StandardNavFace(this.rootItems));
+    // Push a fresh root nav face, keeping the same repair nav mode
+    this.pushFace(new StandardNavFace(this.rootItems, prevRepairNavMode));
   }
 
   private scene(): Phaser.Scene {

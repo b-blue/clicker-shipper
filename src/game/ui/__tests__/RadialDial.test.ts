@@ -722,3 +722,62 @@ describe('RadialDial — terminalStartAngle positioning', () => {
     expect((dial as any).terminalStartAngle).toBeCloseTo(Math.PI / 2, 5);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Regression: reset() must preserve repairNavMode
+//
+// When repair:noMatch fires, RadialDial.reset() tears down all faces and
+// builds a fresh StandardNavFace.  Before this fix, the new face was always
+// constructed with the default repairNavMode=false, which caused
+// StandardNavFace.shouldLockNavItem to re-lock nav-down items at depth≥1
+// (showing skill-blocked instead of skill-down) and silently blocking input.
+// ---------------------------------------------------------------------------
+describe('RadialDial — reset() preserves repairNavMode', () => {
+  const dialX = 100;
+  const dialY = 100;
+
+  it('keeps repairNavMode=true on the fresh root face after reset', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    dial.setRepairNavMode(true);
+    // Verify the flag was applied to the live face
+    expect((dial as any).findRootNavFace()?.repairNavMode).toBe(true);
+
+    dial.reset();
+    // After reset, the new root face must retain the same mode
+    expect((dial as any).findRootNavFace()?.repairNavMode).toBe(true);
+  });
+
+  it('keeps repairNavMode=false (the default) after reset', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    expect((dial as any).findRootNavFace()?.repairNavMode).toBe(false);
+
+    dial.reset();
+    expect((dial as any).findRootNavFace()?.repairNavMode).toBe(false);
+  });
+
+  it('resets to depth 0 regardless of how deep navigation was before reset', () => {
+    const scene = createMockScene();
+    const items = createMockItems();
+    scene.textures.exists.mockReturnValue(true);
+    const dial = new RadialDial(scene as any, dialX, dialY, items);
+
+    // Drill into a child item (items are normalised to MenuItem with children)
+    const rootFace = (dial as any).findRootNavFace();
+    const rootItem = rootFace.navigationController.getCurrentItems()[0];
+    if (rootItem?.children?.length) {
+      rootFace.navigationController.drillDown(rootItem);
+    }
+    expect(dial.getDepth()).toBeGreaterThan(0);
+
+    dial.reset();
+    expect(dial.getDepth()).toBe(0);
+  });
+});

@@ -297,7 +297,15 @@ export class Game extends Phaser.Scene {
     });
 
     this.events.on("repair:noMatch", () => {
+      // Capture depth before reset so the CornerHUD badge can be unwound to
+      // root. No terminal face is active for noMatch (repair:showDial was never
+      // emitted), so each onGoBack call decrements HUD depth by 1.
+      const depth = this.radialDial?.getDepth() ?? 0;
       this.radialDial?.reset();
+      for (let i = 0; i < depth; i++) {
+        this.cornerHUD?.onGoBack();
+      }
+      this.activeAction = null;
     });
 
     this.events.on("repair:itemSolved", () => {

@@ -206,10 +206,9 @@ describe('ReOrientMode.buildArrangement — wireframe pendingEdgeColor', () => {
     const { scene, spriteMock, containerMock } = makeScene();
 
     const mode = new ReOrientMode(scene as any);
-    mode.setBotBounds({ cx: 100, cy: 200, w: 200, h: 120 });
     mode.setPool([{ id: 'item1', icon: 'icon1' }, { id: 'item2', icon: 'icon2' }]);
 
-    mode.buildArrangement(containerMock as any, 2, 'drone-1-idle');
+    mode.buildArrangement(containerMock as any, { cx: 100, cy: 200, w: 200, h: 120 }, 2, 'drone-1-idle');
 
     expect(spriteMock.setPostPipeline).toHaveBeenCalledWith('DiagnosticFX');
     expect(spriteMock._pipe.pendingEdgeColor).toEqual([0.28, 0.40, 0.32]);
@@ -219,10 +218,9 @@ describe('ReOrientMode.buildArrangement — wireframe pendingEdgeColor', () => {
     const { scene, containerMock } = makeScene();
 
     const mode = new ReOrientMode(scene as any);
-    mode.setBotBounds({ cx: 100, cy: 200, w: 200, h: 120 });
     mode.setPool([{ id: 'item1', icon: 'icon1' }]);
 
-    mode.buildArrangement(containerMock as any, 1, 'drone-1-idle');
+    mode.buildArrangement(containerMock as any, { cx: 100, cy: 200, w: 200, h: 120 }, 1, 'drone-1-idle');
 
     expect(scene.time.delayedCall).not.toHaveBeenCalled();
   });
@@ -231,11 +229,10 @@ describe('ReOrientMode.buildArrangement — wireframe pendingEdgeColor', () => {
     const { scene, spriteMock, containerMock } = makeScene();
 
     const mode = new ReOrientMode(scene as any);
-    mode.setBotBounds({ cx: 100, cy: 200, w: 200, h: 120 });
     mode.setPool([{ id: 'item1', icon: 'icon1' }]);
 
     // No droneKey
-    mode.buildArrangement(containerMock as any, 1);
+    mode.buildArrangement(containerMock as any, { cx: 100, cy: 200, w: 200, h: 120 }, 1);
 
     expect(spriteMock.setPostPipeline).not.toHaveBeenCalled();
   });
@@ -245,10 +242,9 @@ describe('ReOrientMode.buildArrangement — wireframe pendingEdgeColor', () => {
     scene.textures.exists.mockReturnValue(false);
 
     const mode = new ReOrientMode(scene as any);
-    mode.setBotBounds({ cx: 100, cy: 200, w: 200, h: 120 });
     mode.setPool([{ id: 'item1', icon: 'icon1' }]);
 
-    mode.buildArrangement(containerMock as any, 1, 'drone-1-idle');
+    mode.buildArrangement(containerMock as any, { cx: 100, cy: 200, w: 200, h: 120 }, 1, 'drone-1-idle');
 
     expect(spriteMock.setPostPipeline).not.toHaveBeenCalled();
   });

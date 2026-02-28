@@ -1,8 +1,13 @@
 import Phaser from 'phaser';
 import { Colors } from '../../constants/Colors';
 import { DroneStage } from '../../repair/DroneStage';
-import { ReOrientMode } from '../../repair/ReOrientMode';
+import { RepairSession } from '../../repair/RepairSession';
+import { TaskBounds } from '../../repair/IRepairTask';
 import { ParallaxBackground } from '../ParallaxBackground';
+
+const STAGGER_MS       = 80;    // ms between each item fade
+const FADE_DUR         = 260;   // ms per individual fade
+const REPAIRED_HOLD_MS = 1400;  // ms "DRONE REPAIRED" is visible
 
 /**
  * Builds the REPAIR tab visual structure:
@@ -18,7 +23,6 @@ import { ParallaxBackground } from '../ParallaxBackground';
 export class RepairPanel {
   private scene: Phaser.Scene;
   private droneStage: DroneStage;
-  private reOrientMode: ReOrientMode;
   private scanG: Phaser.GameObjects.Graphics | null = null;
   private bgMaskGfx: Phaser.GameObjects.Graphics | null = null;
   private bg: ParallaxBackground | null = null;
@@ -28,10 +32,15 @@ export class RepairPanel {
   private scanWidth: number = 0;
   private scanBotH: number = 0;
 
-  constructor(scene: Phaser.Scene, droneStage: DroneStage, reOrientMode: ReOrientMode) {
-    this.scene        = scene;
-    this.droneStage   = droneStage;
-    this.reOrientMode = reOrientMode;
+  // ── Session state ─────────────────────────────────────────────────────
+  private activeSession: RepairSession | null = null;
+  private taskContainer: Phaser.GameObjects.Container | null = null;
+  private taskBounds: TaskBounds | null = null;
+  private repairedLabel: Phaser.GameObjects.BitmapText | null = null;
+
+  constructor(scene: Phaser.Scene, droneStage: DroneStage) {
+    this.scene      = scene;
+    this.droneStage = droneStage;
   }
 
   build(
@@ -57,17 +66,18 @@ export class RepairPanel {
     const rail = 14;   // mid-rail height
 
     // Pass bounds to sub-systems.
-    // reOrientMode receives the *inner* content area — inset past the side bars
+    // taskBounds receives the *inner* content area — inset past the side bars
     // (sW − ext = 22 px each side) and the mid-rail overlap (rail/2 = 7 px at top).
     const sideInset = sW - ext;     // 22 px each side
     const topInset  = rail / 2;     //  7 px at top (half the mid-rail)
     this.droneStage.setTopBounds({ cx: topCX, cy: topCY, w: width, h: topH });
-    this.reOrientMode.setBotBounds({
+    this.taskContainer = container;
+    this.taskBounds = {
       cx: botCX,
       cy: botCY + topInset / 2,
       w:  width - 2 * sideInset,
       h:  botH  - topInset,
-    });
+    };
 
     // ── Top: dark fallback fill (visible when BG textures are missing) ────
     const topBg = this.scene.add.rectangle(topCX, topCY, width, topH, Colors.PANEL_DARK, 0.85);
@@ -114,7 +124,7 @@ export class RepairPanel {
 
     // Spawn the drone — apply the viewport mask so the sprite is clipped to the
     // top area during enter/exit tweens, preventing bleed onto tabs and other UI.
-    this.droneStage.spawn(container, () => this.reOrientMode.materialize(), bgMask);
+    this.droneStage.spawn(container, () => this.materialize(), bgMask);
 
     // ── Bezel — solid chunky frame laid over the entire repair screen ────────
     // Drawn last so it always renders above drone, BG tiles and scanlines.
@@ -229,6 +239,104 @@ export class RepairPanel {
     this.bgMaskGfx = null;
     this.scanG?.destroy();
     this.scanG = null;
+  }
+
+  // ── Session / animation API ────────────────────────────────────────
+
+  /** Store the new session so materialize/dematerialize can access its items. */
+  setSession(session: RepairSession): void {
+    this.activeSession = session;
+  }
+
+  /**
+   * Build the task arrangement using the stored container and bounds, then
+   * activate the task so it subscribes to its own terminal-dial events.
+   */
+  buildTaskArrangement(count: number, droneKey?: string): void {
+    if (!this.taskContainer || !this.taskBounds || !this.activeSession) return;
+    this.activeSession.task.buildArrangement(this.taskContainer, this.taskBounds, count, droneKey);
+    this.activeSession.task.activate();
+  }
+
+  /**
+   * Staggered materialize: each icon + frame fades from alpha 0 → 1.
+   * Called by DroneStage.spawn once the drone arrives.
+   */
+  materialize(): void {
+    if (!this.activeSession) return;
+    const items     = this.activeSession.task.getItems();
+    const wireframe = this.activeSession.task.getWireframe();
+    wireframe?.reveal();
+    const targets = items.flatMap(ri => [ri.bgObj, ri.frameObj, ri.iconObj, ri.badgeBg, ri.badgeIcon]);
+    targets.forEach((obj, i) => {
+      this.scene.tweens.add({
+        targets: obj,
+        alpha: { from: 0, to: 1 },
+        duration: FADE_DUR,
+        delay: i * STAGGER_MS,
+        ease: 'Sine.easeOut',
+      });
+    });
+  }
+
+  /**
+   * Staggered dematerialize: items fade out, then "DRONE REPAIRED" text
+   * appears briefly before onComplete is called.
+   */
+  dematerialize(onComplete: () => void): void {
+    if (!this.activeSession || !this.taskBounds || !this.taskContainer) {
+      onComplete();
+      return;
+    }
+    const { cx, cy } = this.taskBounds;
+    const items     = this.activeSession.task.getItems();
+    const wireframe = this.activeSession.task.getWireframe();
+
+    const allObjs: Phaser.GameObjects.GameObject[] = [
+      ...items.flatMap(ri => [ri.bgObj, ri.frameObj, ri.iconObj, ri.badgeBg, ri.badgeIcon]),
+      ...(wireframe?.sprite ? [wireframe.sprite] : []),
+    ].reverse();
+
+    allObjs.forEach((obj, i) => {
+      this.scene.tweens.add({
+        targets: obj,
+        alpha: { to: 0 },
+        duration: Math.round(FADE_DUR * 0.8),
+        delay: i * Math.round(STAGGER_MS * 0.5),
+        ease: 'Sine.easeIn',
+      });
+    });
+
+    const totalFade = allObjs.length * STAGGER_MS * 0.5 + FADE_DUR * 0.8;
+    const container = this.taskContainer;
+    this.scene.time.delayedCall(totalFade + 60, () => {
+      const lbl = this.scene.add.bitmapText(cx, cy, 'clicker', 'DRONE REPAIRED', 13)
+        .setOrigin(0.5).setTint(0x00e864).setDepth(10).setAlpha(0);
+      container.add(lbl);
+      this.repairedLabel = lbl;
+
+      this.scene.tweens.add({
+        targets: lbl,
+        alpha: { from: 0, to: 1 },
+        duration: 300,
+        ease: 'Sine.easeOut',
+        onComplete: () => {
+          this.scene.time.delayedCall(REPAIRED_HOLD_MS, () => {
+            this.scene.tweens.add({
+              targets: lbl,
+              alpha: { to: 0 },
+              duration: 250,
+              ease: 'Sine.easeIn',
+              onComplete: () => {
+                lbl.destroy();
+                this.repairedLabel = null;
+                onComplete();
+              },
+            });
+          });
+        },
+      });
+    });
   }
 
   private onUpdate(_time: number, delta: number): void {

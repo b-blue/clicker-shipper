@@ -15,7 +15,7 @@ import { CatalogPanel } from "../ui/panels/CatalogPanel";
 import { DroneViewPanel } from "../ui/panels/DroneViewPanel";
 import { OrdersPanel } from "../ui/panels/OrdersPanel";
 import { DroneStage } from "../repair/DroneStage";
-import { ReOrientMode } from "../repair/ReOrientMode";
+import { RepairSession } from "../repair/RepairSession";
 
 type TabKey = "REPAIR" | "SETTINGS" | "CATALOG" | "DRONES";
 
@@ -28,11 +28,12 @@ export class Game extends Phaser.Scene {
   private altTerminalModeActive: boolean = false;
 
   // ── Repair modules ────────────────────────────────────────────────────────
-  private droneStage:       DroneStage   | null = null;
-  private reOrientMode:     ReOrientMode | null = null;
-  private repairPanel:      RepairPanel  | null = null;
-  private repairContainer:  Phaser.GameObjects.Container | null = null;
-  private activeAction:     string | null = null;
+  private droneStage:      DroneStage      | null = null;
+  private repairSession:   RepairSession   | null = null;
+  private repairPanel:     RepairPanel     | null = null;
+  private repairContainer: Phaser.GameObjects.Container | null = null;
+  private repairPool:      any[]           = [];
+  private activeAction:    string | null = null;
 
   // ── Orders (legacy / backgrounded) ───────────────────────────────────────
   private ordersContainer:  Phaser.GameObjects.Container | null = null;
@@ -63,7 +64,6 @@ export class Game extends Phaser.Scene {
       const dialR   = ds.radius ?? 150;
 
       this.droneStage   = new DroneStage(this);
-      this.reOrientMode = new ReOrientMode(this);
       // Pre-select the drone key before buildPanelUI so spawn() and
       // buildArrangement() both reference the same key on the first cycle.
       this.droneStage.pickKey();
@@ -82,7 +82,7 @@ export class Game extends Phaser.Scene {
   shutdown() {
     this.radialDial?.destroy();
     this.droneStage?.destroy();
-    this.reOrientMode?.destroy();
+    this.repairSession?.destroy();
     this.repairPanel?.destroy();
   }
 
@@ -127,7 +127,7 @@ export class Game extends Phaser.Scene {
     this.orderSlots = oPanel.build(this.ordersContainer!, panelX, panelTop + 10, panelW - 20, panelH - 20, order);
     this.ordersContainer!.setVisible(false);
 
-    const rPanel = new RepairPanel(this, this.droneStage!, this.reOrientMode!);
+    const rPanel = new RepairPanel(this, this.droneStage!);
     this.repairPanel = rPanel;
     rPanel.build(repairCtr, panelX, panelTop + 2, panelW - 20, panelH - 10);
 
@@ -226,12 +226,17 @@ export class Game extends Phaser.Scene {
       const root = (items as any[]).find((it: any) => it.id === 'nav_resources_root');
       if (root) pool = this.collectLeaves(root.children ?? []);
     }
-    this.reOrientMode?.setPool(pool);
-    // Initial arrangement: drone was already pre-picked in create() before
-    // buildPanelUI ran, so getCurrentKey() matches the spawned drone.
+    this.repairPool = pool;
+
+    // Create the initial RepairSession now that we have a pool and a pre-picked drone key.
     if (this.repairContainer && this.droneStage) {
+      const key   = this.droneStage.getCurrentKey() ?? '';
       const count = this.droneStage.iconCountForCurrentKey();
-      this.reOrientMode?.buildArrangement(this.repairContainer, count, this.droneStage.getCurrentKey() ?? undefined);
+      const session = new RepairSession(this, key);
+      session.task.setPool(pool);
+      this.repairSession = session;
+      this.repairPanel?.setSession(session);
+      this.repairPanel?.buildTaskArrangement(count, key || undefined);
     }
   }
 
@@ -252,12 +257,13 @@ export class Game extends Phaser.Scene {
 
   private wireDialEvents(): void {
     ["dial:itemConfirmed","dial:quantityConfirmed","dial:levelChanged",
-     "dial:goBack","dial:repairRotated","dial:repairSettled","catalog:tabActivated"].forEach(e => this.events.removeAllListeners(e));
+     "dial:goBack","catalog:tabActivated",
+     "repair:showDial","repair:noMatch","repair:itemSolved","repair:allSolved"].forEach(e => this.events.removeAllListeners(e));
 
     this.events.on("dial:itemConfirmed", (data: { item: any; sliceCenterAngle?: number }) => {
       const depth = this.radialDial?.getDepth() ?? 0;
       if (this.activeAction === 'action_reorient' || depth >= 1) {
-        this.reOrientMode?.onItemSelected(data.item, this.radialDial!, this.cornerHUD);
+        this.repairSession?.task.onItemSelected(data.item);
         return;
       }
       const iconKey = data.item.icon || data.item.id;
@@ -280,36 +286,48 @@ export class Game extends Phaser.Scene {
     });
 
     this.events.on("dial:goBack", () => {
-      this.reOrientMode?.clearCurrent();
+      this.repairSession?.task.clearCurrent();
       this.cornerHUD?.onGoBack();
     });
 
-    this.events.on("dial:repairRotated", (data: { rotation: number }) => {
-      this.reOrientMode?.onRotated(data);
+    this.events.on("repair:showDial", (data: { item: MenuItem; currentRotationDeg: number; targetRotationDeg: number }) => {
+      this.radialDial?.showRepairDial(data.item, data.currentRotationDeg, data.targetRotationDeg);
+      this.cornerHUD?.onItemConfirmed();
     });
 
-    this.events.on("dial:repairSettled", (data: { success: boolean }) => {
-      const allDone = this.reOrientMode?.onSettled(data, this.cornerHUD) ?? false;
-      if (data.success && !allDone) {
-        // Single item solved: onSettled called cornerHUD.onGoBack() once (terminal→item list).
-        // Return the player fully to the root-level nav dial.
-        this.radialDial?.reset();    // navigates back to depth 0 and redraws
-        this.cornerHUD?.onGoBack(); // HUD was at depth=1, !terminal → depth=0
-        this.activeAction = null;
-      }
-      if (allDone && this.repairContainer && this.droneStage) {
-        // Return player to root nav immediately on full-drone completion.
-        this.radialDial?.reset();
-        this.cornerHUD?.onGoBack();
-        this.activeAction = null;
-        this.reOrientMode?.dematerialize(() => {
+    this.events.on("repair:noMatch", () => {
+      this.radialDial?.reset();
+    });
+
+    this.events.on("repair:itemSolved", () => {
+      // Two onGoBack calls: terminal → nav level, then nav → root.
+      this.cornerHUD?.onGoBack();
+      this.radialDial?.reset();
+      this.cornerHUD?.onGoBack();
+      this.activeAction = null;
+    });
+
+    this.events.on("repair:allSolved", () => {
+      this.cornerHUD?.onGoBack();
+      this.radialDial?.reset();
+      this.cornerHUD?.onGoBack();
+      this.activeAction = null;
+      if (this.repairContainer && this.droneStage) {
+        this.repairPanel?.dematerialize(() => {
+          this.repairSession?.destroy();
+          this.repairSession = null;
           this.droneStage?.exit(() => {
             if (!this.repairContainer || !this.droneStage) return;
             this.droneStage.pickKey();
+            const key   = this.droneStage.getCurrentKey() ?? undefined;
             const count = this.droneStage.iconCountForCurrentKey();
-            this.reOrientMode?.buildArrangement(this.repairContainer, count, this.droneStage.getCurrentKey() ?? undefined);
-            // mask is omitted — DroneStage reuses the stored droneMask automatically
-            this.droneStage.spawn(this.repairContainer, () => this.reOrientMode?.materialize());
+            const newSession = new RepairSession(this, key ?? '');
+            newSession.task.setPool(this.repairPool);
+            this.repairSession = newSession;
+            this.repairPanel?.setSession(newSession);
+            this.repairPanel?.buildTaskArrangement(count, key);
+            // mask omitted — DroneStage reuses the stored droneMask automatically
+            this.droneStage.spawn(this.repairContainer, () => this.repairPanel?.materialize());
           });
         });
       }

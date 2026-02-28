@@ -10,6 +10,19 @@ describe('GameManager', () => {
     gameManager = GameManager.getInstance();
   });
 
+  /** Build a minimal scene mock whose JSON cache returns the given fixtures. */
+  const makeScene = (config: GameConfig, itemsData: ItemsData): any => ({
+    cache: {
+      json: {
+        get: jest.fn((key: string) => {
+          if (key === 'config') return config;
+          if (key === 'items')  return itemsData;
+          return null;
+        }),
+      },
+    },
+  });
+
   describe('getInstance', () => {
     it('should return the same instance on multiple calls', () => {
       const manager1 = GameManager.getInstance();
@@ -25,7 +38,7 @@ describe('GameManager', () => {
   });
 
   describe('initialize', () => {
-    it('should load config and items successfully', async () => {
+    it('reads config and items from the Phaser JSON cache (no re-fetch)', async () => {
       const mockConfig: GameConfig = {
         shiftDuration: 180000,
         dialLevels: 2,
@@ -45,30 +58,13 @@ describe('GameManager', () => {
         ],
       };
 
-      const mockScene: any = {
-        load: {
-          json: jest.fn(),
-          once: jest.fn((event, callback) => {
-            if (event === 'complete') {
-              setTimeout(callback, 0);
-            }
-          }),
-          start: jest.fn(),
-        },
-        cache: {
-          json: {
-            get: jest.fn()
-              .mockReturnValueOnce(mockConfig)
-              .mockReturnValueOnce(mockItemsData),
-            remove: jest.fn(),
-          },
-        },
-      };
+      const mockScene = makeScene(mockConfig, mockItemsData);
 
       await gameManager.initialize(mockScene, 'data/config.json', 'data/items.json');
 
-      expect(mockScene.load.json).toHaveBeenCalledWith('tempJson', 'data/config.json');
-      expect(mockScene.load.json).toHaveBeenCalledWith('tempJson', 'data/items.json');
+      // Resolves cache keys from path: 'data/config.json' → 'config', etc.
+      expect(mockScene.cache.json.get).toHaveBeenCalledWith('config');
+      expect(mockScene.cache.json.get).toHaveBeenCalledWith('items');
       expect(gameManager.getConfig()).toEqual(mockConfig);
       expect(gameManager.getItems()).toHaveLength(1);
     });
@@ -88,29 +84,7 @@ describe('GameManager', () => {
         itemsPerLevel: 6,
       };
 
-      const mockItemsData: ItemsData = {
-        items: [],
-      };
-
-      const mockScene: any = {
-        load: {
-          json: jest.fn(),
-          once: jest.fn((event, callback) => {
-            if (event === 'complete') {
-              setTimeout(callback, 0);
-            }
-          }),
-          start: jest.fn(),
-        },
-        cache: {
-          json: {
-            get: jest.fn()
-              .mockReturnValueOnce(mockConfig)
-              .mockReturnValueOnce(mockItemsData),
-            remove: jest.fn(),
-          },
-        },
-      };
+      const mockScene = makeScene(mockConfig, { items: [] });
 
       await gameManager.initialize(mockScene, 'data/config.json', 'data/items.json');
       const config = gameManager.getConfig();
@@ -148,25 +122,7 @@ describe('GameManager', () => {
         ],
       };
 
-      const mockScene: any = {
-        load: {
-          json: jest.fn(),
-          once: jest.fn((event, callback) => {
-            if (event === 'complete') {
-              setTimeout(callback, 0);
-            }
-          }),
-          start: jest.fn(),
-        },
-        cache: {
-          json: {
-            get: jest.fn()
-              .mockReturnValueOnce(mockConfig)
-              .mockReturnValueOnce(mockItemsData),
-            remove: jest.fn(),
-          },
-        },
-      };
+      const mockScene = makeScene(mockConfig, mockItemsData);
 
       await gameManager.initialize(mockScene, 'data/config.json', 'data/items.json');
       const items = gameManager.getItems();
@@ -185,29 +141,7 @@ describe('GameManager', () => {
         itemsPerLevel: 6,
       };
 
-      const mockItemsData: ItemsData = {
-        items: [],
-      };
-
-      const mockScene: any = {
-        load: {
-          json: jest.fn(),
-          once: jest.fn((event, callback) => {
-            if (event === 'complete') {
-              setTimeout(callback, 0);
-            }
-          }),
-          start: jest.fn(),
-        },
-        cache: {
-          json: {
-            get: jest.fn()
-              .mockReturnValueOnce(mockConfig)
-              .mockReturnValueOnce(mockItemsData),
-            remove: jest.fn(),
-          },
-        },
-      };
+      const mockScene = makeScene(mockConfig, { items: [] });
 
       await gameManager.initialize(mockScene, 'data/config.json', 'data/items.json');
       const duration = gameManager.getShiftDuration();

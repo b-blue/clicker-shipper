@@ -15,24 +15,14 @@ export class GameManager {
   }
 
   async initialize(scene: Phaser.Scene, configPath: string, itemsPath: string): Promise<void> {
-    this.config = await this.loadJSON<GameConfig>(scene, configPath);
-    const itemsData = await this.loadJSON<ItemsData>(scene, itemsPath);
+    // Both files are queued in Preloader.preload() so they are already in the
+    // Phaser JSON cache by the time create() calls this — no re-fetch needed.
+    // Derive cache keys from paths: 'data/config.json' → 'config', etc.
+    const configKey  = configPath.split('/').pop()!.replace('.json', '');
+    const itemsKey   = itemsPath.split('/').pop()!.replace('.json', '');
+    this.config      = scene.cache.json.get(configKey) as GameConfig;
+    const itemsData  = scene.cache.json.get(itemsKey)  as ItemsData;
     this.items = itemsData.items;
-  }
-
-  private loadJSON<T>(scene: Phaser.Scene, path: string): Promise<T> {
-    return new Promise((resolve, reject) => {
-      scene.load.json('tempJson', path);
-      scene.load.once('complete', () => {
-        const data = scene.cache.json.get('tempJson');
-        scene.cache.json.remove('tempJson');
-        resolve(data as T);
-      });
-      scene.load.once('loaderror', () => {
-        reject(new Error(`Failed to load ${path}`));
-      });
-      scene.load.start();
-    });
   }
 
   getConfig(): GameConfig {

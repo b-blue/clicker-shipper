@@ -9,6 +9,17 @@ export class Preloader extends Phaser.Scene {
   }
 
   preload() {
+    // Wire up loading-bar progress so the indeterminate sweep transitions to a
+    // deterministic fill once Phaser starts reporting actual load progress.
+    const fill = document.getElementById('loading-bar-fill');
+    if (fill) {
+      this.load.on('progress', (value: number) => {
+        fill.style.animation  = 'none';
+        fill.style.transform  = 'none';
+        fill.style.width      = `${Math.round(value * 100)}%`;
+      });
+    }
+
     // Load config and items data
     this.load.json('config', 'data/config.json');
     this.load.json('items', 'data/items.json');
@@ -199,6 +210,10 @@ export class Preloader extends Phaser.Scene {
       this.load.spritesheet(`artifact-alpha-${n}`, `assets/artifacts/alpha/${n}.png`,  { frameWidth: 20, frameHeight: 20 });
       this.load.spritesheet(`artifact-beta-${n}`,  `assets/artifacts/beta/${n}.png`,   { frameWidth: 20, frameHeight: 20 });
     }
+
+    // Sprite atlases — queued here so they download in parallel with the
+    // drone/robot/background sprites rather than after a sequential create() chain.
+    AssetLoader.preloadAtlases(this);
   }
 
   async create() {
@@ -211,33 +226,24 @@ export class Preloader extends Phaser.Scene {
         }
       }
 
-      // Initialize GameManager with loaded data
-      const gameManager = GameManager.getInstance();
-      await gameManager.initialize(this, 'data/config.json', 'data/items.json');
-      
-      // Initialize SettingsManager
+      // Initialize managers in parallel — GameManager reads from the Phaser JSON
+      // cache (populated in preload()); SettingsManager reads localStorage or
+      // fetches the tiny settings.json. Neither blocks on a network round-trip.
+      const gameManager     = GameManager.getInstance();
       const settingsManager = SettingsManager.getInstance();
-      await settingsManager.loadSettings();
-      
+      await Promise.all([
+        gameManager.initialize(this, 'data/config.json', 'data/items.json'),
+        settingsManager.loadSettings(),
+      ]);
+
       const config = gameManager.getConfig();
 
-      // Now load root dial icon (if path is specified)
+      // If a one-off root-dial icon is configured, load it now (rare case).
       if (config.rootDialIconPath) {
         this.load.image('rootDialIcon', config.rootDialIconPath);
+        this.load.start();
+        await new Promise<void>(resolve => this.load.once('complete', resolve));
       }
-
-      // Load all sprite atlases (replaces the individual per-sprite loads)
-      AssetLoader.preloadAtlases(this);
-      
-      // Start load and wait for completion
-      this.load.start();
-      
-      // Wait for all assets to load
-      await new Promise<void>((resolve) => {
-        this.load.once('complete', () => {
-          resolve();
-        });
-      });
       
       // Register artifact animations (4-frame horizontal strips at 8 fps).
       for (const col of ['alpha', 'beta']) {
@@ -267,12 +273,16 @@ export class Preloader extends Phaser.Scene {
       // One rAF tick so the canvas context actually renders (and caches) the probes.
       await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
 
+      // All assets and fonts are ready — dismiss the HTML loading screen.
+      document.getElementById('loading-screen')?.remove();
+
       // Transition to MainMenu
       this.scene.start('MainMenu');
       _m.destroy();
       _h.destroy();
     } catch (error) {
       console.error('Failed to initialize game:', error);
+      document.getElementById('loading-screen')?.remove();
       // Fallback to MainMenu anyway for now
       this.scene.start('MainMenu');
     }

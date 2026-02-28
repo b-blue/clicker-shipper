@@ -13,6 +13,12 @@
 </head>
 
 <body>
+    <!-- Font primers: reference custom fonts in the DOM so the browser downloads
+         them on initial load before the Phaser canvas ever renders any text. -->
+    <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;font-size:1px;visibility:hidden;">
+        <span style="font-family:'Minotaur'">x</span>
+        <span style="font-family:'Hack'">x</span>
+    </div>
     <div id="app">
         <div id="game-container"></div>
     </div>

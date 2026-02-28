@@ -254,14 +254,13 @@ export class Preloader extends Phaser.Scene {
         }
       }
 
-      // Warm up web fonts: explicitly request the font files from the browser
-      // (document.fonts.ready alone won't download fonts that haven't been used yet).
-      await Promise.allSettled([
-        document.fonts.load('normal 16px Minotaur'),
-        document.fonts.load('normal 16px Hack'),
-      ]);
+      // Warm up web fonts: the hidden font-primer elements in index.html force the
+      // browser to download the font files via CSS. document.fonts.ready resolves
+      // only after all referenced @font-face fonts finish loading.
+      await document.fonts.ready;
 
-      // Probe Text objects prime the Phaser/canvas font metric cache.
+      // Probe Text objects prime the Phaser/canvas font metric cache so the canvas
+      // 2D context has measured the glyphs before any visible scene draws.
       const _m = this.add.text(-9999, -9999, 'AaBbCc', { fontFamily: 'Minotaur', fontSize: '16px', color: '#000000' });
       const _h = this.add.text(-9999, -9999, '0123456789', { fontFamily: 'Hack', fontSize: '16px', color: '#000000' });
 

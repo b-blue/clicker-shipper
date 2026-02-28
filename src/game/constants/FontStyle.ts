@@ -18,7 +18,7 @@ export type TextStyle = Phaser.Types.GameObjects.Text.TextStyle;
  * Global scale multiplier applied to every Minotaur (label) font size.
  * Increase to make all label text larger; decrease to shrink it.
  */
-const LABEL_SCALE = 1.3;
+const LABEL_SCALE = 1.5;
 
 /**
  * Returns a Phaser TextStyle for heading/label text (Minotaur).

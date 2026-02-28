@@ -93,8 +93,8 @@ html, body {
 
 #loading-title {
     font-family: 'Minotaur', monospace;
-    font-size: 5vw;
-    font-size: clamp(1rem, 5vw, 2rem);
+    font-size: 6vw;
+    font-size: clamp(1.25rem, 6vw, 2.5rem);
     letter-spacing: 0.2em;
     color: rgba(224, 224, 224, 0.9);
 }

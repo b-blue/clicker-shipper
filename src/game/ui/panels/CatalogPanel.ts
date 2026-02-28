@@ -6,6 +6,7 @@ import {
 } from '../../managers/ProgressionManager';
 import { AssetLoader } from '../../managers/AssetLoader';
 import { Colors } from '../../constants/Colors';
+import { labelStyle, readoutStyle } from '../../constants/FontStyle';
 import { getCatalogRows } from '../../utils/OrderUtils';
 import { MenuItem } from '../../types/GameTypes';
 
@@ -91,8 +92,8 @@ export class CatalogPanel {
             .setScale(1.2).setAlpha(0.5);
           listContainer.add(lockIcon);
         }
-        const lockLabel = this.scene.add.bitmapText(width / 2, listAreaH / 2 + 20, 'clicker', 'LOCKED', 12)
-          .setOrigin(0.5).setTint(0x556677);
+        const lockLabel = this.scene.add.text(width / 2, listAreaH / 2 + 20, 'LOCKED', labelStyle(12, 0x556677))
+          .setOrigin(0.5);
         listContainer.add(lockLabel);
         return;
       }
@@ -136,8 +137,8 @@ export class CatalogPanel {
 
         const nameX = iconX + iconFrameSize / 2 + 20;
         listContainer.add(
-          this.scene.add.bitmapText(nameX, rowY, 'clicker', item.name.toUpperCase(), 10)
-            .setOrigin(0, 0.5).setMaxWidth(width - iconFrameSize - 90),
+          this.scene.add.text(nameX, rowY, item.name.toUpperCase(), labelStyle(10))
+            .setOrigin(0, 0.5).setWordWrapWidth(width - iconFrameSize - 90),
         );
 
         const badgeSize = 28;
@@ -160,8 +161,8 @@ export class CatalogPanel {
 
         const levelLetter = String.fromCharCode(65 + dialDepth);
         listContainer.add(
-          this.scene.add.bitmapText(badgeX + badgeR - 5, badgeY - badgeR + 5, 'clicker', levelLetter, 8)
-            .setOrigin(0.5).setDepth(3).setTint(Colors.HIGHLIGHT_YELLOW),
+          this.scene.add.text(badgeX + badgeR - 5, badgeY - badgeR + 5, levelLetter, readoutStyle(8, Colors.HIGHLIGHT_YELLOW))
+            .setOrigin(0.5).setDepth(3),
         );
       });
 

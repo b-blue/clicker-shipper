@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { Colors } from '../../constants/Colors';
+import { readoutStyle } from '../../constants/FontStyle';
 import { DroneStage } from '../../repair/DroneStage';
 import { RepairSession } from '../../repair/RepairSession';
 import { TaskBounds } from '../../repair/IRepairTask';
@@ -36,7 +37,7 @@ export class RepairPanel {
   private activeSession: RepairSession | null = null;
   private taskContainer: Phaser.GameObjects.Container | null = null;
   private taskBounds: TaskBounds | null = null;
-  private repairedLabel: Phaser.GameObjects.BitmapText | null = null;
+  private repairedLabel: Phaser.GameObjects.Text | null = null;
 
   constructor(scene: Phaser.Scene, droneStage: DroneStage) {
     this.scene      = scene;
@@ -310,8 +311,8 @@ export class RepairPanel {
     const totalFade = allObjs.length * STAGGER_MS * 0.5 + FADE_DUR * 0.8;
     const container = this.taskContainer;
     this.scene.time.delayedCall(totalFade + 60, () => {
-      const lbl = this.scene.add.bitmapText(cx, cy, 'clicker', 'DRONE REPAIRED', 13)
-        .setOrigin(0.5).setTint(0x00e864).setDepth(10).setAlpha(0);
+      const lbl = this.scene.add.text(cx, cy, 'DRONE REPAIRED', readoutStyle(13, 0x00e864))
+        .setOrigin(0.5).setDepth(10).setAlpha(0);
       container.add(lbl);
       this.repairedLabel = lbl;
 

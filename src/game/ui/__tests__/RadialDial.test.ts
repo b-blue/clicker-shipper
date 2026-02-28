@@ -90,6 +90,9 @@ const createMockScene = (): MockScene => {
       text: jest.fn(() => ({
         setOrigin: jest.fn(function () { return this; }),
         setDepth: jest.fn(function () { return this; }),
+        setWordWrapWidth: jest.fn(function () { return this; }),
+        setText: jest.fn(function () { return this; }),
+        setColor: jest.fn(function () { return this; }),
         destroy: jest.fn(),
       })),
       bitmapText: jest.fn(() => ({

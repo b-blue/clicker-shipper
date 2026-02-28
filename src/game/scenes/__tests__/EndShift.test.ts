@@ -62,7 +62,7 @@ function makeMockScene() {
     cameras: { main: { width: 480, height: 720 } },
     add: {
       rectangle: jest.fn(() => rectObj()),
-      bitmapText: jest.fn(() => textObj()),
+      text: jest.fn(() => textObj()),
       graphics: jest.fn(() => graphicsObj()),
       container: jest.fn(() => containerObj()),
     },
@@ -96,7 +96,7 @@ describe('EndShift scene', () => {
     const mock = makeMockScene();
     Object.assign(scene, mock);
     scene.create({ revenue: 100, bonus: 20, shiftsCompleted: 5 });
-    const calls: string[] = (mock.add.bitmapText as jest.Mock).mock.calls.map(c => c[3]);
+    const calls: string[] = (mock.add.text as jest.Mock).mock.calls.map(c => c[2]);
     expect(calls).toContain('SHIFT COMPLETE');
   });
 
@@ -106,7 +106,7 @@ describe('EndShift scene', () => {
     const mock = makeMockScene();
     Object.assign(scene, mock);
     scene.create({ revenue: 50, bonus: 10 });
-    const calls: string[] = (mock.add.bitmapText as jest.Mock).mock.calls.map(c => c[3]);
+    const calls: string[] = (mock.add.text as jest.Mock).mock.calls.map(c => c[2]);
     expect(calls.some(t => t.includes('150'))).toBe(true);
   });
 
@@ -116,7 +116,7 @@ describe('EndShift scene', () => {
     const mock = makeMockScene();
     Object.assign(scene, mock);
     scene.create({});
-    const calls: string[] = (mock.add.bitmapText as jest.Mock).mock.calls.map(c => c[3]);
+    const calls: string[] = (mock.add.text as jest.Mock).mock.calls.map(c => c[2]);
     expect(calls).toContain('PLAY AGAIN');
     expect(calls).toContain('MAIN MENU');
   });

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { AssetLoader } from '../managers/AssetLoader';
-import { Colors } from '../constants/Colors';
+import { Colors, toColorString } from '../constants/Colors';
+import { labelStyle } from '../constants/FontStyle';
 
 export interface CornerHudCallbacks {
   /** Switches to the catalog tab, pre-scrolled to `categoryId`. */
@@ -51,7 +52,7 @@ export class DialCornerHUD {
   // Level badge (lower-right)
   private readonly levelBg: Phaser.GameObjects.Graphics;
   private readonly levelIcon: Phaser.GameObjects.Image;
-  private readonly levelLabel: Phaser.GameObjects.BitmapText;
+  private readonly levelLabel: Phaser.GameObjects.Text;
 
   // Catalog button (upper-right)
   private readonly catalogBg: Phaser.GameObjects.Graphics;
@@ -106,7 +107,7 @@ export class DialCornerHUD {
     this.levelBg = scene.add.graphics().setDepth(20);
     this.levelIcon = scene.add.image(btnX, lowerY, '').setScale(0.9).setDepth(22);
     this.levelLabel = scene.add
-      .bitmapText(btnX + btnSize / 2 - 7, lowerY - btnSize / 2 + 7, 'clicker', 'A', 10)
+      .text(btnX + btnSize / 2 - 7, lowerY - btnSize / 2 + 7, 'A', labelStyle(10))
       .setOrigin(0.5)
       .setDepth(23);
 
@@ -218,7 +219,7 @@ export class DialCornerHUD {
 
     this.levelLabel.setText(String.fromCharCode(65 + depth));
     this.levelLabel.setPosition(btnX + btnSize / 2 - 7, lowerY - btnSize / 2 + 7);
-    this.levelLabel.setTint(Colors.HIGHLIGHT_YELLOW);
+    this.levelLabel.setColor(toColorString(Colors.HIGHLIGHT_YELLOW));
 
     const categoryItem = this.activeCategoryItem;
     const iconKey: string =

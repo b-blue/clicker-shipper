@@ -6,6 +6,7 @@ import { AssetLoader } from '../../../managers/AssetLoader';
 import { ProgressionManager } from '../../../managers/ProgressionManager';
 import { IDialFace } from '../IDialFace';
 import { DialContext } from '../DialContext';
+import { labelStyle } from '../../../constants/FontStyle';
 
 /**
  * Standard hierarchical navigation face.
@@ -35,7 +36,7 @@ export class StandardNavFace implements IDialFace {
 
   // ── Per-frame Phaser objects ──────────────────────────────────────────────
   private sliceGraphics: Phaser.GameObjects.Graphics[] = [];
-  private sliceTexts:    Phaser.GameObjects.BitmapText[] = [];
+  private sliceTexts:    Phaser.GameObjects.Text[] = [];
   private sliceImages:   Phaser.GameObjects.Image[] = [];
   private sliceGlows:    Phaser.GameObjects.Graphics[] = [];
 
@@ -454,16 +455,16 @@ export class StandardNavFace implements IDialFace {
           this.sliceImages.push(img);
         } else {
           const fontSize = this.navigationController.getDepth() === 0 ? 12 : 11;
-          const text = scene.add.bitmapText(textX, textY, 'clicker', sliceItem.name.toUpperCase(), fontSize)
-            .setOrigin(0.5, 0.5).setMaxWidth(80).setDepth(0);
+          const text = scene.add.text(textX, textY, sliceItem.name.toUpperCase(), labelStyle(fontSize))
+            .setOrigin(0.5, 0.5).setWordWrapWidth(80).setDepth(0);
           this.sliceTexts.push(text);
         }
       } else {
-        const text = scene.add.bitmapText(textX, textY, 'clicker', (sliceItem as any).name.toUpperCase(), 12)
-          .setOrigin(0.5, 0.5).setMaxWidth(80).setDepth(0);
+        const text = scene.add.text(textX, textY, (sliceItem as any).name.toUpperCase(), labelStyle(12))
+          .setOrigin(0.5, 0.5).setWordWrapWidth(80).setDepth(0);
         this.sliceTexts.push(text);
         if (this.navigationController.isNavigable(sliceItem)) {
-          const badge = scene.add.bitmapText(textX + 20, textY - 20, 'clicker', '>', 16)
+          const badge = scene.add.text(textX + 20, textY - 20, '>', labelStyle(16))
             .setOrigin(0.5, 0.5).setDepth(5);
           this.sliceTexts.push(badge);
         }

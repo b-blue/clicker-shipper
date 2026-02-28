@@ -5,6 +5,7 @@ import { SettingsManager } from "../managers/SettingsManager";
 import { ProgressionManager, ALL_CATEGORY_IDS } from "../managers/ProgressionManager";
 import { AssetLoader } from "../managers/AssetLoader";
 import { Colors } from "../constants/Colors";
+import { labelStyle, readoutStyle } from "../constants/FontStyle";
 import { generateOrder as buildOrder } from "../utils/OrderUtils";
 import { MenuItem, Order } from "../types/GameTypes";
 import { RadDialConfig } from "../types/RadDialTypes";
@@ -75,7 +76,7 @@ export class Game extends Phaser.Scene {
       this.events.once("shutdown", this.shutdown, this);
     } catch (e) {
       console.error("Game create error:", e);
-      this.add.bitmapText(50, 50, "clicker", "ERROR LOADING GAME DATA", 20);
+      this.add.text(50, 50, 'ERROR LOADING GAME DATA', labelStyle(20));
     }
   }
 
@@ -171,7 +172,7 @@ export class Game extends Phaser.Scene {
       bg.on("pointerdown", () => updateTab(label));
       bg.on("pointerover", () => bg.setFillStyle(Colors.BUTTON_HOVER, 0.95));
       bg.on("pointerout",  () => bg.setFillStyle(Colors.PANEL_DARK, 0.9));
-      this.add.bitmapText(tabX, ty, "clicker", label[0], 16).setOrigin(0.5).setTint(Colors.HIGHLIGHT_YELLOW);
+      this.add.text(tabX, ty, label[0], labelStyle(16, Colors.HIGHLIGHT_YELLOW)).setOrigin(0.5);
     });
   }
 
@@ -383,7 +384,7 @@ export class Game extends Phaser.Scene {
       const bg = this.add.graphics();
       bg.fillStyle(bC, 1); bg.fillCircle(bX, bY, bR); bg.setDepth(4);
       this.ordersContainer!.add(bg);
-      const txt = this.add.bitmapText(bX, bY, "clicker", String(slot.placedQty), 10).setOrigin(0.5).setTint(bT).setDepth(5);
+      const txt = this.add.text(bX, bY, String(slot.placedQty), readoutStyle(10, bT)).setOrigin(0.5).setDepth(5);
       this.ordersContainer!.add(txt);
       slot.badgeGraphic = bg; slot.badgeText = txt;
     }
@@ -425,7 +426,7 @@ export class Game extends Phaser.Scene {
     const flash = this.add.rectangle(px, pt + ph / 2 + 10, pw - 8, ph - 70, 0xffffff, 0).setDepth(50);
     this.tweens.add({ targets: flash, alpha: { from: 0, to: 0.3 }, duration: 120, yoyo: true, ease: "Quad.easeOut",
       onComplete: () => {
-        const lbl = this.add.bitmapText(px, pt + ph / 2 - 10, "clicker", "ORDER ACCEPTED", 16).setOrigin(0.5).setTint(0x00ff88).setDepth(51);
+        const lbl = this.add.text(px, pt + ph / 2 - 10, 'ORDER ACCEPTED', readoutStyle(16, 0x00ff88)).setOrigin(0.5).setDepth(51);
         this.tweens.add({ targets: lbl, alpha: { from: 1, to: 0 }, duration: 800, delay: 350, ease: "Quad.easeIn",
           onComplete: () => { lbl.destroy(); flash.destroy(); this.loadNextOrder(GameManager.getInstance().getItems()); },
         });

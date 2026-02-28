@@ -1,5 +1,6 @@
 import { toColorString } from '../constants/Colors';
 import { Colors } from '../constants/Colors';
+import { labelStyle } from '../constants/FontStyle';
 import { ParallaxBackground } from '../ui/ParallaxBackground';
 import { fitFontSize } from '../utils/UiUtils';
 
@@ -56,7 +57,7 @@ export class MainMenu extends Phaser.Scene {
     // ── Title between the two rows ────────────────────────────────────────
     const titleText = 'CYBERPUNKINGTON';
     const titleSize = fitFontSize(titleText, W - 40, 24);
-    this.add.bitmapText(W / 2, H * 0.195, 'clicker', titleText, titleSize)
+    this.add.text(W / 2, H * 0.195, titleText, labelStyle(titleSize))
       .setOrigin(0.5)
       .setDepth(11);
 
@@ -100,7 +101,7 @@ export class MainMenu extends Phaser.Scene {
     const color = parseInt(colorHex.replace('#', ''), 16);
     this.add.rectangle(x, y, buttonWidth, buttonHeight).setStrokeStyle(2, color).setDepth(11);
     this.add.rectangle(x, y, buttonWidth - 10, 28, Colors.PANEL_MEDIUM, 0.8).setDepth(12);
-    this.add.bitmapText(x, y, 'clicker', text, 13).setOrigin(0.5).setDepth(13);
+    this.add.text(x, y, text, labelStyle(13)).setOrigin(0.5).setDepth(13);
   }
 
   punchIn()      { this.scene.start('Game'); }

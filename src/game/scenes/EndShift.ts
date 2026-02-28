@@ -1,4 +1,5 @@
 import { Colors } from '../constants/Colors';
+import { labelStyle, readoutStyle } from '../constants/FontStyle';
 import {
   ProgressionManager,
   CATEGORY_DISPLAY_NAMES,
@@ -14,7 +15,7 @@ export class EndShift extends Phaser.Scene {
   private upgradesContainer: Phaser.GameObjects.Container | null = null;
   private upgradesContainerY: number = 0;
   private upgradesAreaHeight: number = 0;
-  private quantaBankText: Phaser.GameObjects.BitmapText | null = null;
+  private quantaBankText: Phaser.GameObjects.Text | null = null;
 
   constructor() {
     super('EndShift');
@@ -38,12 +39,10 @@ export class EndShift extends Phaser.Scene {
     const headerY = headerH / 2 + 10;
     this.add.rectangle(cx, headerY, W - 20, headerH, Colors.PANEL_DARK, 0.9)
       .setStrokeStyle(2, Colors.BORDER_BLUE);
-    this.add.bitmapText(cx, headerY - 9, 'clicker', 'SHIFT COMPLETE', 16)
-      .setOrigin(0.5)
-      .setTint(Colors.HIGHLIGHT_YELLOW_BRIGHT);
-    this.add.bitmapText(cx, headerY + 12, 'clicker', `SHIFTS COMPLETED ${shiftsCompleted}`, 10)
-      .setOrigin(0.5)
-      .setTint(Colors.MUTED_BLUE);
+    this.add.text(cx, headerY - 9, 'SHIFT COMPLETE', labelStyle(16, Colors.HIGHLIGHT_YELLOW_BRIGHT))
+      .setOrigin(0.5);
+    this.add.text(cx, headerY + 12, `SHIFTS COMPLETED ${shiftsCompleted}`, readoutStyle(10, Colors.MUTED_BLUE))
+      .setOrigin(0.5);
 
     // ── Stats row ────────────────────────────────────────────────────────────
     const statsY = headerY + headerH / 2 + 16 + 20;
@@ -53,31 +52,31 @@ export class EndShift extends Phaser.Scene {
     const col1 = cx - (W - 40) / 4;
     const col2 = cx + (W - 40) / 4;
     // Revenue
-    this.add.bitmapText(col1, statsY - 9, 'clicker', 'REVENUE', 10)
-      .setOrigin(0.5).setTint(Colors.MUTED_BLUE);
-    this.add.bitmapText(col1, statsY + 9, 'clicker', `Q${revenue}`, 14)
-      .setOrigin(0.5).setTint(Colors.HIGHLIGHT_YELLOW_BRIGHT);
+    this.add.text(col1, statsY - 9, 'REVENUE', labelStyle(10, Colors.MUTED_BLUE))
+      .setOrigin(0.5);
+    this.add.text(col1, statsY + 9, `Q${revenue}`, readoutStyle(14, Colors.HIGHLIGHT_YELLOW_BRIGHT))
+      .setOrigin(0.5);
     // Accuracy bonus
-    this.add.bitmapText(col2, statsY - 9, 'clicker', 'BONUS', 10)
-      .setOrigin(0.5).setTint(Colors.MUTED_BLUE);
-    this.add.bitmapText(col2, statsY + 9, 'clicker', `Q${bonus}`, 14)
-      .setOrigin(0.5).setTint(Colors.LIGHT_BLUE);
+    this.add.text(col2, statsY - 9, 'BONUS', labelStyle(10, Colors.MUTED_BLUE))
+      .setOrigin(0.5);
+    this.add.text(col2, statsY + 9, `Q${bonus}`, readoutStyle(14, Colors.LIGHT_BLUE))
+      .setOrigin(0.5);
 
     // ── Quanta bank display ──────────────────────────────────────────────────
     const bankY = statsY + statsPanelH / 2 + 10 + 20;
     const bankPanelH = 44;
     this.add.rectangle(cx, bankY, W - 20, bankPanelH, Colors.PANEL_DARK, 0.9)
       .setStrokeStyle(2, Colors.NEON_BLUE, 0.8);
-    this.add.bitmapText(cx - 60, bankY, 'clicker', 'QUANTA BANK', 11)
-      .setOrigin(0, 0.5).setTint(Colors.MUTED_BLUE);
-    this.quantaBankText = this.add.bitmapText(cx + 60, bankY, 'clicker', `Q${progression.getQuantaBank()}`, 15)
-      .setOrigin(1, 0.5).setTint(Colors.HIGHLIGHT_YELLOW_BRIGHT);
+    this.add.text(cx - 60, bankY, 'QUANTA BANK', labelStyle(11, Colors.MUTED_BLUE))
+      .setOrigin(0, 0.5);
+    this.quantaBankText = this.add.text(cx + 60, bankY, `Q${progression.getQuantaBank()}`, readoutStyle(15, Colors.HIGHLIGHT_YELLOW_BRIGHT))
+      .setOrigin(1, 0.5);
 
     // ── Upgrades panel ────────────────────────────────────────────────────────
     const doneH = 56;
     const upgradeLabel = bankY + bankPanelH / 2 + 16;
-    this.add.bitmapText(cx, upgradeLabel, 'clicker', 'UPGRADES', 12)
-      .setOrigin(0.5).setTint(Colors.PALE_BLUE);
+    this.add.text(cx, upgradeLabel, 'UPGRADES', labelStyle(12, Colors.PALE_BLUE))
+      .setOrigin(0.5);
 
     const upgradesTop = upgradeLabel + 16;
     const upgradesBottom = H - doneH - 20;
@@ -98,8 +97,8 @@ export class EndShift extends Phaser.Scene {
     playBg.on('pointerover', () => playBg.setFillStyle(Colors.BUTTON_HOVER, 0.95));
     playBg.on('pointerout', () => playBg.setFillStyle(Colors.PANEL_DARK, 0.9));
     playBg.on('pointerdown', () => this.scene.start('Game'));
-    this.add.bitmapText(playX, btnAreaY, 'clicker', 'PLAY AGAIN', 14)
-      .setOrigin(0.5).setTint(Colors.NEON_BLUE);
+    this.add.text(playX, btnAreaY, 'PLAY AGAIN', labelStyle(14, Colors.NEON_BLUE))
+      .setOrigin(0.5);
 
     const menuBg = this.add.rectangle(menuBtnX, btnAreaY, halfW, doneH - 10, Colors.PANEL_DARK, 0.9)
       .setStrokeStyle(2, Colors.HIGHLIGHT_YELLOW);
@@ -107,8 +106,8 @@ export class EndShift extends Phaser.Scene {
     menuBg.on('pointerover', () => menuBg.setFillStyle(Colors.BUTTON_HOVER, 0.95));
     menuBg.on('pointerout', () => menuBg.setFillStyle(Colors.PANEL_DARK, 0.9));
     menuBg.on('pointerdown', () => this.scene.start('MainMenu'));
-    this.add.bitmapText(menuBtnX, btnAreaY, 'clicker', 'MAIN MENU', 14)
-      .setOrigin(0.5).setTint(Colors.HIGHLIGHT_YELLOW);
+    this.add.text(menuBtnX, btnAreaY, 'MAIN MENU', labelStyle(14, Colors.HIGHLIGHT_YELLOW))
+      .setOrigin(0.5);
   }
 
   // ────────────────────────────────────────────────────────────────────────────
@@ -153,18 +152,18 @@ export class EndShift extends Phaser.Scene {
       rows.push(bg);
 
       const labelTint = atMax ? Colors.MUTED_BLUE : Colors.PALE_BLUE;
-      const lbl = this.add.bitmapText(cx - rowW / 2 + 12, y, 'clicker', label, 11)
-        .setOrigin(0, 0.5).setTint(labelTint);
+      const lbl = this.add.text(cx - rowW / 2 + 12, y, label, labelStyle(11, labelTint))
+        .setOrigin(0, 0.5);
       rows.push(lbl);
 
       if (!atMax) {
         const costTint = canAfford ? Colors.HIGHLIGHT_YELLOW_BRIGHT : Colors.MUTED_BLUE;
-        const cost = this.add.bitmapText(cx + rowW / 2 - 10, y, 'clicker', costStr, 11)
-          .setOrigin(1, 0.5).setTint(costTint);
+        const cost = this.add.text(cx + rowW / 2 - 10, y, costStr, readoutStyle(11, costTint))
+          .setOrigin(1, 0.5);
         rows.push(cost);
       } else {
-        const maxLbl = this.add.bitmapText(cx + rowW / 2 - 10, y, 'clicker', 'MAX', 10)
-          .setOrigin(1, 0.5).setTint(Colors.MUTED_BLUE);
+        const maxLbl = this.add.text(cx + rowW / 2 - 10, y, 'MAX', labelStyle(10, Colors.MUTED_BLUE))
+          .setOrigin(1, 0.5);
         rows.push(maxLbl);
       }
 
@@ -184,8 +183,8 @@ export class EndShift extends Phaser.Scene {
     // Section label
     if (unlocked.length > 0) {
       const secY = rowIndex * (rowH + rowGap) + rowH / 2;
-      const secLbl = this.add.bitmapText(cx, secY, 'clicker', 'DEEPEN ACCESS', 10)
-        .setOrigin(0.5).setTint(Colors.TEXT_MUTED_BLUE);
+      const secLbl = this.add.text(cx, secY, 'DEEPEN ACCESS', labelStyle(10, Colors.TEXT_MUTED_BLUE))
+        .setOrigin(0.5);
       rows.push(secLbl);
       rowIndex++;
     }
@@ -211,8 +210,8 @@ export class EndShift extends Phaser.Scene {
 
     if (available.length > 0) {
       const secY = rowIndex * (rowH + rowGap) + rowH / 2;
-      const secLbl = this.add.bitmapText(cx, secY, 'clicker', 'UNLOCK NEW', 10)
-        .setOrigin(0.5).setTint(Colors.TEXT_MUTED_BLUE);
+      const secLbl = this.add.text(cx, secY, 'UNLOCK NEW', labelStyle(10, Colors.TEXT_MUTED_BLUE))
+        .setOrigin(0.5);
       rows.push(secLbl);
       rowIndex++;
     }
@@ -233,8 +232,8 @@ export class EndShift extends Phaser.Scene {
 
     // Nothing to show
     if (rowIndex === 0) {
-      const lbl = this.add.bitmapText(cx, rowH / 2, 'clicker', 'ALL UPGRADES MAXED', 14)
-        .setOrigin(0.5).setTint(Colors.HIGHLIGHT_YELLOW);
+      const lbl = this.add.text(cx, rowH / 2, 'ALL UPGRADES MAXED', labelStyle(14, Colors.HIGHLIGHT_YELLOW))
+        .setOrigin(0.5);
       rows.push(lbl);
     }
 

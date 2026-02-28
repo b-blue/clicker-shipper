@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ProgressionManager } from '../../managers/ProgressionManager';
 import { Colors } from '../../constants/Colors';
+import { labelStyle } from '../../constants/FontStyle';
 
 /** Builds the SETTINGS tab content. */
 export class SettingsPanel {
@@ -21,15 +22,15 @@ export class SettingsPanel {
     btn.on('pointerdown', () => this.scene.scene.start('DialCalibration'));
     btn.on('pointerover', () => btn.setFillStyle(Colors.BUTTON_HOVER, 0.95));
     btn.on('pointerout',  () => btn.setFillStyle(Colors.PANEL_DARK, 0.9));
-    const btnLabel = this.scene.add.bitmapText(panelX, calibrateY, 'clicker', 'CALIBRATE DIAL', 11).setOrigin(0.5);
+    const btnLabel = this.scene.add.text(panelX, calibrateY, 'CALIBRATE DIAL', labelStyle(11)).setOrigin(0.5);
 
     // RESET PROGRESSION (two-tap confirmation)
     const resetY = calibrateY + 44;
     const resetBtn = this.scene.add.rectangle(panelX, resetY, btnW, 28, Colors.PANEL_DARK, 0.9);
     resetBtn.setStrokeStyle(2, 0xff2244);
     resetBtn.setInteractive();
-    const resetLabel = this.scene.add.bitmapText(panelX, resetY, 'clicker', 'RESET PROGRESS', 11)
-      .setOrigin(0.5).setTint(0xff2244);
+    const resetLabel = this.scene.add.text(panelX, resetY, 'RESET PROGRESS', labelStyle(11, 0xff2244))
+      .setOrigin(0.5);
     let resetPending = false;
     let resetTimer: Phaser.Time.TimerEvent | null = null;
     resetBtn.on('pointerdown', () => {

@@ -157,6 +157,13 @@ describe('ReOrientMode.buildArrangement — wireframe pendingEdgeColor', () => {
           setVisible: jest.fn().mockReturnThis(),
           destroy: jest.fn(),
         }),
+        text: jest.fn().mockReturnValue({
+          setOrigin: jest.fn().mockReturnThis(),
+          setColor: jest.fn().mockReturnThis(),
+          setDepth: jest.fn().mockReturnThis(),
+          setAlpha: jest.fn().mockReturnThis(),
+          destroy: jest.fn(),
+        }),
         bitmapText: jest.fn().mockReturnValue({
           setOrigin: jest.fn().mockReturnThis(),
           setTint: jest.fn().mockReturnThis(),

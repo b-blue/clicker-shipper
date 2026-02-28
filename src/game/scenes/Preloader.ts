@@ -14,9 +14,6 @@ export class Preloader extends Phaser.Scene {
     this.load.json('items', 'data/items.json');
     this.load.json('rad-dial', 'data/rad-dial.json');
 
-    // Load bitmap font
-    this.load.bitmapFont('clicker', 'assets/fonts/clicker.png', 'assets/fonts/clicker.fnt');
-
     // Drone + robot animation strips — plain images; frame layout detected at runtime.
     // Key convention:  drone-{N}-{anim}  /  robot-{N}-{anim}
     // All paths are case-sensitive matches to the files on disk.
@@ -256,6 +253,16 @@ export class Preloader extends Phaser.Scene {
           }
         }
       }
+
+      // Warm up web fonts: ensure the CSS @font-face fonts are fully rasterised before
+      // any scene tries to render text to the Phaser canvas.
+      await document.fonts.load('16px Minotaur');
+      await document.fonts.load('16px Hack');
+      // Invisible probe objects force Phaser's canvas renderer to measure each family.
+      const _m = this.add.text(-9999, -9999, 'X', { fontFamily: 'Minotaur', fontSize: '16px', color: '#000000' }).setAlpha(0);
+      const _h = this.add.text(-9999, -9999, 'X', { fontFamily: 'Hack',     fontSize: '16px', color: '#000000' }).setAlpha(0);
+      _m.destroy();
+      _h.destroy();
 
       // Transition to MainMenu
       this.scene.start('MainMenu');

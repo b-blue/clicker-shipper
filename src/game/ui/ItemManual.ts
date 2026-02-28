@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { MenuItem } from '../types/GameTypes';
 import { GameManager } from '../managers/GameManager';
 import { Colors } from '../constants/Colors';
+import { labelStyle, readoutStyle } from '../constants/FontStyle';
 import { normalizeItems } from '../utils/ItemAdapter';
 import { AssetLoader } from '../managers/AssetLoader';
 
@@ -32,14 +33,14 @@ export class ItemManual extends Phaser.Scene {
 
     // Title with background
     this.add.rectangle(panelX, gameHeight * 0.06, 400, 48, Colors.PANEL_MEDIUM, 0.9);
-    this.add.bitmapText(panelX, gameHeight * 0.06, 'clicker', 'ITEM CATALOG', 32)
+    this.add.text(panelX, gameHeight * 0.06, 'ITEM CATALOG', labelStyle(32))
       .setOrigin(0.5);
 
     // Close button
     const closeBtn = this.add.rectangle(gameWidth * 0.95, gameHeight * 0.06, 40, 40, Colors.BUTTON_DARK);
     closeBtn.setInteractive();
     closeBtn.on('pointerdown', () => this.scene.stop());
-    this.add.bitmapText(gameWidth * 0.95, gameHeight * 0.06, 'clicker', 'X', 20)
+    this.add.text(gameWidth * 0.95, gameHeight * 0.06, 'X', labelStyle(20))
       .setOrigin(0.5);
 
     // List layout
@@ -88,7 +89,7 @@ export class ItemManual extends Phaser.Scene {
         const iconImage = AssetLoader.createImage(this, iconX, iconY, row.item.icon).setScale(iconScale).setDepth(2);
         listContainer.add(iconImage);
       } else {
-        const fallbackText = this.add.bitmapText(iconX, iconY, 'clicker', '?', 18)
+        const fallbackText = this.add.text(iconX, iconY, '?', labelStyle(18))
           .setOrigin(0.5);
         listContainer.add(fallbackText);
       }
@@ -100,17 +101,17 @@ export class ItemManual extends Phaser.Scene {
         const maxNameWidth = rowWidth - iconFrameSize - (isMobile ? 110 : 80);
 
         if (isMobile) {
-          const childName = this.add.bitmapText(nameX, rowY, 'clicker', nameText, 12)
+          const childName = this.add.text(nameX, rowY, nameText, labelStyle(12))
             .setOrigin(0, 0.5)
-            .setMaxWidth(maxNameWidth);
-          const childCost = this.add.bitmapText(rowWidth - 12, rowY, 'clicker', `Q${cost}`, 12)
+            .setWordWrapWidth(maxNameWidth);
+          const childCost = this.add.text(rowWidth - 12, rowY, `Q${cost}`, readoutStyle(12))
             .setOrigin(1, 0.5);
           listContainer.add([childName, childCost]);
         } else {
           const childText = `| Q${cost} | ${nameText}`;
-          const childLabel = this.add.bitmapText(nameX, rowY, 'clicker', childText, 12)
+          const childLabel = this.add.text(nameX, rowY, childText, labelStyle(12))
             .setOrigin(0, 0.5)
-            .setMaxWidth(rowWidth - iconFrameSize - 80);
+            .setWordWrapWidth(rowWidth - iconFrameSize - 80);
           listContainer.add(childLabel);
         }
       } else {
@@ -127,11 +128,11 @@ export class ItemManual extends Phaser.Scene {
         const textX = iconX + iconFrameSize / 2 + 20;
         const maxTextWidth = rowWidth - iconFrameSize - (isMobile ? 90 : 80);
 
-        const title = this.add.bitmapText(textX, rowY - titleOffset, 'clicker', row.item.name.toUpperCase(), titleSize)
+        const title = this.add.text(textX, rowY - titleOffset, row.item.name.toUpperCase(), labelStyle(titleSize))
           .setOrigin(0, 0.5);
-        const desc = this.add.bitmapText(textX, rowY + descOffset, 'clicker', displayDescription.toUpperCase(), descSize)
+        const desc = this.add.text(textX, rowY + descOffset, displayDescription.toUpperCase(), labelStyle(descSize))
           .setOrigin(0, 0.5)
-          .setMaxWidth(maxTextWidth);
+          .setWordWrapWidth(maxTextWidth);
         listContainer.add([title, desc]);
       }
     });

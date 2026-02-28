@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { Colors } from '../constants/Colors';
+import { labelStyle, readoutStyle } from '../constants/FontStyle';
 import { SettingsManager } from '../managers/SettingsManager';
 
 export class DialCalibration extends Scene {
@@ -39,7 +40,7 @@ export class DialCalibration extends Scene {
       .setStrokeStyle(2, Colors.BORDER_BLUE);
 
     // Title
-    this.add.bitmapText(gameWidth / 2, gameHeight * 0.10, 'clicker', 'CALIBRATE DIAL', 26)
+    this.add.text(gameWidth / 2, gameHeight * 0.10, 'CALIBRATE DIAL', labelStyle(26))
       .setOrigin(0.5);
 
     // Load current settings
@@ -54,7 +55,7 @@ export class DialCalibration extends Scene {
     const padCY = panelCenterY - 10;
     const padStep = 58; // button size 48 + 10 gap
 
-    this.add.bitmapText(padCX, gameHeight * 0.22, 'clicker', 'DIAL POSITION', 14)
+    this.add.text(padCX, gameHeight * 0.22, 'DIAL POSITION', labelStyle(14))
       .setOrigin(0.5, 0.5);
 
     // Cross pattern: UP top, DOWN bottom, LEFT left, RIGHT right
@@ -64,9 +65,9 @@ export class DialCalibration extends Scene {
     this.createAdjustButton(padCX,            padCY + padStep, 'DN', () => this.adjustDialPosition(0, 10));
 
     // X / Y value readout below the D-pad
-    const xValueText = this.add.bitmapText(padCX, padCY + 90, 'clicker', `X: ${this.dialX}`, 12)
+    const xValueText = this.add.text(padCX, padCY + 90, `X: ${this.dialX}`, readoutStyle(12))
       .setOrigin(0.5, 0.5);
-    const yValueText = this.add.bitmapText(padCX, padCY + 110, 'clicker', `Y: ${this.dialY}`, 12)
+    const yValueText = this.add.text(padCX, padCY + 110, `Y: ${this.dialY}`, readoutStyle(12))
       .setOrigin(0.5, 0.5);
 
     // ── RIGHT COLUMN: Dial size + outline toggle ──────────────────────────
@@ -74,18 +75,18 @@ export class DialCalibration extends Scene {
     const dialSizeCtrlY   = panelCenterY - 35;
     const btnOffset = 60;
 
-    this.add.bitmapText(rightCX, dialSizeLabelY, 'clicker', 'DIAL SIZE', 14)
+    this.add.text(rightCX, dialSizeLabelY, 'DIAL SIZE', labelStyle(14))
       .setOrigin(0.5, 0.5);
 
     this.createAdjustButton(rightCX - btnOffset, dialSizeCtrlY, 'LT', () => this.adjustDialRadius(-10));
-    const radiusValueText = this.add.bitmapText(rightCX, dialSizeCtrlY, 'clicker', `${this.dialRadius}`, 14)
+    const radiusValueText = this.add.text(rightCX, dialSizeCtrlY, `${this.dialRadius}`, readoutStyle(14))
       .setOrigin(0.5);
     this.createAdjustButton(rightCX + btnOffset, dialSizeCtrlY, 'RT', () => this.adjustDialRadius(10));
 
     const outlineLabelY  = panelCenterY + 40;
     const outlineToggleY = panelCenterY + 75;
 
-    this.add.bitmapText(rightCX, outlineLabelY, 'clicker', 'SHOW OUTLINE', 14)
+    this.add.text(rightCX, outlineLabelY, 'SHOW OUTLINE', labelStyle(14))
       .setOrigin(0.5, 0.5);
 
     const toggleButton = this.add.rectangle(rightCX, outlineToggleY, 60, 30,
@@ -93,7 +94,7 @@ export class DialCalibration extends Scene {
     toggleButton.setStrokeStyle(2, Colors.BORDER_BLUE);
     toggleButton.setInteractive();
 
-    const toggleText = this.add.bitmapText(rightCX, outlineToggleY, 'clicker', this.showOutline ? 'ON' : 'OFF', 14)
+    const toggleText = this.add.text(rightCX, outlineToggleY, this.showOutline ? 'ON' : 'OFF', labelStyle(14))
       .setOrigin(0.5);
 
     toggleButton.on('pointerdown', () => {
@@ -130,7 +131,7 @@ export class DialCalibration extends Scene {
 
   private adjustDialRadius(delta: number): void {
     this.dialRadius = Math.max(80, Math.min(250, this.dialRadius + delta));
-    const radiusValueText = this.data.get('radiusValueText') as Phaser.GameObjects.BitmapText;
+    const radiusValueText = this.data.get('radiusValueText') as Phaser.GameObjects.Text;
     if (radiusValueText) radiusValueText.setText(`${this.dialRadius}`);
     this.drawPreviewDial();
   }
@@ -144,8 +145,8 @@ export class DialCalibration extends Scene {
     this.dialY = Math.max(-400, Math.min(-50, this.dialY));
 
     // Update text displays
-    const xValueText = this.data.get('xValueText') as Phaser.GameObjects.BitmapText;
-    const yValueText = this.data.get('yValueText') as Phaser.GameObjects.BitmapText;
+    const xValueText = this.data.get('xValueText') as Phaser.GameObjects.Text;
+    const yValueText = this.data.get('yValueText') as Phaser.GameObjects.Text;
 
     if (xValueText) xValueText.setText(`X: ${this.dialX}`);
     if (yValueText) yValueText.setText(`Y: ${this.dialY}`);
@@ -187,9 +188,9 @@ export class DialCalibration extends Scene {
     this.dialY = -150;
     this.dialRadius = 150;
 
-    const xValueText = this.data.get('xValueText') as Phaser.GameObjects.BitmapText;
-    const yValueText = this.data.get('yValueText') as Phaser.GameObjects.BitmapText;
-    const radiusValueText = this.data.get('radiusValueText') as Phaser.GameObjects.BitmapText;
+    const xValueText = this.data.get('xValueText') as Phaser.GameObjects.Text;
+    const yValueText = this.data.get('yValueText') as Phaser.GameObjects.Text;
+    const radiusValueText = this.data.get('radiusValueText') as Phaser.GameObjects.Text;
     
     if (xValueText) xValueText.setText(`X: ${this.dialX}`);
     if (yValueText) yValueText.setText(`Y: ${this.dialY}`);
@@ -277,7 +278,7 @@ export class DialCalibration extends Scene {
 
     this.add.rectangle(x, y, width, buttonHeight).setStrokeStyle(2, Colors.HIGHLIGHT_YELLOW);
 
-    this.add.bitmapText(x, y, 'clicker', text, 14)
+    this.add.text(x, y, text, labelStyle(14))
       .setOrigin(0.5);
   }
 }

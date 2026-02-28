@@ -12,5 +12,5 @@ export interface OrderSlot {
   slotBg: Phaser.GameObjects.Graphics;
   slotIcon: Phaser.GameObjects.Image | null;
   badgeGraphic: Phaser.GameObjects.Graphics | null;
-  badgeText: Phaser.GameObjects.BitmapText | null;
+  badgeText: Phaser.GameObjects.Text | null;
 }

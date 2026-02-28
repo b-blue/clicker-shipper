@@ -17,9 +17,8 @@ describe('MainMenu scene', () => {
       setStrokeStyle: jest.fn().mockReturnThis(),
       setDepth: jest.fn().mockReturnThis(),
     }));
-    const bitmapText = jest.fn(() => ({
+    const text = jest.fn(() => ({
       setOrigin: jest.fn().mockReturnThis(),
-      setTint: jest.fn().mockReturnThis(),
       setDepth: jest.fn().mockReturnThis(),
     }));
     const tileSprite = jest.fn(() => ({
@@ -36,7 +35,7 @@ describe('MainMenu scene', () => {
 
     (scene as any).add = {
       rectangle,
-      bitmapText,
+      text,
       tileSprite,
       sprite,
       existing: jest.fn(),
@@ -61,24 +60,24 @@ describe('MainMenu scene', () => {
     (scene as any).cameras = { main: { width: 800, height: 600 } };
     (scene as any).scene   = { start: jest.fn(), launch: jest.fn() };
 
-    return { scene, rectangle, bitmapText, sprite, keyboardOn };
+    return { scene, rectangle, text, sprite, keyboardOn };
   };
 
   it('displays the game title CYBERPUNKINGTON', async () => {
-    const { scene, bitmapText } = await createScene();
+    const { scene, text } = await createScene();
 
     scene.create();
 
-    const labels: string[] = bitmapText.mock.calls.map((c: any[]) => c[3]);
+    const labels: string[] = text.mock.calls.map((c: any[]) => c[2]);
     expect(labels).toContain('CYBERPUNKINGTON');
   });
 
   it('creates buttons for all four main menu options', async () => {
-    const { scene, bitmapText } = await createScene();
+    const { scene, text } = await createScene();
 
     scene.create();
 
-    const labels: string[] = bitmapText.mock.calls.map((c: any[]) => c[3]);
+    const labels: string[] = text.mock.calls.map((c: any[]) => c[2]);
     expect(labels).toContain('START SHIFT');
     expect(labels).toContain('UPGRADES');
     expect(labels).toContain('CALIBRATE DIAL');

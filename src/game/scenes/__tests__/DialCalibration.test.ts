@@ -68,6 +68,9 @@ describe('DialCalibration scene', () => {
     const mockText = jest.fn(() => ({
       setOrigin: jest.fn().mockReturnThis(),
       setText: jest.fn().mockReturnThis(),
+      setDepth: jest.fn().mockReturnThis(),
+      setColor: jest.fn().mockReturnThis(),
+      setWordWrapWidth: jest.fn().mockReturnThis(),
     }));
     
     const mockBitmapText = jest.fn(() => ({
@@ -131,23 +134,23 @@ describe('DialCalibration scene', () => {
   });
 
   it('renders the title', async () => {
-    const { scene, mockBitmapText } = await createScene();
+    const { scene, mockText } = await createScene();
 
     scene.create();
 
-    expect(mockBitmapText).toHaveBeenCalledWith(400, 60, 'clicker', 'CALIBRATE DIAL', 26);
+    expect(mockText).toHaveBeenCalledWith(400, 60, 'CALIBRATE DIAL', expect.any(Object));
   });
 
   it('renders section header and D-pad controls', async () => {
-    const { scene, mockBitmapText, mockRectangle } = await createScene();
+    const { scene, mockText, mockRectangle } = await createScene();
 
     scene.create();
 
     // DIAL POSITION label above the D-pad (left column centre = 220, y = 600*0.22 = 132)
-    expect(mockBitmapText).toHaveBeenCalledWith(220, 132, 'clicker', 'DIAL POSITION', 14);
+    expect(mockText).toHaveBeenCalledWith(220, 132, 'DIAL POSITION', expect.any(Object));
 
     // DIAL SIZE label on right column (rightCX = 580, dialSizeLabelY = 240 - 75 = 165)
-    expect(mockBitmapText).toHaveBeenCalledWith(580, 165, 'clicker', 'DIAL SIZE', 14);
+    expect(mockText).toHaveBeenCalledWith(580, 165, 'DIAL SIZE', expect.any(Object));
 
     // D-pad buttons — UP top, DOWN bottom, LEFT left, RIGHT right (48×48, padCX=220, padCY=230, step=58)
     expect(mockRectangle).toHaveBeenCalledWith(220, 172, 48, 48, Colors.PANEL_DARK, 0.8); // UP
@@ -163,14 +166,14 @@ describe('DialCalibration scene', () => {
       showOutline: true,
     });
 
-    const { scene, mockBitmapText } = await createScene();
+    const { scene, mockText } = await createScene();
 
     scene.create();
 
     expect(mockSettingsManager.getDialSettings).toHaveBeenCalled();
     // X/Y value readout below the D-pad (padCX=220, padCY+90=320, padCY+110=340)
-    expect(mockBitmapText).toHaveBeenCalledWith(220, 320, 'clicker', 'X: -250', 12);
-    expect(mockBitmapText).toHaveBeenCalledWith(220, 340, 'clicker', 'Y: -180', 12);
+    expect(mockText).toHaveBeenCalledWith(220, 320, 'X: -250', expect.any(Object));
+    expect(mockText).toHaveBeenCalledWith(220, 340, 'Y: -180', expect.any(Object));
   });
 
   it('renders three buttons in a single row', async () => {
@@ -351,14 +354,14 @@ describe('DialCalibration scene', () => {
   });
 
   it('renders outline toggle with correct initial state', async () => {
-    const { scene, mockBitmapText } = await createScene();
+    const { scene, mockText } = await createScene();
 
     scene.create();
 
     // SHOW OUTLINE label (rightCX=580, outlineLabelY = panelCenterY+40 = 280)
-    expect(mockBitmapText).toHaveBeenCalledWith(580, 280, 'clicker', 'SHOW OUTLINE', 14);
+    expect(mockText).toHaveBeenCalledWith(580, 280, 'SHOW OUTLINE', expect.any(Object));
 
     // Toggle OFF text (rightCX=580, outlineToggleY = panelCenterY+75 = 315)
-    expect(mockBitmapText).toHaveBeenCalledWith(580, 315, 'clicker', 'OFF', 14);
+    expect(mockText).toHaveBeenCalledWith(580, 315, 'OFF', expect.any(Object));
   });
 });

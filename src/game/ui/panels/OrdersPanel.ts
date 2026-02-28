@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { AssetLoader } from '../../managers/AssetLoader';
 import { Colors } from '../../constants/Colors';
+import { labelStyle, readoutStyle } from '../../constants/FontStyle';
 import { Order } from '../../types/GameTypes';
 import { OrderSlot } from '../../orders/OrderTypes';
 
@@ -138,18 +139,18 @@ export class OrdersPanel {
         container.add(bullet);
       }
       container.add(
-        this.scene.add.bitmapText(contentX + 22, nameLine1Y, 'clicker', req.itemName.toUpperCase(), fontSize)
-          .setOrigin(0, 0.5).setMaxWidth(width - 36),
+        this.scene.add.text(contentX + 22, nameLine1Y, req.itemName.toUpperCase(), labelStyle(fontSize))
+          .setOrigin(0, 0.5).setWordWrapWidth(width - 36),
       );
 
       const detailY = nameLine1Y + fontSize + 4;
       container.add(
-        this.scene.add.bitmapText(contentX + 16, detailY, 'clicker', `X${req.quantity}`, qtyFontSize)
-          .setOrigin(0, 0.5).setTint(0xaaaacc),
+        this.scene.add.text(contentX + 16, detailY, `X${req.quantity}`, readoutStyle(qtyFontSize, 0xaaaacc))
+          .setOrigin(0, 0.5),
       );
       container.add(
-        this.scene.add.bitmapText(rightEdge, detailY, 'clicker', `Q${req.cost * req.quantity}`, detailFontSize)
-          .setOrigin(1, 0.5).setTint(Colors.HIGHLIGHT_YELLOW),
+        this.scene.add.text(rightEdge, detailY, `Q${req.cost * req.quantity}`, readoutStyle(detailFontSize, Colors.HIGHLIGHT_YELLOW))
+          .setOrigin(1, 0.5),
       );
 
       if (index < order.requirements.length - 1) {
@@ -170,12 +171,12 @@ export class OrdersPanel {
     container.add(separatorLine);
 
     container.add(
-      this.scene.add.bitmapText(contentX, budgetY + budgetLineHeight / 2, 'clicker', 'TOTAL BUDGET', fontSize)
+      this.scene.add.text(contentX, budgetY + budgetLineHeight / 2, 'TOTAL BUDGET', labelStyle(fontSize))
         .setOrigin(0, 0.5),
     );
     container.add(
-      this.scene.add.bitmapText(rightEdge, budgetY + budgetLineHeight / 2, 'clicker', `Q${order.budget}`, fontSize + 1)
-        .setOrigin(1, 0.5).setTint(Colors.HIGHLIGHT_YELLOW_BRIGHT),
+      this.scene.add.text(rightEdge, budgetY + budgetLineHeight / 2, `Q${order.budget}`, readoutStyle(fontSize + 1, Colors.HIGHLIGHT_YELLOW_BRIGHT))
+        .setOrigin(1, 0.5),
     );
   }
 }

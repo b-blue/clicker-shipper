@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { Colors } from '../../constants/Colors';
+import { labelStyle } from '../../constants/FontStyle';
 import { ParallaxBackground } from '../ParallaxBackground';
 
 /**
@@ -57,9 +58,8 @@ export class DroneViewPanel {
     container.add(bgFill);
 
     const nameLabel = this.scene.add
-      .bitmapText(x, top + 14, 'clicker', '', 12)
-      .setOrigin(0.5)
-      .setTint(Colors.HIGHLIGHT_YELLOW);
+      .text(x, top + 14, '', labelStyle(12, Colors.HIGHLIGHT_YELLOW))
+      .setOrigin(0.5);
     container.add(nameLabel);
 
     const spawnBg = (index: number): ParallaxBackground => {
@@ -103,9 +103,8 @@ export class DroneViewPanel {
         .rectangle(ax, arrowY, 44, 28, Colors.PANEL_MEDIUM, multiEntry ? 0.85 : 0.3)
         .setStrokeStyle(1, Colors.BORDER_BLUE, multiEntry ? 0.8 : 0.25);
       const lbl = this.scene.add
-        .bitmapText(ax, arrowY, 'clicker', label, 14)
-        .setOrigin(0.5)
-        .setTint(multiEntry ? Colors.HIGHLIGHT_YELLOW : Colors.BORDER_BLUE);
+        .text(ax, arrowY, label, labelStyle(14, multiEntry ? Colors.HIGHLIGHT_YELLOW : Colors.BORDER_BLUE))
+        .setOrigin(0.5);
       if (multiEntry) {
         bg.setInteractive();
         bg.on('pointerdown', () => navigate(dir));

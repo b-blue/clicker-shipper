@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
 import { MenuItem } from '../../../types/GameTypes';
-import { Colors } from '../../../constants/Colors';
+import { Colors, toColorString } from '../../../constants/Colors';
 import { AssetLoader } from '../../../managers/AssetLoader';
 import { IDialFace } from '../IDialFace';
 import { DialContext } from '../DialContext';
+import { readoutStyle } from '../../../constants/FontStyle';
 
 /**
  * Terminal face: quantity-selector arc.
@@ -26,7 +27,7 @@ export class QuantityTerminalFace implements IDialFace {
 
   // ── Per-frame Phaser objects ──────────────────────────────────────────────
   private arcFillGraphics: Phaser.GameObjects.Graphics | null = null;
-  private quantityNumeral: Phaser.GameObjects.BitmapText | null = null;
+  private quantityNumeral: Phaser.GameObjects.Text | null = null;
 
   // ── Pointer guard ──────────────────────────────────────────────────────────
   private pointerConsumed: boolean = false;
@@ -193,11 +194,11 @@ export class QuantityTerminalFace implements IDialFace {
 
     if (this.quantityNumeral) {
       this.quantityNumeral.setText(String(this.currentQuantity));
-      this.quantityNumeral.setTint(numeralColor);
+      this.quantityNumeral.setColor(toColorString(numeralColor));
     } else {
-      this.quantityNumeral = scene.add.bitmapText(
-        dialX, dialY + 12, 'clicker', String(this.currentQuantity), 20,
-      ).setOrigin(0.5).setDepth(11).setTint(numeralColor);
+      this.quantityNumeral = scene.add.text(
+        dialX, dialY + 12, String(this.currentQuantity), readoutStyle(20, numeralColor),
+      ).setOrigin(0.5).setDepth(11);
     }
   }
 

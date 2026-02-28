@@ -15,14 +15,20 @@ export const Fonts = {
 export type TextStyle = Phaser.Types.GameObjects.Text.TextStyle;
 
 /**
+ * Global scale multiplier applied to every Minotaur (label) font size.
+ * Increase to make all label text larger; decrease to shrink it.
+ */
+const LABEL_SCALE = 1.3;
+
+/**
  * Returns a Phaser TextStyle for heading/label text (Minotaur).
- * @param size   Font size in pixels.
+ * @param size   Font size in pixels (before LABEL_SCALE is applied).
  * @param color  Hex color number (e.g. `Colors.HIGHLIGHT_YELLOW`). Defaults to white.
  */
 export function labelStyle(size: number, color: number = Colors.WHITE): TextStyle {
   return {
     fontFamily: Fonts.LABEL,
-    fontSize:   `${size}px`,
+    fontSize:   `${Math.round(size * LABEL_SCALE)}px`,
     color:      toColorString(color),
   };
 }

@@ -432,7 +432,7 @@ export class StandardNavFace implements IDialFace {
       if ('id' in sliceItem) {
         const hasLayers = sliceItem.layers && sliceItem.layers.length > 0;
         if (hasLayers) {
-          sliceItem.layers!.forEach((layer, index) => {
+          sliceItem.layers!.filter(layer => layer.texture !== 'frame').forEach((layer, index) => {
             if (AssetLoader.textureExists(scene, layer.texture)) {
               const img = AssetLoader.createImage(scene, textX, textY, layer.texture);
               img.setScale((layer.scale ?? 1) * scale);

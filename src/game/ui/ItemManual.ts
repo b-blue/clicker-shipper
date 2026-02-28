@@ -80,11 +80,6 @@ export class ItemManual extends Phaser.Scene {
       const iconX = iconFrameSize / 2 + 10 + offsetX;
       const iconY = rowY;
 
-      if (!row.isChild && AssetLoader.textureExists(this, 'frame')) {
-        const frameImage = AssetLoader.createImage(this, iconX, iconY, 'frame').setScale(iconScale).setDepth(1);
-        listContainer.add(frameImage);
-      }
-
       if (AssetLoader.textureExists(this, row.item.icon)) {
         const iconImage = AssetLoader.createImage(this, iconX, iconY, row.item.icon).setScale(iconScale).setDepth(2);
         listContainer.add(iconImage);

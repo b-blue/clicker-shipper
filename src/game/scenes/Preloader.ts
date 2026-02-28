@@ -254,18 +254,24 @@ export class Preloader extends Phaser.Scene {
         }
       }
 
-      // Warm up web fonts: ensure the CSS @font-face fonts are fully rasterised before
-      // any scene tries to render text to the Phaser canvas.
-      await document.fonts.load('16px Minotaur');
-      await document.fonts.load('16px Hack');
-      // Invisible probe objects force Phaser's canvas renderer to measure each family.
-      const _m = this.add.text(-9999, -9999, 'X', { fontFamily: 'Minotaur', fontSize: '16px', color: '#000000' }).setAlpha(0);
-      const _h = this.add.text(-9999, -9999, 'X', { fontFamily: 'Hack',     fontSize: '16px', color: '#000000' }).setAlpha(0);
-      _m.destroy();
-      _h.destroy();
+      // Warm up web fonts: explicitly request the font files from the browser
+      // (document.fonts.ready alone won't download fonts that haven't been used yet).
+      await Promise.allSettled([
+        document.fonts.load('normal 16px Minotaur'),
+        document.fonts.load('normal 16px Hack'),
+      ]);
+
+      // Probe Text objects prime the Phaser/canvas font metric cache.
+      const _m = this.add.text(-9999, -9999, 'AaBbCc', { fontFamily: 'Minotaur', fontSize: '16px', color: '#000000' });
+      const _h = this.add.text(-9999, -9999, '0123456789', { fontFamily: 'Hack', fontSize: '16px', color: '#000000' });
+
+      // One rAF tick so the canvas context actually renders (and caches) the probes.
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
 
       // Transition to MainMenu
       this.scene.start('MainMenu');
+      _m.destroy();
+      _h.destroy();
     } catch (error) {
       console.error('Failed to initialize game:', error);
       // Fallback to MainMenu anyway for now

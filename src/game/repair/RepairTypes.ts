@@ -14,6 +14,6 @@ export interface RepairItem {
   bgObj: Phaser.GameObjects.Graphics;
   /** Small circular badge background in the bottom-right corner of each icon cell. */
   badgeBg: Phaser.GameObjects.Graphics;
-  /** Action icon shown inside the badge (e.g. skill-gear for re-orient). */
+  /** Action icon shown inside the badge (e.g. skill-refresh for re-orient). */
   badgeIcon: Phaser.GameObjects.Image;
 }

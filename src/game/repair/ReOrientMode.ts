@@ -8,7 +8,7 @@ import { IRepairTask, TaskBounds } from './IRepairTask';
 
 const ROT_OPTIONS = [30, 60, 90, 120, 135, 150, 180, 210, 240, 270, 300, 330];
 /** Icon key for the re-orient action badge shown on each repair item card. */
-const REORIENT_ACTION_ICON = 'skill-gear';
+const REORIENT_ACTION_ICON = 'skill-refresh';
 
 /**
  * Re-Orient repair task.

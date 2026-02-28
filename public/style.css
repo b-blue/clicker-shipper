@@ -3,7 +3,7 @@
     src: url('fonts/minotaur/minotaur.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
-    font-display: block;
+    font-display: swap;
 }
 @font-face {
     font-family: 'Hack';
@@ -77,29 +77,34 @@ html, body {
 /* ── Loading screen ──────────────────────────────────────────────────────── */
 #loading-screen {
     position: fixed;
-    inset: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     background: #0a1022;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     z-index: 9999;
-    gap: 1.5rem;
+    gap: 24px;
     transition: opacity 0.3s ease;
 }
 
 #loading-title {
     font-family: 'Minotaur', monospace;
+    font-size: 5vw;
     font-size: clamp(1rem, 5vw, 2rem);
     letter-spacing: 0.2em;
     color: rgba(224, 224, 224, 0.9);
 }
 
 #loading-bar-track {
-    width: min(280px, 55vw);
-    height: 2px;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 1px;
+    width: 55vw;
+    max-width: 280px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
     overflow: hidden;
     position: relative;
 }
@@ -109,7 +114,7 @@ html, body {
     height: 100%;
     width: 30%;
     background: #028af8;
-    border-radius: 1px;
+    border-radius: 3px;
     animation: loading-sweep 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     transition: width 0.15s linear;
 }

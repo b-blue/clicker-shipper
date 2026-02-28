@@ -93,7 +93,6 @@ export class QuantityTerminalFace implements IDialFace {
     if (!this.ctx) return;
     if (this.activePointerId !== -1 && pointer.pointerId !== this.activePointerId) return;
 
-    const isTouch = pointer.wasTouch || (pointer.event as PointerEvent | undefined)?.pointerType === 'touch';
     const triggerAngle  = this.terminalStartAngle - this.arcProgress * (5 * Math.PI / 6);
     const triggerX      = this.ctx.dialX + Math.cos(triggerAngle) * this.arcRadius;
     const triggerY      = this.ctx.dialY + Math.sin(triggerAngle) * this.arcRadius;

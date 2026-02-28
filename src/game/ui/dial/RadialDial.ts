@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { Item, MenuItem } from '../../../types/GameTypes';
-import { Colors } from '../../constants/Colors';
 import { normalizeItems } from '../../utils/ItemAdapter';
 import { DialContext } from './DialContext';
 import { FaceEvent } from './FaceEvent';
@@ -164,10 +163,10 @@ export class RadialDial {
   // ── Face stack management ──────────────────────────────────────────────────
 
   private makeContext(): DialContext {
-    // glowAngle is a mutable property: capture `this` so the face always reads current value
-    const self = this;
-    return {
-      scene:            this.scene(),
+    // Build base context; glowAngle needs live coordinator access so we use
+    // Object.defineProperty with arrow functions (avoids `no-this-alias`).
+    const ctx = {
+      scene:            this._scene,
       dialX:            this.dialX,
       dialY:            this.dialY,
       sliceRadius:      this.sliceRadius,
@@ -175,10 +174,16 @@ export class RadialDial {
       dialFrameGraphic: this.dialFrameGraphic,
       centerGraphic:    this.centerGraphic,
       centerImage:      this.centerImage,
-      get glowAngle()     { return self.glowAngle; },
-      set glowAngle(v)    { self.glowAngle = v; },
+      glowAngle:        0 as number, // overridden immediately below
       emit: (event: FaceEvent) => this.handleFaceEvent(event),
-    };
+    } satisfies DialContext;
+    Object.defineProperty(ctx, 'glowAngle', {
+      get: () => this.glowAngle,
+      set: (v: number) => { this.glowAngle = v; },
+      enumerable:   true,
+      configurable: true,
+    });
+    return ctx;
   }
 
   private pushFace(face: IDialFace): void {

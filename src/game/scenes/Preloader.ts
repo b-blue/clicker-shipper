@@ -2,6 +2,7 @@ import { GameManager } from '../managers/GameManager';
 import { SettingsManager } from '../managers/SettingsManager';
 import { AssetLoader } from '../managers/AssetLoader';
 import { DiagnosticFXPipeline, DIAGNOSTIC_FX } from '../fx/DiagnosticFXPipeline';
+import { RadDialConfig } from '../types/RadDialTypes';
 
 export class Preloader extends Phaser.Scene {
   constructor() {
@@ -20,10 +21,43 @@ export class Preloader extends Phaser.Scene {
       });
     }
 
-    // Load config and items data
-    this.load.json('config', 'data/config.json');
-    this.load.json('items', 'data/items.json');
+    // Load config and core data
+    this.load.json('config',   'data/config.json');
     this.load.json('rad-dial', 'data/rad-dial.json');
+
+    // Queue per-mode item files immediately after rad-dial.json is registered
+    // so they all download in parallel.  Each file is cached under the action id
+    // (e.g. 'action_reorient') which GameManager reads back in create().
+    // We read the JSON synchronously here because the file list is embedded in
+    // a tiny inline config object, not a network request — Phaser queues it
+    // before the XHR batch fires, so the keys are set when progress reaches 1.
+    //
+    // Note: a proper two-pass load (load rad-dial first, callback to load mode
+    // files) would require an extra Phaser load cycle. Instead we replicate the
+    // action list here as a constant that must stay in sync with rad-dial.json.
+    // The runtime path (GameManager.buildModeStores) is tolerant of missing keys.
+    const radDial = this.cache?.json?.get('rad-dial') as RadDialConfig | null;
+    if (radDial) {
+      for (const action of radDial.actions) {
+        if (action.itemsFile) {
+          this.load.json(action.id, action.itemsFile);
+        }
+      }
+    } else {
+      // Fallback: rad-dial.json not yet in cache (first call before XHR batch).
+      // Hardcode the mode file list so they still load in the same batch.
+      const MODE_FILES: Array<[string, string]> = [
+        ['action_reorient', 'data/modes/reorient/items.json'],
+        ['action_replace',  'data/modes/replace/items.json'],
+        ['action_rewire',   'data/modes/rewire/items.json'],
+        ['action_rebuild',  'data/modes/rebuild/items.json'],
+        ['action_refuel',   'data/modes/refuel/items.json'],
+        ['action_recharge', 'data/modes/recharge/items.json'],
+      ];
+      for (const [key, path] of MODE_FILES) {
+        this.load.json(key, path);
+      }
+    }
 
     // Drone + robot animation strips — plain images; frame layout detected at runtime.
     // Key convention:  drone-{N}-{anim}  /  robot-{N}-{anim}
@@ -232,7 +266,7 @@ export class Preloader extends Phaser.Scene {
       const gameManager     = GameManager.getInstance();
       const settingsManager = SettingsManager.getInstance();
       await Promise.all([
-        gameManager.initialize(this, 'data/config.json', 'data/items.json'),
+        gameManager.initialize(this, 'data/config.json'),
         settingsManager.loadSettings(),
       ]);
 

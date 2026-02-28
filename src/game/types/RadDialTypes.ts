@@ -20,8 +20,12 @@ export interface ActionNode {
   icon: string;
   terminalMode: TerminalMode;
   enabled: boolean;
-  /** id of a node in items.json whose children become this action's sub-dials */
-  itemSource?: string;
+  /**
+   * Path (relative to the public root) of a flat JSON array of leaf items
+   * for this mode.  e.g. "data/modes/reorient/items.json".
+   * The array is paginated into a nav tree at runtime by paginateItems().
+   */
+  itemsFile?: string;
   layers?: ImageLayer[];
 }
 

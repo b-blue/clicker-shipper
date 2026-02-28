@@ -1,7 +1,8 @@
 import {
   adaptLegacyItems,
   isMenuItemFormat,
-  normalizeItems
+  normalizeItems,
+  paginateItems,
 } from '../ItemAdapter';
 import { Item, MenuItem } from '../../types/GameTypes';
 
@@ -317,5 +318,123 @@ describe('ItemAdapter', () => {
 
       expect(result[0].children).toEqual([]);
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// paginateItems — builds a paginated nav tree from a flat leaf list
+// ---------------------------------------------------------------------------
+describe('paginateItems', () => {
+  const makeLeaf = (n: number): MenuItem => ({ id: `item_${n}`, name: `Item ${n}`, icon: `icon${n}` });
+
+  it('returns the items unchanged when count ≤ pageSize', () => {
+    const result = paginateItems([makeLeaf(1), makeLeaf(2)], 5);
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe('item_1');
+    expect(result.some(n => n.id.startsWith('nav_page'))).toBe(false);
+  });
+
+  it('appends a nav_page_down_0 node when items overflow the first page', () => {
+    // 3 items + pageSize=2 → page=[A,B] + navDown→[C]
+    const result = paginateItems([makeLeaf(1), makeLeaf(2), makeLeaf(3)], 2);
+    expect(result).toHaveLength(3); // A, B, navDown
+    const navDown = result.find(n => n.id === 'nav_page_down_0')!;
+    expect(navDown).toBeDefined();
+    expect(navDown.icon).toBe('skill-down');
+    expect(navDown.children).toHaveLength(1);
+    expect(navDown.children![0].id).toBe('item_3');
+  });
+
+  it('nests multiple pages recursively', () => {
+    // 5 items + pageSize=2 → [1,2,navDown→[3,4,navDown→[5]]]
+    const items = [1, 2, 3, 4, 5].map(makeLeaf);
+    const result = paginateItems(items, 2);
+
+    expect(result).toHaveLength(3); // 1, 2, navDown0
+    const navDown0 = result.find(n => n.id === 'nav_page_down_0')!;
+    const navDown1 = navDown0.children!.find(n => n.id === 'nav_page_down_1')!;
+    expect(navDown1).toBeDefined();
+    expect(navDown1.children).toHaveLength(1);
+    expect(navDown1.children![0].id).toBe('item_5');
+  });
+
+  it('returns empty array for empty input', () => {
+    expect(paginateItems([], 5)).toHaveLength(0);
+  });
+
+  it('nav-down node includes skill-down layers for StandardNavFace rendering', () => {
+    const result = paginateItems([makeLeaf(1), makeLeaf(2), makeLeaf(3)], 2);
+    const navDown = result.find(n => n.id.startsWith('nav_page_down'))!;
+    const textures = navDown.layers!.map(l => l.texture);
+    expect(textures).toContain('skill-down');
+    expect(textures).toContain('frame');
+  });
+
+  it('defaults to pageSize 5 when not specified', () => {
+    const items = [1, 2, 3, 4, 5, 6].map(makeLeaf);
+    const result = paginateItems(items);
+    // 5 items on page 1, navDown with 1 item
+    expect(result).toHaveLength(6);
+    const navDown = result.find(n => n.id.startsWith('nav_page_down'));
+    expect(navDown).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// paginateItems — builds a paginated nav tree from a flat leaf list
+// ---------------------------------------------------------------------------
+describe('paginateItems', () => {
+  const makeLeaf = (n: number): MenuItem => ({ id: `item_${n}`, name: `Item ${n}`, icon: `icon${n}` });
+
+  it('returns the items unchanged when count ≤ pageSize', () => {
+    const result = paginateItems([makeLeaf(1), makeLeaf(2)], 5);
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe('item_1');
+    expect(result.some(n => n.id.startsWith('nav_page'))).toBe(false);
+  });
+
+  it('appends a nav_page_down_0 node when items overflow the first page', () => {
+    // 3 items + pageSize=2 → page=[A,B] + navDown→[C]
+    const result = paginateItems([makeLeaf(1), makeLeaf(2), makeLeaf(3)], 2);
+    expect(result).toHaveLength(3); // A, B, navDown
+    const navDown = result.find(n => n.id === 'nav_page_down_0')!;
+    expect(navDown).toBeDefined();
+    expect(navDown.icon).toBe('skill-down');
+    expect(navDown.children).toHaveLength(1);
+    expect(navDown.children![0].id).toBe('item_3');
+  });
+
+  it('nests multiple pages recursively', () => {
+    // 5 items + pageSize=2 → [1,2,navDown→[3,4,navDown→[5]]]
+    const items = [1,2,3,4,5].map(makeLeaf);
+    const result = paginateItems(items, 2);
+
+    expect(result).toHaveLength(3); // 1, 2, navDown0
+    const navDown0 = result.find(n => n.id === 'nav_page_down_0')!;
+    const navDown1 = navDown0.children!.find(n => n.id === 'nav_page_down_1')!;
+    expect(navDown1).toBeDefined();
+    expect(navDown1.children).toHaveLength(1);
+    expect(navDown1.children![0].id).toBe('item_5');
+  });
+
+  it('returns empty array for empty input', () => {
+    expect(paginateItems([], 5)).toHaveLength(0);
+  });
+
+  it('nav-down node includes skill-down layers for StandardNavFace rendering', () => {
+    const result = paginateItems([makeLeaf(1), makeLeaf(2), makeLeaf(3)], 2);
+    const navDown = result.find(n => n.id.startsWith('nav_page_down'))!;
+    const textures = navDown.layers!.map(l => l.texture);
+    expect(textures).toContain('skill-down');
+    expect(textures).toContain('frame');
+  });
+
+  it('defaults to pageSize 5 when not specified', () => {
+    const items = [1,2,3,4,5,6].map(makeLeaf);
+    const result = paginateItems(items);
+    // 5 items on page 1, navDown with 1 item
+    expect(result).toHaveLength(6);
+    const navDown = result.find(n => n.id.startsWith('nav_page_down'));
+    expect(navDown).toBeDefined();
   });
 });

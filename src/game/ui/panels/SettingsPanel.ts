@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { ProgressionManager } from '../../managers/ProgressionManager';
+import { SettingsManager } from '../../managers/SettingsManager';
 import { Colors } from '../../constants/Colors';
 import { labelStyle } from '../../constants/FontStyle';
 
@@ -12,6 +13,7 @@ export class SettingsPanel {
   }
 
   build(container: Phaser.GameObjects.Container, panelX: number, panelWidth: number): void {
+    const sm   = SettingsManager.getInstance();
     const btnW = panelWidth - 60;
 
     // CALIBRATE DIAL
@@ -24,8 +26,36 @@ export class SettingsPanel {
     btn.on('pointerout',  () => btn.setFillStyle(Colors.PANEL_DARK, 0.9));
     const btnLabel = this.scene.add.text(panelX, calibrateY, 'CALIBRATE DIAL', labelStyle(11)).setOrigin(0.5);
 
+    // HANDEDNESS toggle
+    const handY     = calibrateY + 44;
+    const handHalfW = (btnW - 8) / 2;
+    const rX = panelX - handHalfW / 2 - 4;
+    const lX = panelX + handHalfW / 2 + 4;
+
+    const makeHandBtn = (label: string, x: number, value: 'right' | 'left') => {
+      const active  = sm.getHandedness() === value;
+      const bg = this.scene.add.rectangle(x, handY, handHalfW, 28,
+        active ? Colors.BUTTON_HOVER : Colors.PANEL_DARK, active ? 0.95 : 0.9);
+      bg.setStrokeStyle(2, active ? Colors.HIGHLIGHT_YELLOW : Colors.BORDER_BLUE);
+      bg.setInteractive();
+      const txt = this.scene.add.text(x, handY, label, labelStyle(11, active ? Colors.HIGHLIGHT_YELLOW : 0xaaaaaa)).setOrigin(0.5);
+      bg.on('pointerdown', () => {
+        if (sm.getHandedness() !== value) {
+          sm.updateHandedness(value);
+          this.scene.scene.restart();
+        }
+      });
+      bg.on('pointerover', () => bg.setFillStyle(Colors.BUTTON_HOVER, 0.95));
+      bg.on('pointerout',  () => bg.setFillStyle(active ? Colors.BUTTON_HOVER : Colors.PANEL_DARK, active ? 0.95 : 0.9));
+      return [bg, txt] as const;
+    };
+
+    const [rBg, rTxt] = makeHandBtn('RIGHT-HAND', rX, 'right');
+    const [lBg, lTxt] = makeHandBtn('LEFT-HAND',  lX, 'left');
+    const handLabel   = this.scene.add.text(panelX, handY - 20, 'HANDEDNESS', labelStyle(9, Colors.BORDER_BLUE)).setOrigin(0.5);
+
     // RESET PROGRESSION (two-tap confirmation)
-    const resetY = calibrateY + 44;
+    const resetY = handY + 52;
     const resetBtn = this.scene.add.rectangle(panelX, resetY, btnW, 28, Colors.PANEL_DARK, 0.9);
     resetBtn.setStrokeStyle(2, 0xff2244);
     resetBtn.setInteractive();
@@ -55,6 +85,6 @@ export class SettingsPanel {
     resetBtn.on('pointerover', () => resetBtn.setFillStyle(resetPending ? 0x5a0010 : 0x1a0008, 0.95));
     resetBtn.on('pointerout',  () => resetBtn.setFillStyle(resetPending ? 0x3a0008 : Colors.PANEL_DARK, 0.9));
 
-    container.add([btn, btnLabel, resetBtn, resetLabel]);
+    container.add([btn, btnLabel, handLabel, rBg, rTxt, lBg, lTxt, resetBtn, resetLabel]);
   }
 }

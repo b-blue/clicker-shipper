@@ -13,6 +13,7 @@ export interface UISettings {
 }
 
 export interface GameSettings {
+  handedness?: 'right' | 'left';
   dial: DialSettings;
   ui: UISettings;
 }
@@ -77,6 +78,18 @@ export class SettingsManager {
 
   getUISettings(): UISettings {
     return this.getSettings().ui;
+  }
+
+  /** Returns the current handedness setting, defaulting to 'right'. */
+  getHandedness(): 'right' | 'left' {
+    return this.settings?.handedness ?? 'right';
+  }
+
+  updateHandedness(h: 'right' | 'left'): void {
+    if (this.settings) {
+      this.settings.handedness = h;
+      this.save();
+    }
   }
 
   updateDialPosition(offsetX: number, offsetY: number): void {

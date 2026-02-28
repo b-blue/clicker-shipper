@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { AssetLoader } from '../managers/AssetLoader';
 import { Colors, toColorString } from '../constants/Colors';
 import { labelStyle } from '../constants/FontStyle';
+import { SettingsManager } from '../managers/SettingsManager';
 
 export interface CornerHudCallbacks {
   /** Switches to the catalog tab, pre-scrolled to `categoryId`. */
@@ -78,8 +79,18 @@ export class DialCornerHUD {
 
     const margin = 6;
     const half = this.btnSize / 2;
-    this.btnX     = dialX + dialRadius - half - margin;
-    this.menuBtnX = dialX - dialRadius + half + margin;
+    const leftHanded = SettingsManager.getInstance().getHandedness() === 'left';
+    // Right-handed: primary buttons (catalog + level) on dialX right edge;
+    //               menu + alt-term on the left edge — natural for right thumb reach.
+    // Left-handed:  swap so primary buttons sit on the left edge of the dial.
+    const primaryX    = leftHanded
+      ? dialX - dialRadius + half + margin
+      : dialX + dialRadius - half - margin;
+    const secondaryX  = leftHanded
+      ? dialX + dialRadius - half - margin
+      : dialX - dialRadius + half + margin;
+    this.btnX     = primaryX;
+    this.menuBtnX = secondaryX;
     this.upperY   = dialY - dialRadius + half + margin;
     this.lowerY   = dialY + dialRadius - half - margin;
 

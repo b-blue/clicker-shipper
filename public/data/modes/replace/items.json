@@ -1,0 +1,23 @@
+[
+  {
+    "id": "item_replace_001",
+    "name": "SENSOR ARRAY",
+    "icon": "resource1",
+    "type": "replace",
+    "cost": 20
+  },
+  {
+    "id": "item_replace_002",
+    "name": "POWER CELL",
+    "icon": "resource6",
+    "type": "replace",
+    "cost": 25
+  },
+  {
+    "id": "item_replace_003",
+    "name": "LOGIC BOARD",
+    "icon": "resource11",
+    "type": "replace",
+    "cost": 30
+  }
+]

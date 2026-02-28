@@ -1,4 +1,4 @@
-import { Item, SubItem, MenuItem } from '../types/GameTypes';
+import { Item, SubItem, MenuItem, GameConfig } from '../types/GameTypes';
 
 /**
  * Adapter to convert legacy Item/SubItem structure to hierarchical MenuItem structure
@@ -74,4 +74,63 @@ export function normalizeItems(items: Item[] | MenuItem[]): MenuItem[] {
 
   // Otherwise, convert from legacy format
   return adaptLegacyItems(items as Item[]);
+}
+
+/**
+ * Builds a paginated nav-tree MenuItem hierarchy from a flat list of leaf items.
+ *
+ * Each page holds up to `pageSize` leaf items.  When the list exceeds one page
+ * a "More" nav-down node is appended that links to the overflow page, recursively.
+ *
+ * This replaces the hand-authored nav_*_down_N nodes that previously lived in
+ * items.json — the tree is now generated at runtime from compact flat files.
+ *
+ * @param items    Flat array of leaf items (MenuItem without children).
+ * @param pageSize Max items per dial page.  Defaults to config.itemsPerLevel (5).
+ * @param depth    Internal recursion counter; starts at 0.
+ * @returns        Root-level MenuItem array ready to pass to StandardNavFace.
+ */
+export function paginateItems(
+  items: MenuItem[],
+  pageSize: number = 5,
+  depth: number = 0,
+  navDownIndex: number = 1,
+): MenuItem[] {
+  if (items.length === 0) return [];
+
+  const page    = items.slice(0, pageSize);
+  const rest    = items.slice(pageSize);
+
+  if (rest.length === 0) return page;
+
+  const navDown: MenuItem = {
+    id:   `nav_page_down_${depth}`,
+    name: 'More',
+    icon: 'skill-down',
+    layers: [
+      { texture: 'skill-down', depth: 3 },
+      { texture: 'frame',      depth: 2 },
+    ],
+    children: paginateItems(rest, pageSize, depth + 1, navDownIndex),
+  };
+
+  // Insert the nav-down node at the target clock position:
+  //   navDownIndex=1 → 3 o'clock (right-handed default)
+  //   navDownIndex=4 → 9 o'clock (left-handed)
+  const result = [...page];
+  result.splice(Math.min(navDownIndex, page.length), 0, navDown);
+  return result;
+}
+
+/**
+ * Convenience wrapper: paginate a flat item list using the itemsPerLevel value
+ * from GameConfig (falls back to 5 if config is not yet available).
+ */
+export function paginateWithConfig(
+  items: MenuItem[],
+  config: GameConfig | null,
+  navDownIndex: number = 1,
+): MenuItem[] {
+  const pageSize = config?.itemsPerLevel ?? 5;
+  return paginateItems(items, pageSize, 0, navDownIndex);
 }

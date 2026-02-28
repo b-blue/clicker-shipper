@@ -55,12 +55,13 @@ export class Game extends Phaser.Scene {
 
   create() {
     try {
-      const items   = GameManager.getInstance().getItems();
       const cam     = this.cameras.main;
       const gw      = cam.width;
       const gh      = cam.height;
-      const ds      = SettingsManager.getInstance().getDialSettings();
-      const dialX   = gw + ds.offsetX;
+      const sm       = SettingsManager.getInstance();
+      const ds       = sm.getDialSettings();
+      const leftHanded = sm.getHandedness() === 'left';
+      const dialX   = leftHanded ? -ds.offsetX : gw + ds.offsetX;
       const dialY   = gh + ds.offsetY;
       const dialR   = ds.radius ?? 150;
 
@@ -69,9 +70,9 @@ export class Game extends Phaser.Scene {
       // buildArrangement() both reference the same key on the first cycle.
       this.droneStage.pickKey();
 
-      this.buildPanelUI(gw, gh, dialY, dialR, items);
-      this.buildDial(items, dialX, dialY, dialR);
-      this.populateRepairPools(items);
+      this.buildPanelUI(gw, gh, dialY, dialR, GameManager.getInstance().getItems());
+      this.populateRepairPools();
+      this.buildDial(dialX, dialY, dialR);
       this.wireDialEvents();
       this.events.once("shutdown", this.shutdown, this);
     } catch (e) {
@@ -103,7 +104,8 @@ export class Game extends Phaser.Scene {
     const panelTop  = 20;
     const panelBot  = dialY - dialR - 20;
     const panelH    = panelBot - panelTop;
-    const panelX    = 10 + panelW / 2;
+    const leftHanded = SettingsManager.getInstance().getHandedness() === 'left';
+    const panelX    = leftHanded ? gw - 10 - panelW / 2 : 10 + panelW / 2;
     const panelY    = (panelTop + panelBot) / 2;
 
     const frame = this.add.rectangle(panelX, panelY, panelW, panelH, Colors.PANEL_DARK, 0.85);
@@ -162,7 +164,9 @@ export class Game extends Phaser.Scene {
       switchToCatalog();
     });
 
-    const tabX      = panelX + panelW / 2 + tabGap + tabW / 2;
+    const tabX      = leftHanded
+      ? panelX - panelW / 2 - tabGap - tabW / 2
+      : panelX + panelW / 2 + tabGap + tabW / 2;
     const tabStartY = panelTop + tabH / 2 + 4;
     tabKeys.forEach((label, i) => {
       const ty  = tabStartY + i * (tabH + tabSpc);
@@ -180,22 +184,26 @@ export class Game extends Phaser.Scene {
   // Dial
   // ══════════════════════════════════════════════════════════════════════════
 
-  private buildDial(items: any[], dialX: number, dialY: number, dialR: number): void {
-    const cfg = this.cache.json.get('rad-dial') as RadDialConfig | undefined;
+  private buildDial(dialX: number, dialY: number, dialR: number): void {
+    const cfg  = this.cache.json.get('rad-dial') as RadDialConfig | undefined;
+    const gm   = GameManager.getInstance();
     let roots: MenuItem[];
 
     if (cfg) {
       roots = cfg.actions.map((a): MenuItem => {
         if (!a.enabled) return { id: `locked_${a.id}`, name: a.name, icon: a.icon, layers: a.layers };
-        const src = a.itemSource ? (items as any[]).find((it: any) => it.id === a.itemSource) : null;
-        return { id: a.id, name: a.name, icon: a.icon, layers: a.layers, children: src?.children ?? [] } as MenuItem;
+        const store = gm.getModeStore(a.id);
+        return { id: a.id, name: a.name, icon: a.icon, layers: a.layers, children: store?.navTree ?? [] } as MenuItem;
       });
     } else {
       const p    = ProgressionManager.getInstance();
       const cats = p.getUnlockedCategories();
-      roots = cats.map(({ categoryId }) => (items as any[]).find((it: any) => it.id === categoryId) as MenuItem).filter(Boolean);
+      roots = cats.map(({ categoryId }) => {
+        const store = gm.getModeStore(categoryId);
+        return store ? { id: categoryId, name: categoryId, icon: categoryId, children: store.navTree } as MenuItem : undefined;
+      }).filter(Boolean) as MenuItem[];
       const needed = ALL_CATEGORY_IDS.length - roots.length;
-      for (let i = 0; i < needed; i++) roots.push({ id: `locked_slot_${i}`, name: "LOCKED", icon: "skill-blocked" });
+      for (let i = 0; i < needed; i++) roots.push({ id: `locked_slot_${i}`, name: 'LOCKED', icon: 'skill-blocked' });
     }
 
     this.radialDial = new RadialDial(this, dialX, dialY, roots);
@@ -213,19 +221,19 @@ export class Game extends Phaser.Scene {
     });
   }
 
-  private populateRepairPools(items: any[]): void {
+  private populateRepairPools(): void {
     const cfg = this.cache.json.get('rad-dial') as RadDialConfig | undefined;
+    const gm  = GameManager.getInstance();
     let pool: any[] = [];
+
     if (cfg) {
       const ra = cfg.actions.find(a => a.id === 'action_reorient');
-      if (ra?.itemSource) {
-        const src = (items as any[]).find((it: any) => it.id === ra.itemSource);
-        if (src) pool = this.collectLeaves(src.children ?? []);
+      if (ra) {
+        pool = gm.getModeStore('action_reorient')?.flat ?? [];
       }
     }
     if (pool.length === 0) {
-      const root = (items as any[]).find((it: any) => it.id === 'nav_resources_root');
-      if (root) pool = this.collectLeaves(root.children ?? []);
+      pool = gm.getModeStore('action_reorient')?.flat ?? [];
     }
     this.repairPool = pool;
 
@@ -239,17 +247,6 @@ export class Game extends Phaser.Scene {
       this.repairPanel?.setSession(session);
       this.repairPanel?.buildTaskArrangement(count, key || undefined);
     }
-  }
-
-  private collectLeaves(nodes: any[]): any[] {
-    const out: any[] = [];
-    const walk = (arr: any[]) => {
-      for (const n of arr) {
-        if (n.children?.length) walk(n.children); else out.push(n);
-      }
-    };
-    walk(nodes);
-    return out;
   }
 
   // ══════════════════════════════════════════════════════════════════════════

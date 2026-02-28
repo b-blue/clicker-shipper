@@ -282,7 +282,7 @@ describe('Preloader — parallel manager initialisation', () => {
     await instance.create();
 
     expect(gmInstance.initialize).toHaveBeenCalledWith(
-      expect.anything(), 'data/config.json', 'data/items.json'
+      expect.anything(), 'data/config.json'
     );
     expect(smInstance.loadSettings).toHaveBeenCalled();
   });

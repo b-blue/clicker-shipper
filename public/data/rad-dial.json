@@ -6,7 +6,7 @@
       "icon": "skill-gear",
       "terminalMode": "reorient",
       "enabled": true,
-      "itemSource": "nav_resources_root",
+      "itemsFile": "data/modes/reorient/items.json",
       "layers": [
         { "texture": "skill-gear", "depth": 3 },
         { "texture": "frame",      "depth": 2 }
@@ -15,11 +15,12 @@
     {
       "id": "action_replace",
       "name": "REPLACE",
-      "icon": "skill-blocked",
+      "icon": "skill-recycle",
       "terminalMode": "replace",
-      "enabled": false,
+      "enabled": true,
+      "itemsFile": "data/modes/replace/items.json",
       "layers": [
-        { "texture": "skill-blocked", "depth": 3 },
+        { "texture": "skill-recycle", "depth": 3 },
         { "texture": "frame",         "depth": 2 }
       ]
     },
@@ -29,6 +30,7 @@
       "icon": "skill-blocked",
       "terminalMode": "rewire",
       "enabled": false,
+      "itemsFile": "data/modes/rewire/items.json",
       "layers": [
         { "texture": "skill-blocked", "depth": 3 },
         { "texture": "frame",         "depth": 2 }
@@ -40,6 +42,7 @@
       "icon": "skill-blocked",
       "terminalMode": "rebuild",
       "enabled": false,
+      "itemsFile": "data/modes/rebuild/items.json",
       "layers": [
         { "texture": "skill-blocked", "depth": 3 },
         { "texture": "frame",         "depth": 2 }
@@ -51,6 +54,7 @@
       "icon": "skill-blocked",
       "terminalMode": "refuel",
       "enabled": false,
+      "itemsFile": "data/modes/refuel/items.json",
       "layers": [
         { "texture": "skill-blocked", "depth": 3 },
         { "texture": "frame",         "depth": 2 }
@@ -62,6 +66,7 @@
       "icon": "skill-blocked",
       "terminalMode": "recharge",
       "enabled": false,
+      "itemsFile": "data/modes/recharge/items.json",
       "layers": [
         { "texture": "skill-blocked", "depth": 3 },
         { "texture": "frame",         "depth": 2 }

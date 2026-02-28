@@ -4,8 +4,6 @@
  * parallel manager init, and Phaser-native progress bar.
  */
 
-import { jest } from '@jest/globals';
-
 // ── Module mocks (must come before any import that transitively uses them) ──
 
 jest.mock('../../managers/GameManager', () => ({

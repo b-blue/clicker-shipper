@@ -1,5 +1,8 @@
 {
   "shiftDuration": 180000,
   "dialLevels": 2,
-  "itemsPerLevel": 5
+  "itemsPerLevel": 5,
+  "quantaPerRepair": 10,
+  "deliveryCosts": [2, 5, 10],
+  "deliveryDurations": [8000, 4000, 1500]
 }

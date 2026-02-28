@@ -16,6 +16,7 @@ export type TaskBounds = { cx: number; cy: number; w: number; h: number };
  *   - Emitting outward scene events:
  *       repair:showDial   { item, currentRotationDeg, targetRotationDeg }
  *       repair:noMatch    {}
+ *       repair:itemFailed { iconKey }  (item permanently failed; needs replacement)
  *       repair:itemSolved {}
  *       repair:allSolved  {}
  *
@@ -45,6 +46,13 @@ export interface IRepairTask {
 
   /** Called when dial:goBack fires — cancel the current in-progress item. */
   clearCurrent(): void;
+
+  /**
+   * Force-resolves a previously-failed item by iconKey (called when its
+   * replacement delivery completes).  Emits repair:itemSolved or
+   * repair:allSolved as appropriate.
+   */
+  resolveItem(iconKey: string): void;
 
   /**
    * Subscribe to whatever terminal-dial scene events this task needs.

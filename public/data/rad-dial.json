@@ -17,7 +17,7 @@
       "name": "REPLACE",
       "icon": "skill-recycle",
       "terminalMode": "replace",
-      "enabled": true,
+      "enabled": false,
       "itemsFile": "data/modes/replace/items.json",
       "layers": [
         { "texture": "skill-recycle", "depth": 3 },

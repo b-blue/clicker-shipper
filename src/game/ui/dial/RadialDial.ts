@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { Item, MenuItem } from '../../../types/GameTypes';
+import { Item, MenuItem } from '../../types/GameTypes';
 import { normalizeItems } from '../../utils/ItemAdapter';
 import { DialContext } from './DialContext';
 import { FaceEvent } from './FaceEvent';
@@ -43,11 +43,6 @@ export class RadialDial {
   // ── Face stack ─────────────────────────────────────────────────────────────
   private faceStack: IDialFace[] = [];
 
-  // ── Pointer dedup (multi-pointer guard at coordinator level) ──────────────
-  private activePointerId: number = -1;
-  private pointerConsumed: boolean = false;
-  private lastTouchEndTime: number = 0;
-  private readonly touchSynthesisWindow: number = 500;
 
   // ── Context (re-created each push so glowAngle is always current) ─────────
   private readonly dialX: number;
@@ -55,9 +50,6 @@ export class RadialDial {
   private readonly sliceRadius: number = 150;
   private readonly centerRadius: number = 50;
 
-  // ── Navigation breadcrumb (set when root face drills down) ────────────────
-  /** Id of the currently active A-level action (set on first drillDown from root). */
-  private rootActionId: string | null = null;
 
   // ── Root items (kept so reset() can rebuild the root nav face) ────────────
   private readonly rootItems: MenuItem[];
@@ -125,6 +117,19 @@ export class RadialDial {
     this.pushFace(new RepairTerminalFace(item, currentRotationDeg, targetRotationDeg));
   }
 
+  /**
+   * Replace-flow: push a StandardNavFace containing the global item catalog so
+   * the player can select a replacement item.  Any non-root face is popped
+   * first (mirrors the guard in showRepairDial / showTerminalDial).
+   */
+  public showReplaceCatalog(items: MenuItem[]): void {
+    // Keep only the root face
+    while (this.faceStack.length > 1) {
+      this.popFace();
+    }
+    this.pushFace(new StandardNavFace(items, false));
+  }
+
   public reset(): void {
     // Preserve the repair nav mode so the new root face behaves the same way
     // the one we are discarding did (repair:noMatch must not silently disable
@@ -137,7 +142,6 @@ export class RadialDial {
       f.deactivate();
       f.destroy();
     }
-    this.rootActionId = null;
     this.centerImage.setAngle(0);
     if (this.glowTimer) this.glowTimer.paused = false;
     // Push a fresh root nav face, keeping the same repair nav mode
@@ -229,10 +233,6 @@ export class RadialDial {
       case 'drillDown': {
         // Track the root action for terminal registry lookups
         const nav = this.findRootNavFace();
-        if (nav && nav.getDepth() === 1) {
-          // depth just became 1 — this nav item IS the action
-          this.rootActionId = event.item.id;
-        }
         s.events.emit('dial:levelChanged', {
           depth: nav?.getDepth() ?? 1,
           item:  event.item,
@@ -250,10 +250,8 @@ export class RadialDial {
         if (this.faceStack.length > 1) {
           // A non-root face (terminal face) is popping itself
           this.popFace();
-          if (nav && nav.getDepth() === 0) this.rootActionId = null;
         } else if (nav && nav.canGoBack()) {
-          // Root nav face went back internally — update rootActionId
-          if (nav.getDepth() === 0) this.rootActionId = null;
+          // Root nav face went back internally (no extra state to update)
         }
         if (this.glowTimer) this.glowTimer.paused = false;
         s.events.emit('dial:goBack');

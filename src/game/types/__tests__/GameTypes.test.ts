@@ -44,6 +44,9 @@ describe('GameTypes', () => {
         shiftDuration: 180000,
         dialLevels: 2,
         itemsPerLevel: 6,
+        quantaPerRepair: 10,
+        deliveryCosts: [2, 5, 10],
+        deliveryDurations: [8000, 4000, 1500],
         rootDialIconPath: 'assets/dial.png',
       };
       expect(config.shiftDuration).toBe(180000);
@@ -55,6 +58,9 @@ describe('GameTypes', () => {
         shiftDuration: 180000,
         dialLevels: 2,
         itemsPerLevel: 6,
+        quantaPerRepair: 10,
+        deliveryCosts: [2, 5, 10],
+        deliveryDurations: [8000, 4000, 1500],
       };
       expect(config.rootDialIconPath).toBeUndefined();
     });
@@ -65,7 +71,10 @@ describe('GameTypes', () => {
       const req: OrderRequirement = {
         itemId: 'item_1_1',
         itemName: 'Test Item',
+        iconKey: 'icon-1',
         quantity: 2,
+        fulfilled: 0,
+        cost: 10,
       };
       expect(req.itemId).toBe('item_1_1');
       expect(req.quantity).toBe(2);
@@ -78,8 +87,8 @@ describe('GameTypes', () => {
         id: 'order_1',
         budget: 100,
         requirements: [
-          { itemId: 'item_1_1', itemName: 'Item 1', quantity: 1 },
-          { itemId: 'item_1_2', itemName: 'Item 2', quantity: 2 },
+          { itemId: 'item_1_1', itemName: 'Item 1', iconKey: 'icon-1', quantity: 1, fulfilled: 0, cost: 5 },
+          { itemId: 'item_1_2', itemName: 'Item 2', iconKey: 'icon-2', quantity: 2, fulfilled: 0, cost: 8 },
         ],
       };
       expect(order.requirements.length).toBe(2);

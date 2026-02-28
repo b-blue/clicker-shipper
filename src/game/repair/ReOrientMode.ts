@@ -68,6 +68,17 @@ export class ReOrientMode implements IRepairTask {
     this.currentRepairItem = null;
   }
 
+  resolveItem(iconKey: string): void {
+    const item = this.repairItems.find(r => r.iconKey === iconKey && r.requiresReplace && !r.solved);
+    if (!item) return;
+    item.solved = true;
+    // Redraw frame in solved green
+    item.frameObj.clear();
+    item.frameObj.lineStyle(3, 0x44ff88, 1.0);
+    item.frameObj.strokeCircle(item.iconObj.x, item.iconObj.y, Math.round(item.iconObj.displayWidth / 2) + 2);
+    this.scene.events.emit(this.isAllSolved() ? 'repair:allSolved' : 'repair:itemSolved');
+  }
+
   // ── IRepairTask nav events ────────────────────────────────────────────
 
   /**
@@ -78,6 +89,12 @@ export class ReOrientMode implements IRepairTask {
     const iconKey = item.icon || item.id;
     const match   = this.repairItems.find(r => r.iconKey === iconKey && !r.solved);
     if (!match) {
+      this.scene.events.emit('repair:noMatch');
+      return;
+    }
+    // If this item previously failed it now needs replacement — re-emitting
+    // noMatch causes the dial to reset; repairPanel handles the badge swap.
+    if (match.requiresReplace) {
       this.scene.events.emit('repair:noMatch');
       return;
     }
@@ -203,6 +220,7 @@ export class ReOrientMode implements IRepairTask {
         targetRotationDeg: targetRot,
         currentRotationDeg: startRot,
         solved: false,
+        requiresReplace: false,
         iconObj,
         frameObj: frameG,
         bgObj,
@@ -234,6 +252,11 @@ export class ReOrientMode implements IRepairTask {
       frameObj.clear();
       frameObj.lineStyle(3, 0x44ff88, 1.0);
       frameObj.strokeCircle(iconObj.x, iconObj.y, Math.round(iconObj.displayWidth / 2) + 2);
+    } else {
+      // Mark this item as requiring physical replacement.
+      // RepairPanel will visually dim it and swap its badge.
+      this.currentRepairItem.requiresReplace = true;
+      this.scene.events.emit('repair:itemFailed', { iconKey: this.currentRepairItem.iconKey });
     }
     this.currentRepairItem = null;
     if (data.success) {

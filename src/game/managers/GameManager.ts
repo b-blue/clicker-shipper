@@ -78,6 +78,26 @@ export class GameManager {
     return Array.from(this.modeStores.values());
   }
 
+  /**
+   * Returns a deduplicated, paginated nav tree of every leaf item across all
+   * mode stores.  Used to populate the Replace delivery catalog subdial.
+   */
+  getGlobalItemCatalog(): MenuItem[] {
+    const seen = new Set<string>();
+    const all: MenuItem[] = [];
+    for (const store of this.modeStores.values()) {
+      for (const item of store.flat) {
+        if (!seen.has(item.id)) {
+          seen.add(item.id);
+          all.push(item);
+        }
+      }
+    }
+    const leftHanded   = SettingsManager.getInstance().getHandedness() === 'left';
+    const navDownIndex = leftHanded ? 4 : 1;
+    return paginateWithConfig(all, this.config, navDownIndex);
+  }
+
   getShiftDuration(): number {
     return this.getConfig().shiftDuration;
   }

@@ -1,5 +1,5 @@
 import { GameManager } from '../GameManager';
-import { GameConfig } from '../types/GameTypes';
+import { GameConfig } from '../../types/GameTypes';
 
 describe('GameManager', () => {
   let gameManager: GameManager;
@@ -44,6 +44,9 @@ describe('GameManager', () => {
         shiftDuration: 180000,
         dialLevels: 2,
         itemsPerLevel: 6,
+        quantaPerRepair: 10,
+        deliveryCosts: [2, 5, 10],
+        deliveryDurations: [8000, 4000, 1500],
       };
 
       const mockScene = makeScene(mockConfig);
@@ -56,7 +59,7 @@ describe('GameManager', () => {
     });
 
     it('builds mode stores from rad-dial.json action entries', async () => {
-      const mockConfig: GameConfig = { shiftDuration: 180000, dialLevels: 2, itemsPerLevel: 5 };
+      const mockConfig: GameConfig = { shiftDuration: 180000, dialLevels: 2, itemsPerLevel: 5, quantaPerRepair: 10, deliveryCosts: [2, 5, 10], deliveryDurations: [8000, 4000, 1500] };
       const radDial = {
         actions: [
           { id: 'action_reorient', name: 'RE-ORIENT', icon: 'skill-gear', terminalMode: 'reorient',
@@ -80,7 +83,7 @@ describe('GameManager', () => {
     });
 
     it('paginated navTree wraps into pages of itemsPerLevel', async () => {
-      const mockConfig: GameConfig = { shiftDuration: 180000, dialLevels: 2, itemsPerLevel: 2 };
+      const mockConfig: GameConfig = { shiftDuration: 180000, dialLevels: 2, itemsPerLevel: 2, quantaPerRepair: 10, deliveryCosts: [2, 5, 10], deliveryDurations: [8000, 4000, 1500] };
       const radDial = {
         actions: [
           { id: 'action_reorient', name: 'RE-ORIENT', icon: 'skill-gear', terminalMode: 'reorient',
@@ -120,6 +123,9 @@ describe('GameManager', () => {
         shiftDuration: 180000,
         dialLevels: 2,
         itemsPerLevel: 6,
+        quantaPerRepair: 10,
+        deliveryCosts: [2, 5, 10],
+        deliveryDurations: [8000, 4000, 1500],
       };
 
       const mockScene = makeScene(mockConfig);
@@ -146,11 +152,14 @@ describe('GameManager', () => {
         shiftDuration: 180000,
         dialLevels: 2,
         itemsPerLevel: 6,
+        quantaPerRepair: 10,
+        deliveryCosts: [2, 5, 10],
+        deliveryDurations: [8000, 4000, 1500],
       };
 
       const mockScene = makeScene(mockConfig, { items: [] });
 
-      await gameManager.initialize(mockScene, 'data/config.json', 'data/items.json');
+      await gameManager.initialize(mockScene, 'data/config.json');
       const duration = gameManager.getShiftDuration();
 
       expect(duration).toBe(180000);

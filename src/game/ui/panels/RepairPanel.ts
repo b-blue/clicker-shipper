@@ -5,6 +5,7 @@ import { DroneStage } from '../../repair/DroneStage';
 import { RepairSession } from '../../repair/RepairSession';
 import { TaskBounds } from '../../repair/IRepairTask';
 import { ParallaxBackground } from '../ParallaxBackground';
+import { AssetLoader } from '../../managers/AssetLoader';
 
 const STAGGER_MS       = 80;    // ms between each item fade
 const FADE_DUR         = 260;   // ms per individual fade
@@ -37,7 +38,6 @@ export class RepairPanel {
   private activeSession: RepairSession | null = null;
   private taskContainer: Phaser.GameObjects.Container | null = null;
   private taskBounds: TaskBounds | null = null;
-  private repairedLabel: Phaser.GameObjects.Text | null = null;
 
   constructor(scene: Phaser.Scene, droneStage: DroneStage) {
     this.scene      = scene;
@@ -230,10 +230,13 @@ export class RepairPanel {
     bezelG.fillCircle(rRX, divY + 5, rV);
 
     container.add(bezelG);
+
+    this.scene.events.on('repair:itemFailed', this.onItemFailed, this);
   }
 
   destroy(): void {
     this.scene.events.off('update', this.onUpdate, this);
+    this.scene.events.off('repair:itemFailed', this.onItemFailed, this);
     this.bg?.destroy();
     this.bg = null;
     this.bgMaskGfx?.destroy();
@@ -247,6 +250,50 @@ export class RepairPanel {
   /** Store the new session so materialize/dematerialize can access its items. */
   setSession(session: RepairSession): void {
     this.activeSession = session;
+  }
+
+  /**
+   * Called when `repair:itemFailed` fires.  Dims the icon, recolours the frame
+   * in warning amber, and swaps the badge to the replace (skill-recycle) icon.
+   */
+  private onItemFailed(data: { iconKey: string }): void {
+    const items = this.activeSession?.task.getItems() ?? [];
+    const ri = items.find(r => r.iconKey === data.iconKey);
+    if (!ri) return;
+
+    // Dim the icon
+    this.scene.tweens.add({
+      targets: ri.iconObj,
+      alpha: 0.3,
+      duration: 250,
+      ease: 'Sine.easeIn',
+    });
+
+    // Redraw frame in amber
+    ri.frameObj.clear();
+    ri.frameObj.lineStyle(2, Colors.HIGHLIGHT_YELLOW, 0.85);
+    const r = Math.round(ri.iconObj.displayWidth / 2) + 2;
+    ri.frameObj.strokeCircle(ri.iconObj.x, ri.iconObj.y, r);
+
+    // Redraw badge bg in yellow
+    const bR   = Math.round(r * 0.56);
+    const bCx  = ri.iconObj.x + r * 0.62;
+    const bCy  = ri.iconObj.y + r * 0.62;
+    ri.badgeBg.clear();
+    ri.badgeBg.fillStyle(Colors.PANEL_DARK, 0.95);
+    ri.badgeBg.fillCircle(bCx, bCy, bR);
+    ri.badgeBg.lineStyle(1, Colors.HIGHLIGHT_YELLOW, 0.9);
+    ri.badgeBg.strokeCircle(bCx, bCy, bR);
+
+    // Swap badge icon to skill-recycle
+    const iconKey = 'skill-recycle';
+    const atlasKey = AssetLoader.getAtlasKey(iconKey);
+    if (atlasKey) {
+      ri.badgeIcon.setTexture(atlasKey, iconKey);
+    } else {
+      ri.badgeIcon.setTexture(iconKey);
+    }
+    ri.badgeIcon.setAlpha(1);
   }
 
   /**
@@ -314,7 +361,6 @@ export class RepairPanel {
       const lbl = this.scene.add.text(cx, cy, 'DRONE REPAIRED', readoutStyle(13, 0x00e864))
         .setOrigin(0.5).setDepth(10).setAlpha(0);
       container.add(lbl);
-      this.repairedLabel = lbl;
 
       this.scene.tweens.add({
         targets: lbl,
@@ -330,7 +376,6 @@ export class RepairPanel {
               ease: 'Sine.easeIn',
               onComplete: () => {
                 lbl.destroy();
-                this.repairedLabel = null;
                 onComplete();
               },
             });

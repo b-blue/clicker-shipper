@@ -20,7 +20,6 @@ export class RepairTerminalFace implements IDialFace {
 
   // ── Private repair state ───────────────────────────────────────────────────
   private repairItemRotationDeg: number;
-  private repairTargetDeg: number;
   private arcRadius: number = 0;
 
   // ── Drag tracking ──────────────────────────────────────────────────────────
@@ -44,10 +43,9 @@ export class RepairTerminalFace implements IDialFace {
 
   private ctx: DialContext | null = null;
 
-  constructor(item: MenuItem, currentRotationDeg: number, targetRotationDeg: number) {
+  constructor(item: MenuItem, currentRotationDeg: number, _targetRotationDeg: number) {
     this.item                  = item;
     this.repairItemRotationDeg = currentRotationDeg;
-    this.repairTargetDeg       = targetRotationDeg;
   }
 
   // ── IDialFace lifecycle ────────────────────────────────────────────────────

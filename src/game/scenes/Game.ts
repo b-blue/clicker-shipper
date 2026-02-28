@@ -17,6 +17,8 @@ import { DroneViewPanel } from "../ui/panels/DroneViewPanel";
 import { OrdersPanel } from "../ui/panels/OrdersPanel";
 import { DroneStage } from "../repair/DroneStage";
 import { RepairSession } from "../repair/RepairSession";
+import { DeliveryQueue } from "../repair/DeliveryQueue";
+import { DeliveryQueueUI } from "../ui/DeliveryQueueUI";
 
 type TabKey = "REPAIR" | "SETTINGS" | "CATALOG" | "DRONES";
 
@@ -24,9 +26,9 @@ export class Game extends Phaser.Scene {
   // ── Dial / HUD ────────────────────────────────────────────────────────────
   private radialDial: RadialDial | null = null;
   private cornerHUD: DialCornerHUD | null = null;
-  private lastTerminalItem: any = null;
-  private lastTerminalSliceAngle: number = Math.PI / 2;
-  private altTerminalModeActive: boolean = false;
+  private activeReplaceItem: string | null = null;
+  private deliveryQueue: DeliveryQueue | null = null;
+  private deliveryQueueUI: DeliveryQueueUI | null = null;
 
   // ── Repair modules ────────────────────────────────────────────────────────
   private droneStage:      DroneStage      | null = null;
@@ -86,6 +88,8 @@ export class Game extends Phaser.Scene {
     this.droneStage?.destroy();
     this.repairSession?.destroy();
     this.repairPanel?.destroy();
+    this.deliveryQueue?.destroy();
+    this.deliveryQueueUI?.destroy();
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -210,15 +214,23 @@ export class Game extends Phaser.Scene {
     this.radialDial.setRepairNavMode(true);
 
     this.cornerHUD = new DialCornerHUD(this, dialX, dialY, dialR, {
-      openCatalog:        (id) => this.events.emit("catalog:openToCategory", id),
-      closeCatalog:       () => this.switchToOrdersTab?.(),
-      openMenu:           () => this.scene.start("MainMenu"),
-      onAltTerminalToggle: (alt) => {
-        this.altTerminalModeActive = alt;
-        if (!this.lastTerminalItem || !this.radialDial) return;
-        this.radialDial.showTerminalDial(this.lastTerminalItem, 0, alt ? Math.PI / 3 : this.lastTerminalSliceAngle);
+      openCatalog:  (id) => this.events.emit("catalog:openToCategory", id),
+      closeCatalog: () => this.switchToOrdersTab?.(),
+      openMenu:     () => this.scene.start("MainMenu"),
+      onReplaceRequested: () => {
+        this.activeAction = 'action_replace';
+        const catalog = GameManager.getInstance().getGlobalItemCatalog();
+        this.radialDial?.showReplaceCatalog(catalog);
+        this.cornerHUD?.onLevelChanged(1, { id: 'action_replace', icon: 'skill-recycle' });
       },
     });
+
+    const sm2  = SettingsManager.getInstance();
+    const ds2  = sm2.getDialSettings();
+    const leftHanded2 = sm2.getHandedness() === 'left';
+    this.deliveryQueue   = new DeliveryQueue();
+    this.deliveryQueueUI = new DeliveryQueueUI(this, dialX, dialY, dialR, leftHanded2, ds2);
+    this.deliveryQueue.setScene(this);
   }
 
   private populateRepairPools(): void {
@@ -256,23 +268,48 @@ export class Game extends Phaser.Scene {
   private wireDialEvents(): void {
     ["dial:itemConfirmed","dial:quantityConfirmed","dial:levelChanged",
      "dial:goBack","catalog:tabActivated",
-     "repair:showDial","repair:noMatch","repair:itemSolved","repair:allSolved"].forEach(e => this.events.removeAllListeners(e));
+     "repair:showDial","repair:noMatch","repair:itemSolved","repair:allSolved",
+     "repair:itemFailed","delivery:completed"].forEach(e => this.events.removeAllListeners(e));
 
     this.events.on("dial:itemConfirmed", (data: { item: any; sliceCenterAngle?: number }) => {
       const depth = this.radialDial?.getDepth() ?? 0;
       if (this.activeAction === 'action_reorient' || depth >= 1) {
+        // Replace-catalog path: selecting an item opens the quantity terminal
+        if (this.activeAction === 'action_replace') {
+          this.activeReplaceItem = data.item.icon || data.item.id;
+          this.radialDial?.showTerminalDial(data.item, 0, Math.PI / 2);
+          this.cornerHUD?.onItemConfirmed();
+          return;
+        }
         this.repairSession?.task.onItemSelected(data.item);
         return;
       }
-      const iconKey = data.item.icon || data.item.id;
-      const qty     = this.orderSlots.find(s => s.iconKey === iconKey)?.placedQty ?? 0;
-      this.lastTerminalItem       = data.item;
-      this.lastTerminalSliceAngle = data.sliceCenterAngle ?? Math.PI / 2;
-      this.radialDial?.showTerminalDial(data.item, qty, this.altTerminalModeActive ? Math.PI / 3 : this.lastTerminalSliceAngle);
+      const iconKey      = data.item.icon || data.item.id;
+      const qty          = this.orderSlots.find(s => s.iconKey === iconKey)?.placedQty ?? 0;
+      const sliceAngle   = data.sliceCenterAngle ?? Math.PI / 2;
+      this.radialDial?.showTerminalDial(data.item, qty, sliceAngle);
       this.cornerHUD?.onItemConfirmed();
     });
 
     this.events.on("dial:quantityConfirmed", (data: { item: any; quantity: number }) => {
+      // Replace path: quantity = speed tier (1=slow/2=normal/3=fast)
+      if (this.activeReplaceItem) {
+        const speedTier = Math.min(2, Math.max(0, data.quantity - 1));
+        const cfg       = GameManager.getInstance().getConfig();
+        const cost      = cfg.deliveryCosts[speedTier];
+        const pm        = ProgressionManager.getInstance();
+        if (pm.canAfford(cost)) {
+          pm.addQuanta(-cost);
+          this.deliveryQueue?.enqueue(this.activeReplaceItem, speedTier, cfg, this);
+          this.deliveryQueueUI?.addSlot(this.activeReplaceItem, cfg.deliveryDurations[speedTier]);
+        }
+        this.activeReplaceItem = null;
+        this.activeAction      = null;
+        this.radialDial?.reset();
+        this.cornerHUD?.onQuantityConfirmed();
+        this.cornerHUD?.onGoBack();
+        return;
+      }
       this.placeItem(data.item.icon || data.item.id, data.quantity);
       this.cornerHUD?.onQuantityConfirmed();
     });
@@ -313,11 +350,35 @@ export class Game extends Phaser.Scene {
       this.activeAction = null;
     });
 
+    this.events.on("repair:itemFailed", (_data: { iconKey: string }) => {
+      // Update the HUD's failed-item count
+      const items = this.repairSession?.task.getItems() ?? [];
+      const failedCount = items.filter((r: any) => r.requiresReplace && !r.solved).length;
+      this.cornerHUD?.onFailedItemCountChanged(failedCount);
+      // Reset dial and return to root
+      const depth = this.radialDial?.getDepth() ?? 0;
+      this.radialDial?.reset();
+      for (let i = 0; i < depth; i++) this.cornerHUD?.onGoBack();
+      this.activeAction = null;
+    });
+
+    this.events.on("delivery:completed", (data: { iconKey: string }) => {
+      this.repairSession?.task.resolveItem(data.iconKey);
+      const items = this.repairSession?.task.getItems() ?? [];
+      const failedCount = items.filter((r: any) => r.requiresReplace && !r.solved).length;
+      this.cornerHUD?.onFailedItemCountChanged(failedCount);
+      this.deliveryQueueUI?.removeSlot(data.iconKey);
+    });
+
     this.events.on("repair:allSolved", () => {
       this.cornerHUD?.onGoBack();
       this.radialDial?.reset();
       this.cornerHUD?.onGoBack();
       this.activeAction = null;
+      // Award quanta for completing a full repair
+      ProgressionManager.getInstance().addQuanta(
+        GameManager.getInstance().getConfig().quantaPerRepair
+      );
       if (this.repairContainer && this.droneStage) {
         this.repairPanel?.dematerialize(() => {
           this.repairSession?.destroy();

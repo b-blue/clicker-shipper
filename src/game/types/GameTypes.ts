@@ -53,6 +53,12 @@ export interface GameConfig {
   dialLevels: number;
   itemsPerLevel: number;
   rootDialIconPath?: string;
+  /** Quanta awarded when a full drone repair is completed. */
+  quantaPerRepair: number;
+  /** Quanta cost for each delivery speed tier (index 0=Slow, 1=Normal, 2=Fast). */
+  deliveryCosts: [number, number, number];
+  /** Delivery duration in ms for each speed tier (index 0=Slow, 1=Normal, 2=Fast). */
+  deliveryDurations: [number, number, number];
 }
 
 export interface OrderRequirement {

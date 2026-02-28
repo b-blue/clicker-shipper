@@ -8,6 +8,11 @@ export interface RepairItem {
   targetRotationDeg: number;   // randomized ring offset used to position the green zone
   currentRotationDeg: number;  // updated live during ring drag
   solved: boolean;
+  /**
+   * Set to true when the player fails the primary repair action for this item.
+   * Once true the item can only be resolved via the Replace delivery flow.
+   */
+  requiresReplace: boolean;
   iconObj: Phaser.GameObjects.Image;
   frameObj: Phaser.GameObjects.Graphics;
   /** Dark-panel fill circle behind the icon — separates it from the wireframe bg. */

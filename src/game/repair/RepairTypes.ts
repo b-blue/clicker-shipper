@@ -21,4 +21,6 @@ export interface RepairItem {
   badgeBg: Phaser.GameObjects.Graphics;
   /** Action icon shown inside the badge (e.g. skill-refresh for re-orient). */
   badgeIcon: Phaser.GameObjects.Image;
+  /** Rotating blue ring drawn around the badge when this item needs replacement. */
+  badgeRing?: Phaser.GameObjects.Graphics;
 }

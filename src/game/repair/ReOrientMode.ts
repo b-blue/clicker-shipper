@@ -270,6 +270,7 @@ export class ReOrientMode implements IRepairTask {
     for (const ri of this.repairItems) {
       ri.iconObj.destroy(); ri.frameObj.destroy();
       ri.bgObj.destroy(); ri.badgeBg.destroy(); ri.badgeIcon.destroy();
+      ri.badgeRing?.destroy();
     }
     this.wireframe?.destroy();
     this.repairItems       = [];

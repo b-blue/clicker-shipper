@@ -63,6 +63,9 @@ export class DialCornerHUD {
   private readonly menuBg:   Phaser.GameObjects.Graphics;
   private readonly menuIcon: Phaser.GameObjects.Image;
 
+  // Replacement-pending indicator ring on the recycle button (rotating blue arc)
+  private readonly recycleRingGfx: Phaser.GameObjects.Graphics;
+
   constructor(
     scene: Phaser.Scene,
     dialX: number,
@@ -138,6 +141,32 @@ export class DialCornerHUD {
     this.menuBg.on('pointerdown', () => this.callbacks.openMenu());
     this.menuBg.on('pointerover', () => this.drawMenuBtn(true));
     this.menuBg.on('pointerout',  () => this.drawMenuBtn(false));
+
+    // ── Replacement-pending indicator rings ───────────────────────────────
+    // Each ring is a Graphics object positioned at the button centre so that
+    // tweening its `angle` property rotates the arc in place.  A 240° arc
+    // (4/3 π) leaves a 120° gap that makes the rotation immediately legible.
+    const ringR   = btnSize / 2 + 5;   // just outside the button edge
+    const ringCol = 0x44aaff;          // cornflower blue
+
+    const makeRing = (cx: number, cy: number) => {
+      const g = scene.add.graphics().setDepth(25).setPosition(cx, cy);
+      g.lineStyle(2.5, ringCol, 0.92);
+      g.arc(0, 0, ringR, 0, Math.PI * (4 / 3));
+      g.strokePath();
+      g.setVisible(false);
+      return g;
+    };
+
+    this.recycleRingGfx = makeRing(btnX, upperY);
+
+    scene.tweens.add({
+      targets:  this.recycleRingGfx,
+      angle:    360,
+      duration: 1800,
+      repeat:   -1,
+      ease:     'Linear',
+    });
 
     this.redraw();
   }
@@ -234,6 +263,7 @@ export class DialCornerHUD {
     );
     this.recycleBg.strokeCircle(btnX, upperY, radius);
     this.recycleIcon.setAlpha(active ? 1 : 0.3);
+    this.recycleRingGfx?.setVisible(active);
   }
 
   private drawLevelBadge(): void {

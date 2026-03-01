@@ -266,10 +266,13 @@ export class Game extends Phaser.Scene {
   // ══════════════════════════════════════════════════════════════════════════
 
   private wireDialEvents(): void {
+    // Only clear the Game-owned dial/repair routing events.
+    // Do NOT clear repair:itemFailed or delivery:completed — other objects
+    // (RepairPanel) have long-lived subscriptions to those events that must
+    // not be wiped when dial events are re-wired.
     ["dial:itemConfirmed","dial:quantityConfirmed","dial:levelChanged",
      "dial:goBack","catalog:tabActivated",
-     "repair:showDial","repair:noMatch","repair:itemSolved","repair:allSolved",
-     "repair:itemFailed","delivery:completed"].forEach(e => this.events.removeAllListeners(e));
+     "repair:showDial","repair:noMatch","repair:itemSolved","repair:allSolved"].forEach(e => this.events.removeAllListeners(e));
 
     this.events.on("dial:itemConfirmed", (data: { item: any; sliceCenterAngle?: number }) => {
       const depth = this.radialDial?.getDepth() ?? 0;
@@ -277,7 +280,8 @@ export class Game extends Phaser.Scene {
         // Replace-catalog path: selecting an item opens the quantity terminal
         if (this.activeAction === 'action_replace') {
           this.activeReplaceItem = data.item.icon || data.item.id;
-          this.radialDial?.showTerminalDial(data.item, 0, Math.PI / 2);
+          // Fixed 5-o'clock position (π/3 = 60° from x-axis) — never varies by item.
+          this.radialDial?.showTerminalDial(data.item, 0, Math.PI / 3);
           this.cornerHUD?.onItemConfirmed();
           return;
         }

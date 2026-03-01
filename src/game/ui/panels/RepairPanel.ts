@@ -294,6 +294,36 @@ export class RepairPanel {
       ri.badgeIcon.setTexture(iconKey);
     }
     ri.badgeIcon.setAlpha(1);
+
+    // Brief explosion effect over the icon — random Tiny variant, plays once then self-destructs.
+    const expVariant = 1 + Math.floor(Math.random() * 3);
+    const expKey = `explosion-tiny-${expVariant}`;
+    if (this.scene.anims.exists(expKey)) {
+      const iconSize = ri.iconObj.displayWidth;
+      const expScale = (iconSize * 1.6) / 32;  // size so explosion comfortably covers the icon
+      const exp = this.scene.add.sprite(ri.iconObj.x, ri.iconObj.y, expKey)
+        .setScale(expScale)
+        .setDepth(30)
+        .play(expKey);
+      exp.once('animationcomplete', () => exp.destroy());
+    }
+
+    // Spawn rotating blue indicator ring around the badge
+    if (!ri.badgeRing) {
+      const ringR = bR + 4;
+      const g = this.scene.add.graphics().setDepth(32).setPosition(bCx, bCy);
+      g.lineStyle(2, 0x44aaff, 0.92);
+      g.arc(0, 0, ringR, 0, Math.PI * (4 / 3));
+      g.strokePath();
+      ri.badgeRing = g;
+      this.scene.tweens.add({
+        targets:  g,
+        angle:    360,
+        duration: 1800,
+        repeat:   -1,
+        ease:     'Linear',
+      });
+    }
   }
 
   /**

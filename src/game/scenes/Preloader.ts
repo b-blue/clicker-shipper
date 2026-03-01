@@ -154,7 +154,11 @@ export class Preloader extends Phaser.Scene {
       ['drone-15-idle',      'assets/drones/15/Idle.png'],
       ['drone-15-run',       'assets/drones/15/Run.png'],
 
-      // ── Robots 1-10 ───────────────────────────────────────────────────
+      ['drone-16-idle',      'assets/drones/16/Idle.png'],
+
+      ['drone-17-idle',      'assets/drones/17/Idle.png'],
+
+      // ── Robots 1-11 ───────────────────────────────────────────────────
       ['robot-1-attack',     'assets/robots/1/Attack.png'],
       ['robot-1-death',      'assets/robots/1/Death.png'],
       ['robot-1-hurt',       'assets/robots/1/Hurt.png'],
@@ -220,9 +224,32 @@ export class Preloader extends Phaser.Scene {
       ['robot-10-hurt',      'assets/robots/10/Hurt.png'],
       ['robot-10-idle',      'assets/robots/10/Idle.png'],
       ['robot-10-uo',        'assets/robots/10/Uo.png'],
+
+      ['robot-11-idle',      'assets/robots/11/Idle.png'],
     ];
     for (const [key, path] of DRONE_FILE_MANIFEST) {
       this.load.image(key, path);
+    }
+
+    // Explosion effects — 4 size tiers × 3 variants each.
+    // All strips are horizontal with square frames; height equals frame size.
+    // Keys: explosion-tiny-{1-3}, explosion-low-{1-3}, explosion-mid-{1-3}, explosion-high-{1-3}
+    const EXPLOSION_MANIFEST: Array<[string, string, number]> = [
+      ['explosion-tiny-1', 'assets/effects/explosions/1 Tiny/1.png',    32],
+      ['explosion-tiny-2', 'assets/effects/explosions/1 Tiny/2.png',    32],
+      ['explosion-tiny-3', 'assets/effects/explosions/1 Tiny/3.png',    32],
+      ['explosion-low-1',  'assets/effects/explosions/2 Low/1.png',     48],
+      ['explosion-low-2',  'assets/effects/explosions/2 Low/2.png',     48],
+      ['explosion-low-3',  'assets/effects/explosions/2 Low/3.png',     48],
+      ['explosion-mid-1',  'assets/effects/explosions/3 Middle/1.png',  72],
+      ['explosion-mid-2',  'assets/effects/explosions/3 Middle/2.png',  72],
+      ['explosion-mid-3',  'assets/effects/explosions/3 Middle/3.png',  72],
+      ['explosion-high-1', 'assets/effects/explosions/4 High/1.png',    96],
+      ['explosion-high-2', 'assets/effects/explosions/4 High/2.png',    96],
+      ['explosion-high-3', 'assets/effects/explosions/4 High/3.png',    96],
+    ];
+    for (const [key, path, frameSize] of EXPLOSION_MANIFEST) {
+      this.load.spritesheet(key, path, { frameWidth: frameSize, frameHeight: frameSize });
     }
 
     // Parallax background layers — 8 sets × 2 time-of-day variants × 5 layers = 80 images.
@@ -289,6 +316,22 @@ export class Preloader extends Phaser.Scene {
               frames:    this.anims.generateFrameNumbers(key, { start: 0, end: 3 }),
               frameRate: 8,
               repeat:    -1,
+            });
+          }
+        }
+      }
+
+      // Register explosion animations — play-once at 12 fps.
+      // Phaser knows the frame count because these were loaded as spritesheets.
+      for (const tier of ['tiny', 'low', 'mid', 'high']) {
+        for (let n = 1; n <= 3; n++) {
+          const key = `explosion-${tier}-${n}`;
+          if (!this.anims.exists(key) && this.textures.exists(key)) {
+            this.anims.create({
+              key,
+              frames:    this.anims.generateFrameNumbers(key, { start: 0, end: -1 }),
+              frameRate: 12,
+              repeat:    0,
             });
           }
         }

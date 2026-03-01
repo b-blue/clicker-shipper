@@ -1,282 +1,142 @@
 [
   {
-    "id": "item_resources_001",
-    "name": "FFC STRIP",
-    "icon": "resource1",
-    "type": "resources",
+    "id": "item_reorient_001",
+    "name": "MOUNTING BRACKET",
+    "icon": "reorient1",
+    "type": "reorient",
     "cost": 10
   },
   {
-    "id": "item_resources_006",
-    "name": "PCIe RISER",
-    "icon": "resource6",
-    "type": "resources",
-    "cost": 15
+    "id": "item_reorient_002",
+    "name": "CABLE GUIDE",
+    "icon": "reorient2",
+    "type": "reorient",
+    "cost": 11
   },
   {
-    "id": "item_resources_011",
-    "name": "DDR5 MODULE",
-    "icon": "resource11",
-    "type": "resources",
+    "id": "item_reorient_003",
+    "name": "HEATSINK FIN",
+    "icon": "reorient3",
+    "type": "reorient",
+    "cost": 12
+  },
+  {
+    "id": "item_reorient_004",
+    "name": "LATCH ASSEMBLY",
+    "icon": "reorient4",
+    "type": "reorient",
+    "cost": 13
+  },
+  {
+    "id": "item_reorient_005",
+    "name": "PIVOT BLOCK",
+    "icon": "reorient5",
+    "type": "reorient",
     "cost": 14
   },
   {
-    "id": "item_resources_016",
-    "name": "ATX SHROUD",
-    "icon": "resource16",
-    "type": "resources",
-    "cost": 13
-  },
-  {
-    "id": "item_resources_021",
-    "name": "SERVER HBA CARD",
-    "icon": "resource21",
-    "type": "resources",
-    "cost": 12
-  },
-  {
-    "id": "item_resources_026",
-    "name": "MOLEX HARNESS",
-    "icon": "resource26",
-    "type": "resources",
-    "cost": 11
-  },
-  {
-    "id": "item_resources_031",
-    "name": "RF SHIELD BLANK",
-    "icon": "resource31",
-    "type": "resources",
-    "cost": 10
-  },
-  {
-    "id": "item_resources_036",
-    "name": "SATA POWER ADAPTER",
-    "icon": "resource36",
-    "type": "resources",
+    "id": "item_reorient_006",
+    "name": "RAIL CLAMP",
+    "icon": "reorient6",
+    "type": "reorient",
     "cost": 15
   },
   {
-    "id": "item_resources_037",
-    "name": "PCH HEATSINK",
-    "icon": "resource37",
-    "type": "resources",
+    "id": "item_reorient_007",
+    "name": "SLOT PLATE",
+    "icon": "reorient7",
+    "type": "reorient",
     "cost": 10
   },
   {
-    "id": "item_resources_038",
-    "name": "FRONT PANEL HEADER",
-    "icon": "resource38",
-    "type": "resources",
+    "id": "item_reorient_008",
+    "name": "RATCHET LEVER",
+    "icon": "reorient8",
+    "type": "reorient",
     "cost": 11
   },
   {
-    "id": "item_resources_039",
-    "name": "JUMPER BLOCK",
-    "icon": "resource39",
-    "type": "resources",
+    "id": "item_reorient_009",
+    "name": "ALIGNMENT KEY",
+    "icon": "reorient9",
+    "type": "reorient",
     "cost": 12
   },
   {
-    "id": "item_resources_040",
-    "name": "VRM SPREADER",
-    "icon": "resource40",
-    "type": "resources",
+    "id": "item_reorient_010",
+    "name": "TENSION CLIP",
+    "icon": "reorient10",
+    "type": "reorient",
     "cost": 13
   },
   {
-    "id": "item_resources_032",
-    "name": "SOLDER WICK",
-    "icon": "resource32",
-    "type": "resources",
-    "cost": 11
-  },
-  {
-    "id": "item_resources_033",
-    "name": "OSCILLATOR MODULE",
-    "icon": "resource33",
-    "type": "resources",
-    "cost": 12
-  },
-  {
-    "id": "item_resources_034",
-    "name": "EEPROM CHIP",
-    "icon": "resource34",
-    "type": "resources",
-    "cost": 13
-  },
-  {
-    "id": "item_resources_035",
-    "name": "CMOS BATTERY",
-    "icon": "resource35",
-    "type": "resources",
+    "id": "item_reorient_011",
+    "name": "SWIVEL JOINT",
+    "icon": "reorient11",
+    "type": "reorient",
     "cost": 14
   },
   {
-    "id": "item_resources_027",
-    "name": "TDP SHIM",
-    "icon": "resource27",
-    "type": "resources",
-    "cost": 12
-  },
-  {
-    "id": "item_resources_028",
-    "name": "BGA SOCKET",
-    "icon": "resource28",
-    "type": "resources",
-    "cost": 13
-  },
-  {
-    "id": "item_resources_029",
-    "name": "CPU SOCKET CAP",
-    "icon": "resource29",
-    "type": "resources",
-    "cost": 14
-  },
-  {
-    "id": "item_resources_030",
-    "name": "I/O BACKPLATE",
-    "icon": "resource30",
-    "type": "resources",
+    "id": "item_reorient_012",
+    "name": "INDEX RING",
+    "icon": "reorient12",
+    "type": "reorient",
     "cost": 15
   },
   {
-    "id": "item_resources_022",
-    "name": "NVMe ADAPTER",
-    "icon": "resource22",
-    "type": "resources",
-    "cost": 13
-  },
-  {
-    "id": "item_resources_023",
-    "name": "SAS EXPANDER",
-    "icon": "resource23",
-    "type": "resources",
-    "cost": 14
-  },
-  {
-    "id": "item_resources_024",
-    "name": "DIMM BRACKET",
-    "icon": "resource24",
-    "type": "resources",
-    "cost": 15
-  },
-  {
-    "id": "item_resources_025",
-    "name": "POWER DELIVERY IC",
-    "icon": "resource25",
-    "type": "resources",
+    "id": "item_reorient_013",
+    "name": "LOCATING PIN",
+    "icon": "reorient13",
+    "type": "reorient",
     "cost": 10
   },
   {
-    "id": "item_resources_017",
-    "name": "COPPER SLUG",
-    "icon": "resource17",
-    "type": "resources",
-    "cost": 14
-  },
-  {
-    "id": "item_resources_018",
-    "name": "FIBER PIGTAIL",
-    "icon": "resource18",
-    "type": "resources",
-    "cost": 15
-  },
-  {
-    "id": "item_resources_019",
-    "name": "CABLE SLEEVE KIT",
-    "icon": "resource19",
-    "type": "resources",
-    "cost": 10
-  },
-  {
-    "id": "item_resources_020",
-    "name": "PCI SLOT COVER",
-    "icon": "resource20",
-    "type": "resources",
+    "id": "item_reorient_014",
+    "name": "BUSHING SPACER",
+    "icon": "reorient14",
+    "type": "reorient",
     "cost": 11
   },
   {
-    "id": "item_resources_012",
-    "name": "THERMAL COMPOUND",
-    "icon": "resource12",
-    "type": "resources",
-    "cost": 15
-  },
-  {
-    "id": "item_resources_013",
-    "name": "COAX ADAPTER",
-    "icon": "resource13",
-    "type": "resources",
-    "cost": 10
-  },
-  {
-    "id": "item_resources_014",
-    "name": "SFP+ MODULE",
-    "icon": "resource14",
-    "type": "resources",
-    "cost": 11
-  },
-  {
-    "id": "item_resources_015",
-    "name": "GPU BRACE",
-    "icon": "resource15",
-    "type": "resources",
+    "id": "item_reorient_015",
+    "name": "DETENT BALL",
+    "icon": "reorient15",
+    "type": "reorient",
     "cost": 12
   },
   {
-    "id": "item_resources_007",
-    "name": "SATA III BRACKET",
-    "icon": "resource7",
-    "type": "resources",
+    "id": "item_reorient_016",
+    "name": "ANGLE ADAPTER",
+    "icon": "reorient16",
+    "type": "reorient",
+    "cost": 13
+  },
+  {
+    "id": "item_reorient_017",
+    "name": "HINGE PLATE",
+    "icon": "reorient17",
+    "type": "reorient",
+    "cost": 14
+  },
+  {
+    "id": "item_reorient_018",
+    "name": "CAM FOLLOWER",
+    "icon": "reorient18",
+    "type": "reorient",
+    "cost": 15
+  },
+  {
+    "id": "item_reorient_019",
+    "name": "LOCK COLLAR",
+    "icon": "reorient19",
+    "type": "reorient",
     "cost": 10
   },
   {
-    "id": "item_resources_008",
-    "name": "M.2 HEATSINK",
-    "icon": "resource8",
-    "type": "resources",
+    "id": "item_reorient_020",
+    "name": "KEEPER RING",
+    "icon": "reorient20",
+    "type": "reorient",
     "cost": 11
-  },
-  {
-    "id": "item_resources_009",
-    "name": "RJ45 COUPLER",
-    "icon": "resource9",
-    "type": "resources",
-    "cost": 12
-  },
-  {
-    "id": "item_resources_010",
-    "name": "USB-C SPLITTER",
-    "icon": "resource10",
-    "type": "resources",
-    "cost": 13
-  },
-  {
-    "id": "item_resources_002",
-    "name": "DE-9 CONNECTOR",
-    "icon": "resource2",
-    "type": "resources",
-    "cost": 11
-  },
-  {
-    "id": "item_resources_003",
-    "name": "CAT 7 SPOOL",
-    "icon": "resource3",
-    "type": "resources",
-    "cost": 12
-  },
-  {
-    "id": "item_resources_004",
-    "name": "SERVER RACK KEY",
-    "icon": "resource4",
-    "type": "resources",
-    "cost": 13
-  },
-  {
-    "id": "item_resources_005",
-    "name": "WIRE SCRAP",
-    "icon": "resource5",
-    "type": "resources",
-    "cost": 14
   }
 ]

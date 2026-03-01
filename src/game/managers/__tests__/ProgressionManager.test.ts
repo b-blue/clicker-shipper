@@ -4,8 +4,6 @@
 
 import {
   ProgressionManager,
-  ALL_CATEGORY_IDS,
-  CATEGORY_DISPLAY_NAMES,
 } from '../ProgressionManager';
 
 // Helper: get a fresh manager with clean localStorage for each test
@@ -17,16 +15,10 @@ function freshManager(): ProgressionManager {
 }
 
 describe('ProgressionManager — initial state', () => {
-  it('starts with Resources unlocked at depth 1', () => {
+  it('starts with action_reorient unlocked at depth 1', () => {
     const pm = freshManager();
-    expect(pm.isUnlocked('nav_resources_root')).toBe(true);
-    expect(pm.getUnlockedDepth('nav_resources_root')).toBe(1);
-  });
-
-  it('starts with all other categories locked', () => {
-    const pm = freshManager();
-    const locked = ALL_CATEGORY_IDS.filter(id => id !== 'nav_resources_root');
-    locked.forEach(id => expect(pm.isUnlocked(id)).toBe(false));
+    expect(pm.isUnlocked('action_reorient')).toBe(true);
+    expect(pm.getUnlockedDepth('action_reorient')).toBe(1);
   });
 
   it('starts with zero quanta', () => {
@@ -84,8 +76,8 @@ describe('ProgressionManager — canAfford', () => {
 });
 
 describe('ProgressionManager — cost schedule', () => {
-  it('getCostToUnlockNew returns Q25 for the first non-Resources unlock', () => {
-    const pm = freshManager(); // only Resources unlocked
+  it('getCostToUnlockNew returns Q25 for the first new unlock', () => {
+    const pm = freshManager(); // only action_reorient unlocked by default
     expect(pm.getCostToUnlockNew()).toBe(25);
   });
 
@@ -100,13 +92,13 @@ describe('ProgressionManager — cost schedule', () => {
 
   it('getCostToDeepen returns Q30 * current depth', () => {
     const pm = freshManager();
-    expect(pm.getCostToDeepen('nav_resources_root')).toBe(30); // depth 1 → Q30
+    expect(pm.getCostToDeepen('action_reorient')).toBe(30); // depth 1 → Q30
     pm.addQuanta(30);
-    pm.deepenCategory('nav_resources_root'); // depth becomes 2
-    expect(pm.getCostToDeepen('nav_resources_root')).toBe(60); // Q30 × 2
+    pm.deepenCategory('action_reorient'); // depth becomes 2
+    expect(pm.getCostToDeepen('action_reorient')).toBe(60); // Q30 × 2
   });
 
-  it('getCostToDeepen returns 0 for a locked category', () => {
+  it('getCostToDeepen returns 0 for an unlocked category', () => {
     const pm = freshManager();
     expect(pm.getCostToDeepen('nav_armaments_root')).toBe(0);
   });
@@ -135,7 +127,7 @@ describe('ProgressionManager — purchaseNewCategory', () => {
   it('returns false when category already unlocked', () => {
     const pm = freshManager();
     pm.addQuanta(100);
-    expect(pm.purchaseNewCategory('nav_resources_root')).toBe(false);
+    expect(pm.purchaseNewCategory('action_reorient')).toBe(false);
   });
 
   it('returns false when cannot afford', () => {
@@ -150,17 +142,17 @@ describe('ProgressionManager — deepenCategory', () => {
   it('increments depth by 1 and deducts quanta', () => {
     const pm = freshManager();
     pm.addQuanta(30);
-    const ok = pm.deepenCategory('nav_resources_root');
+    const ok = pm.deepenCategory('action_reorient');
     expect(ok).toBe(true);
-    expect(pm.getUnlockedDepth('nav_resources_root')).toBe(2);
+    expect(pm.getUnlockedDepth('action_reorient')).toBe(2);
     expect(pm.getQuantaBank()).toBe(0);
   });
 
   it('returns false when cannot afford', () => {
     const pm = freshManager();
     // bank is 0
-    expect(pm.deepenCategory('nav_resources_root')).toBe(false);
-    expect(pm.getUnlockedDepth('nav_resources_root')).toBe(1);
+    expect(pm.deepenCategory('action_reorient')).toBe(false);
+    expect(pm.getUnlockedDepth('action_reorient')).toBe(1);
   });
 
   it('returns false for a locked category', () => {
@@ -173,34 +165,9 @@ describe('ProgressionManager — deepenCategory', () => {
     const pm = freshManager();
     pm.addQuanta(10000);
     // Deepen to max (7)
-    for (let i = 1; i < 7; i++) pm.deepenCategory('nav_resources_root');
-    expect(pm.getUnlockedDepth('nav_resources_root')).toBe(7);
-    expect(pm.deepenCategory('nav_resources_root')).toBe(false);
-  });
-});
-
-describe('ProgressionManager — getAvailableToUnlock', () => {
-  it('returns all categories except Resources initially', () => {
-    const pm = freshManager();
-    const available = pm.getAvailableToUnlock();
-    expect(available).not.toContain('nav_resources_root');
-    expect(available.length).toBe(ALL_CATEGORY_IDS.length - 1);
-  });
-
-  it('removes purchased categories from available list', () => {
-    const pm = freshManager();
-    pm.addQuanta(100);
-    pm.purchaseNewCategory('nav_armaments_root');
-    const available = pm.getAvailableToUnlock();
-    expect(available).not.toContain('nav_armaments_root');
-  });
-
-  it('returns empty array when all categories are unlocked', () => {
-    const pm = freshManager();
-    pm.addQuanta(1000);
-    const toUnlock = ALL_CATEGORY_IDS.filter(id => id !== 'nav_resources_root');
-    for (const id of toUnlock) pm.purchaseNewCategory(id);
-    expect(pm.getAvailableToUnlock()).toHaveLength(0);
+    for (let i = 1; i < 7; i++) pm.deepenCategory('action_reorient');
+    expect(pm.getUnlockedDepth('action_reorient')).toBe(7);
+    expect(pm.deepenCategory('action_reorient')).toBe(false);
   });
 });
 
@@ -229,20 +196,6 @@ describe('ProgressionManager — persistence', () => {
     const pm2 = ProgressionManager.getInstance();
     expect(pm2.getQuantaBank()).toBe(99);
     expect(pm2.getShiftsCompleted()).toBe(1);
-  });
-});
-
-describe('ProgressionManager — CATEGORY_DISPLAY_NAMES', () => {
-  it('has entries for every ALL_CATEGORY_IDS entry', () => {
-    ALL_CATEGORY_IDS.forEach(id => {
-      expect(CATEGORY_DISPLAY_NAMES[id]).toBeDefined();
-    });
-  });
-
-  it('all names are uppercase', () => {
-    Object.values(CATEGORY_DISPLAY_NAMES).forEach(name => {
-      expect(name).toBe(name.toUpperCase());
-    });
   });
 });
 

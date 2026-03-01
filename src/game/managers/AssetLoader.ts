@@ -1,42 +1,19 @@
 import { Item, MenuItem } from '../types/GameTypes';
-
-/**
- * Named mining sprites that don't follow the `miningN` numbering pattern.
- * These live in the mining atlas and need to be routed there.
- */
-const MINING_NAMED = new Set([
-  'cthonic-bore',
-  'handheld-cthonic-bore',
-  'ice-core-augur',
-  'jackhammer',
-  'pickaxe',
-  'pickaxe-broken',
-  'shovel',
-]);
+import { ITEM_ATLASES } from '../generated/SpritesManifest';
 
 export class AssetLoader {
   // ── Atlas loading ─────────────────────────────────────────────────────────
 
   /**
    * Returns the atlas key for a given icon key, or `null` if the icon is not
-   * part of any atlas (e.g. rootDialIcon or other one-off images).
+   * part of any atlas (e.g. standalone PNGs for action items).
    *
-   * Convention mirrors the folder layout under public/assets/:
-   *   arm*          → atlas-armaments
-   *   melee*        → atlas-melee
-   *   mining* / named mining icons → atlas-mining
-   *   radioactive* / Iconset10     → atlas-radioactive
-   *   resource*     → atlas-resources
-   *   streetwear*   → atlas-streetwear
-   *   skill-* / Skillicon14_* / frame / hash-sign → atlas-nav
+   * Only the nav atlas survives — skill-* icons, Skillicon14_* dial frames,
+   * the generic `frame` key, and `hash-sign` all live in atlas-nav.
+   * Action-item icons (e.g. reorient1–20) are loaded as individual images
+   * and return null here.
    */
   static getAtlasKey(iconKey: string): string | null {
-    if (iconKey.startsWith('arm'))                                           return 'atlas-armaments';
-    if (iconKey.startsWith('melee'))                                         return 'atlas-melee';
-    if (iconKey.startsWith('mining') || MINING_NAMED.has(iconKey))          return 'atlas-mining';
-    if (iconKey.startsWith('radioactive') || iconKey === 'Iconset10')       return 'atlas-radioactive';
-    if (iconKey.startsWith('resource'))                                      return 'atlas-resources';
-    if (iconKey.startsWith('streetwear'))                                    return 'atlas-streetwear';
     if (
       iconKey.startsWith('skill-') ||
       iconKey.startsWith('Skillicon14_') ||
@@ -51,8 +28,7 @@ export class AssetLoader {
    * Call inside a Phaser scene's preload() or before load.start() in create().
    */
   static preloadAtlases(scene: Phaser.Scene): void {
-    const atlasNames = ['armaments', 'melee', 'mining', 'radioactive', 'resources', 'streetwear', 'nav'];
-    for (const name of atlasNames) {
+    for (const name of ITEM_ATLASES) {
       scene.load.atlas(`atlas-${name}`, `assets/atlases/${name}.png`, `assets/atlases/${name}.json`);
     }
   }

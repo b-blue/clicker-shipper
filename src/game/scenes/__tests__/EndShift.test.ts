@@ -7,25 +7,15 @@ jest.mock('../../managers/ProgressionManager', () => ({
       getShiftsCompleted: jest.fn(() => 3),
       getQuantaBank: jest.fn(() => 150),
       getUnlockedCategories: jest.fn(() => [
-        { categoryId: 'nav_resources_root', depth: 1 },
+        { categoryId: 'action_reorient', depth: 1 },
       ]),
       canDeepen: jest.fn(() => true),
       getCostToDeepen: jest.fn(() => 30),
       canAfford: jest.fn(() => true),
-      getCostToUnlockNew: jest.fn(() => 25),
-      getAvailableToUnlock: jest.fn(() => ['nav_armaments_root']),
       deepenCategory: jest.fn(),
       purchaseNewCategory: jest.fn(),
     })),
   },
-  CATEGORY_DISPLAY_NAMES: {
-    'nav_resources_root': 'RESOURCES',
-    'nav_armaments_root': 'ARMAMENTS',
-  },
-  ALL_CATEGORY_IDS: [
-    'nav_resources_root',
-    'nav_armaments_root',
-  ],
 }));
 
 function makeMockScene() {

@@ -14,6 +14,7 @@
 jest.mock('phaser', () => ({}));
 
 import { DroneStage } from '../DroneStage';
+import { IDLE_KEYS } from '../../generated/SpritesManifest';
 
 // ── Scene factory ──────────────────────────────────────────────────────────
 
@@ -270,5 +271,41 @@ describe('DroneStage.destroy', () => {
     const { scene } = makeScene();
     const stage = new DroneStage(scene as any);
     expect(() => stage.destroy()).not.toThrow();
+  });
+});
+
+// ── Generated IDLE_KEYS (SpritesManifest) ─────────────────────────────────
+
+describe('SpritesManifest IDLE_KEYS', () => {
+  it('contains drone-16-idle and drone-17-idle', () => {
+    expect(IDLE_KEYS).toContain('drone-16-idle');
+    expect(IDLE_KEYS).toContain('drone-17-idle');
+  });
+
+  it('contains robot-11-idle', () => {
+    expect(IDLE_KEYS).toContain('robot-11-idle');
+  });
+
+  it('does NOT contain drone-6-idle (drone-6 has no Idle animation)', () => {
+    expect(IDLE_KEYS).not.toContain('drone-6-idle');
+  });
+
+  it('has 27 entries (17 drones minus 1 without Idle, plus 11 robots)', () => {
+    expect(IDLE_KEYS).toHaveLength(27);
+  });
+
+  it('all entries follow the {prefix}-{n}-idle naming convention', () => {
+    for (const key of IDLE_KEYS) {
+      expect(key).toMatch(/^(drone|robot)-\d+-idle$/);
+    }
+  });
+
+  it('DroneStage.pickKey always returns a key from IDLE_KEYS', () => {
+    const { scene } = makeScene();
+    const stage = new DroneStage(scene as any);
+    for (let i = 0; i < 20; i++) {
+      stage.pickKey();
+      expect(IDLE_KEYS).toContain(stage.getCurrentKey());
+    }
   });
 });

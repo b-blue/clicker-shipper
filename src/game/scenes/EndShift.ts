@@ -1,9 +1,6 @@
 import { Colors } from '../constants/Colors';
 import { labelStyle, readoutStyle } from '../constants/FontStyle';
-import {
-  ProgressionManager,
-  CATEGORY_DISPLAY_NAMES,
-} from '../managers/ProgressionManager';
+import { ProgressionManager } from '../managers/ProgressionManager';
 
 interface EndShiftData {
   revenue?: number;
@@ -190,7 +187,7 @@ export class EndShift extends Phaser.Scene {
     }
 
     for (const cat of unlocked) {
-      const name = CATEGORY_DISPLAY_NAMES[cat.categoryId] ?? cat.categoryId;
+      const name = cat.categoryId.replace(/^action_/, '').toUpperCase();
       const atMax = !progression.canDeepen(cat.categoryId);
       const cost = progression.getCostToDeepen(cat.categoryId);
       const canAfford = !atMax && progression.canAfford(cost);
@@ -203,31 +200,6 @@ export class EndShift extends Phaser.Scene {
         this.quantaBankText?.setText(`Q${progression.getQuantaBank()}`);
         this.buildUpgradesPanel(W, cx);
       });
-    }
-
-    // ── Unlock new category rows ──────────────────────────────────────────────
-    const available = progression.getAvailableToUnlock();
-
-    if (available.length > 0) {
-      const secY = rowIndex * (rowH + rowGap) + rowH / 2;
-      const secLbl = this.add.text(cx, secY, 'UNLOCK NEW', labelStyle(10, Colors.TEXT_MUTED_BLUE))
-        .setOrigin(0.5);
-      rows.push(secLbl);
-      rowIndex++;
-    }
-
-    if (available.length > 0) {
-      const cost = progression.getCostToUnlockNew();
-      const canAfford = progression.canAfford(cost);
-      for (const catId of available) {
-        const name = CATEGORY_DISPLAY_NAMES[catId] ?? catId;
-        const label = `UNLOCK ${name}`;
-        addRow(label, `Q${cost}`, canAfford, false, () => {
-          progression.purchaseNewCategory(catId);
-          this.quantaBankText?.setText(`Q${progression.getQuantaBank()}`);
-          this.buildUpgradesPanel(W, cx);
-        });
-      }
     }
 
     // Nothing to show

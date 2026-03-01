@@ -66,7 +66,13 @@ export function getShippableItems(items: any[]): MenuItem[] {
   };
 
   normalized.forEach(rootItem => {
-    if (!rootItem.children) return;
+    // Flat leaf item (no children, has cost) — include directly.
+    // This handles mode-specific flat item pools (e.g. reorient/items.json)
+    // that are not wrapped in a nav-tree hierarchy.
+    if (!rootItem.children) {
+      if (rootItem.cost !== undefined) shippable.push(rootItem);
+      return;
+    }
 
     // Skip locked progression categories.
     const isProgressionCategory = rootItem.id.startsWith('nav_') && rootItem.id.endsWith('_root');

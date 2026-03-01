@@ -1,19 +1,11 @@
 import Phaser from 'phaser';
+import { IDLE_KEYS } from '../generated/SpritesManifest';
 
 
 type Bounds = { cx: number; cy: number; w: number; h: number };
 
-const IDLE_KEYS = [
-  // Drones 1-17 (drone-6 has no Idle)
-  'drone-1-idle',  'drone-2-idle',  'drone-3-idle',  'drone-4-idle',
-  'drone-5-idle',  'drone-7-idle',  'drone-8-idle',  'drone-9-idle',
-  'drone-10-idle', 'drone-11-idle', 'drone-12-idle', 'drone-13-idle',
-  'drone-14-idle', 'drone-15-idle', 'drone-16-idle', 'drone-17-idle',
-  // Robots 1-11
-  'robot-1-idle',  'robot-2-idle',  'robot-3-idle',  'robot-4-idle',
-  'robot-5-idle',  'robot-6-idle',  'robot-7-idle',  'robot-8-idle',
-  'robot-9-idle',  'robot-10-idle', 'robot-11-idle',
-];
+// IDLE_KEYS is generated from the filesystem — see scripts/generate_manifests.js
+export { IDLE_KEYS };
 
 /**
  * Manages spawning and exiting the drone sprite in the top half of the Repair panel.

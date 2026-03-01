@@ -765,3 +765,47 @@ describe('getCatalogRows — progression filtering', () => {
     expect(alphaItems.map(i => i.id)).toEqual(['item_a1', 'item_a2', 'item_a3', 'item_a4']);
   });
 });
+
+// ─── Flat leaf items (mode-specific flat pools e.g. reorient/items.json) ─────
+
+describe('getShippableItems — flat leaf MenuItem arrays', () => {
+  /** Simulates the 40-item flat array from reorient/items.json. */
+  function makeFlatItems(): MenuItem[] {
+    return [
+      { id: 'item_resources_001', name: 'FFC STRIP',   icon: 'resource1',  cost: 10 },
+      { id: 'item_resources_006', name: 'PCIe RISER',  icon: 'resource6',  cost: 15 },
+      { id: 'item_resources_011', name: 'DDR5 MODULE', icon: 'resource11', cost: 14 },
+    ];
+  }
+
+  it('returns flat items that have a cost', () => {
+    const result = getShippableItems(makeFlatItems());
+    expect(result).toHaveLength(3);
+    expect(result.map(i => i.id)).toEqual([
+      'item_resources_001',
+      'item_resources_006',
+      'item_resources_011',
+    ]);
+  });
+
+  it('excludes flat items that have no cost', () => {
+    const items: MenuItem[] = [
+      { id: 'meta_node', name: 'Meta', icon: 'skill-chip' },          // no cost
+      { id: 'real_item', name: 'Real', icon: 'resource1', cost: 10 },
+    ];
+    const result = getShippableItems(items);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('real_item');
+  });
+
+  it('generateOrder picks from flat items and builds a valid order', () => {
+    const items = makeFlatItems();
+    const order = generateOrder(items, () => 0.5, () => 2);
+    expect(order.requirements.length).toBeGreaterThan(0);
+    const validIds = items.map(i => i.id);
+    for (const req of order.requirements) {
+      expect(validIds).toContain(req.itemId);
+    }
+    expect(order.budget).toBeGreaterThan(0);
+  });
+});

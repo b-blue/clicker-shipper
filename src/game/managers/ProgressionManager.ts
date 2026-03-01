@@ -3,41 +3,11 @@ import { POWERUP_CATALOG, PowerupEntry } from '../constants/Powerups';
 
 const STORAGE_KEY = 'clicker-shipper-progression';
 
-// All 6 possible A-level categories. Resources is always slot 0 (first unlocked by default).
-export const ALL_CATEGORY_IDS: string[] = [
-  'nav_resources_root',
-  'nav_armaments_root',
-  'nav_melee_root',
-  'nav_radioactive_root',
-  'nav_mining_root',
-  'nav_streetwear_root',
-];
-
-// Human-readable display names (uppercase for bitmap font)
-export const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
-  'nav_resources_root':   'RESOURCES',
-  'nav_armaments_root':   'ARMAMENTS',
-  'nav_melee_root':       'MELEE',
-  'nav_radioactive_root': 'RADIOACTIVE',
-  'nav_mining_root':      'MINING',
-  'nav_streetwear_root':  'STREETWEAR',
-};
-
-// Texture keys for the A-level category icons (matches items.json root node icon fields)
-export const CATEGORY_ICON_KEYS: Record<string, string> = {
-  'nav_resources_root':   'skill-chip',
-  'nav_armaments_root':   'skill-ranged',
-  'nav_melee_root':       'skill-melee',
-  'nav_radioactive_root': 'skill-radioactive',
-  'nav_mining_root':      'skill-drill',
-  'nav_streetwear_root':  'skill-character',
-};
-
-// Maximum depth accessible per category (items.json has 7 nav_down levels per category)
+// Maximum depth accessible per action folder (nav tree depth).
 const MAX_UNLOCK_DEPTH = 7;
 
 const DEFAULT_STATE: ProgressionState = {
-  unlockedCategories: [{ categoryId: 'nav_resources_root', depth: 1 }],
+  unlockedCategories: [{ categoryId: 'action_reorient', depth: 1 }],
   quantaBank: 0,
   shiftsCompleted: 0,
   purchasedPowerups: [],
@@ -118,12 +88,6 @@ export class ProgressionManager {
 
   getShiftsCompleted(): number {
     return this.state.shiftsCompleted;
-  }
-
-  /** Category IDs from ALL_CATEGORY_IDS not yet present in unlockedCategories. */
-  getAvailableToUnlock(): string[] {
-    const unlockedIds = new Set(this.state.unlockedCategories.map(c => c.categoryId));
-    return ALL_CATEGORY_IDS.filter(id => !unlockedIds.has(id));
   }
 
   canAfford(cost: number): boolean {

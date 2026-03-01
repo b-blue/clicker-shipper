@@ -57,8 +57,10 @@ export function isMenuItemFormat(items: any[]): items is MenuItem[] {
   if (!items || items.length === 0) return true; // Empty is valid for both
 
   const firstItem = items[0];
-  // Check for 'children' property and lack of 'subItems'
-  return 'children' in firstItem && !('subItems' in firstItem);
+  // Legacy Item format is identified by the presence of 'subItems'.
+  // Flat leaf MenuItems have neither 'children' nor 'subItems', and navTree
+  // MenuItems have 'children' but no 'subItems' — both are already MenuItem format.
+  return !('subItems' in firstItem);
 }
 
 /**

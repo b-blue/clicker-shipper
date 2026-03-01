@@ -1,0 +1,22 @@
+{
+  "reorient1":  { "name": "MOUNTING BRACKET", "cost": 10 },
+  "reorient2":  { "name": "CABLE GUIDE",       "cost": 11 },
+  "reorient3":  { "name": "HEATSINK FIN",      "cost": 12 },
+  "reorient4":  { "name": "LATCH ASSEMBLY",    "cost": 13 },
+  "reorient5":  { "name": "PIVOT BLOCK",       "cost": 14 },
+  "reorient6":  { "name": "RAIL CLAMP",        "cost": 15 },
+  "reorient7":  { "name": "SLOT PLATE",        "cost": 10 },
+  "reorient8":  { "name": "RATCHET LEVER",     "cost": 11 },
+  "reorient9":  { "name": "ALIGNMENT KEY",     "cost": 12 },
+  "reorient10": { "name": "TENSION CLIP",      "cost": 13 },
+  "reorient11": { "name": "SWIVEL JOINT",      "cost": 14 },
+  "reorient12": { "name": "INDEX RING",        "cost": 15 },
+  "reorient13": { "name": "LOCATING PIN",      "cost": 10 },
+  "reorient14": { "name": "BUSHING SPACER",    "cost": 11 },
+  "reorient15": { "name": "DETENT BALL",       "cost": 12 },
+  "reorient16": { "name": "ANGLE ADAPTER",     "cost": 13 },
+  "reorient17": { "name": "HINGE PLATE",       "cost": 14 },
+  "reorient18": { "name": "CAM FOLLOWER",      "cost": 15 },
+  "reorient19": { "name": "LOCK COLLAR",       "cost": 10 },
+  "reorient20": { "name": "KEEPER RING",       "cost": 11 }
+}

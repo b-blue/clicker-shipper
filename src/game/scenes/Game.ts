@@ -2,7 +2,7 @@ import { RadialDial } from "../ui/RadialDial";
 import { DialCornerHUD } from "../ui/DialCornerHUD";
 import { GameManager } from "../managers/GameManager";
 import { SettingsManager } from "../managers/SettingsManager";
-import { ProgressionManager, ALL_CATEGORY_IDS } from "../managers/ProgressionManager";
+import { ProgressionManager } from "../managers/ProgressionManager";
 import { AssetLoader } from "../managers/AssetLoader";
 import { Colors } from "../constants/Colors";
 import { labelStyle, readoutStyle } from "../constants/FontStyle";
@@ -72,7 +72,8 @@ export class Game extends Phaser.Scene {
       // buildArrangement() both reference the same key on the first cycle.
       this.droneStage.pickKey();
 
-      this.buildPanelUI(gw, gh, dialY, dialR, GameManager.getInstance().getItems());
+      const reorientItems = GameManager.getInstance().getModeStore('action_reorient')?.flat ?? [];
+      this.buildPanelUI(gw, gh, dialY, dialR, reorientItems);
       this.populateRepairPools();
       this.buildDial(dialX, dialY, dialR);
       this.wireDialEvents();
@@ -200,14 +201,8 @@ export class Game extends Phaser.Scene {
         return { id: a.id, name: a.name, icon: a.icon, layers: a.layers, children: store?.navTree ?? [] } as MenuItem;
       });
     } else {
-      const p    = ProgressionManager.getInstance();
-      const cats = p.getUnlockedCategories();
-      roots = cats.map(({ categoryId }) => {
-        const store = gm.getModeStore(categoryId);
-        return store ? { id: categoryId, name: categoryId, icon: categoryId, children: store.navTree } as MenuItem : undefined;
-      }).filter(Boolean) as MenuItem[];
-      const needed = ALL_CATEGORY_IDS.length - roots.length;
-      for (let i = 0; i < needed; i++) roots.push({ id: `locked_slot_${i}`, name: 'LOCKED', icon: 'skill-blocked' });
+      // rad-dial.json absent — shouldn't happen in production; fall back gracefully.
+      roots = [];
     }
 
     this.radialDial = new RadialDial(this, dialX, dialY, roots);
@@ -219,7 +214,10 @@ export class Game extends Phaser.Scene {
       openMenu:     () => this.scene.start("MainMenu"),
       onReplaceRequested: () => {
         this.activeAction = 'action_replace';
-        const catalog = GameManager.getInstance().getGlobalItemCatalog();
+        // Use the reorient item pool as the replacement catalog — only items
+        // that can fail during reorient are eligible for replacement delivery.
+        const store   = GameManager.getInstance().getModeStore('action_reorient');
+        const catalog = store?.navTree ?? [];
         this.radialDial?.showReplaceCatalog(catalog);
         this.cornerHUD?.onLevelChanged(1, { id: 'action_replace', icon: 'skill-recycle' });
       },
@@ -234,19 +232,8 @@ export class Game extends Phaser.Scene {
   }
 
   private populateRepairPools(): void {
-    const cfg = this.cache.json.get('rad-dial') as RadDialConfig | undefined;
     const gm  = GameManager.getInstance();
-    let pool: any[] = [];
-
-    if (cfg) {
-      const ra = cfg.actions.find(a => a.id === 'action_reorient');
-      if (ra) {
-        pool = gm.getModeStore('action_reorient')?.flat ?? [];
-      }
-    }
-    if (pool.length === 0) {
-      pool = gm.getModeStore('action_reorient')?.flat ?? [];
-    }
+    const pool = gm.getModeStore('action_reorient')?.flat ?? [];
     this.repairPool = pool;
 
     // Create the initial RepairSession now that we have a pool and a pre-picked drone key.
@@ -275,22 +262,24 @@ export class Game extends Phaser.Scene {
      "repair:showDial","repair:noMatch","repair:itemSolved","repair:allSolved"].forEach(e => this.events.removeAllListeners(e));
 
     this.events.on("dial:itemConfirmed", (data: { item: any; sliceCenterAngle?: number }) => {
-      const depth = this.radialDial?.getDepth() ?? 0;
-      if (this.activeAction === 'action_reorient' || depth >= 1) {
-        // Replace-catalog path: selecting an item opens the quantity terminal
-        if (this.activeAction === 'action_replace') {
-          this.activeReplaceItem = data.item.icon || data.item.id;
-          // Fixed 5-o'clock position (π/3 = 60° from x-axis) — never varies by item.
-          this.radialDial?.showTerminalDial(data.item, 0, Math.PI / 3);
-          this.cornerHUD?.onItemConfirmed();
-          return;
-        }
+      // Route by active action — no depth check needed.  Navigable (drill-down)
+      // nodes always emit 'drillDown' from StandardNavFace, never 'itemConfirmed'.
+      if (this.activeAction === 'action_reorient') {
         this.repairSession?.task.onItemSelected(data.item);
         return;
       }
-      const iconKey      = data.item.icon || data.item.id;
-      const qty          = this.orderSlots.find(s => s.iconKey === iconKey)?.placedQty ?? 0;
-      const sliceAngle   = data.sliceCenterAngle ?? Math.PI / 2;
+      if (this.activeAction === 'action_replace') {
+        // Replace-catalog path: selected item opens speed-tier terminal.
+        // Fixed 5-o'clock position (π/3 = 60° from x-axis) — never varies by item.
+        this.activeReplaceItem = data.item.icon || data.item.id;
+        this.radialDial?.showTerminalDial(data.item, 0, Math.PI / 3);
+        this.cornerHUD?.onItemConfirmed();
+        return;
+      }
+      // Delivery path: show quantity terminal at the item's slice clock position.
+      const iconKey    = data.item.icon || data.item.id;
+      const qty        = this.orderSlots.find(s => s.iconKey === iconKey)?.placedQty ?? 0;
+      const sliceAngle = data.sliceCenterAngle ?? Math.PI / 2;
       this.radialDial?.showTerminalDial(data.item, qty, sliceAngle);
       this.cornerHUD?.onItemConfirmed();
     });
@@ -335,15 +324,11 @@ export class Game extends Phaser.Scene {
     });
 
     this.events.on("repair:noMatch", () => {
-      // Capture depth before reset so the CornerHUD badge can be unwound to
-      // root. No terminal face is active for noMatch (repair:showDial was never
-      // emitted), so each onGoBack call decrements HUD depth by 1.
-      const depth = this.radialDial?.getDepth() ?? 0;
-      this.radialDial?.reset();
-      for (let i = 0; i < depth; i++) {
-        this.cornerHUD?.onGoBack();
-      }
-      this.activeAction = null;
+      // The tapped item is not an active repair target (already solved, needs
+      // replacement, or simply isn't in the current repair set).  Stay at the
+      // current nav position so the player can keep browsing without losing
+      // their place in the paginated item list.
+      this.repairSession?.task.clearCurrent();
     });
 
     this.events.on("repair:itemSolved", () => {

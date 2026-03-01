@@ -400,3 +400,92 @@ describe('Preloader.preload — progress bar (step E)', () => {
     expect(cb).toBeUndefined();
   });
 });
+
+// ── Generated manifest: drone / robot loading ─────────────────────────────
+
+describe('Preloader.preload — DRONE_FILE_MANIFEST (generated)', () => {
+  beforeAll(globalSetup);
+  afterEach(() => {
+    document.getElementById('loading-bar-fill')?.remove();
+    jest.resetModules();
+  });
+
+  it('loads drone-16-idle, drone-17-idle, and robot-11-idle via load.image', async () => {
+    const { Preloader } = await import('../Preloader');
+    const { scene } = buildScene();
+    const instance = Object.assign(new Preloader(), scene);
+    instance.preload();
+    const imageCalls: string[] = (scene.load.image as jest.Mock).mock.calls.map((c: any[]) => c[0]);
+    expect(imageCalls).toContain('drone-16-idle');
+    expect(imageCalls).toContain('drone-17-idle');
+    expect(imageCalls).toContain('robot-11-idle');
+  });
+
+  it('does not load drone-6-idle (drone-6 has no Idle animation)', async () => {
+    const { Preloader } = await import('../Preloader');
+    const { scene } = buildScene();
+    const instance = Object.assign(new Preloader(), scene);
+    instance.preload();
+    const imageCalls: string[] = (scene.load.image as jest.Mock).mock.calls.map((c: any[]) => c[0]);
+    expect(imageCalls).not.toContain('drone-6-idle');
+  });
+
+  it('calls AssetLoader.preloadAtlases exactly once', async () => {
+    const { Preloader } = await import('../Preloader');
+    const { AssetLoader } = await import('../../managers/AssetLoader');
+    const { scene } = buildScene();
+    const instance = Object.assign(new Preloader(), scene);
+    instance.preload();
+    expect(AssetLoader.preloadAtlases).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ── Generated manifest: explosion spritesheets ────────────────────────────
+
+describe('Preloader.preload — EXPLOSION_MANIFEST (generated)', () => {
+  beforeAll(globalSetup);
+  afterEach(() => {
+    document.getElementById('loading-bar-fill')?.remove();
+    jest.resetModules();
+  });
+
+  it('loads all 12 explosion spritesheets via load.spritesheet', async () => {
+    const { Preloader } = await import('../Preloader');
+    const { scene } = buildScene();
+    const instance = Object.assign(new Preloader(), scene);
+    instance.preload();
+    const sheetKeys: string[] = (scene.load.spritesheet as jest.Mock).mock.calls.map((c: any[]) => c[0]);
+    for (const tier of ['tiny', 'low', 'mid', 'high']) {
+      for (let n = 1; n <= 3; n++) {
+        expect(sheetKeys).toContain(`explosion-${tier}-${n}`);
+      }
+    }
+  });
+
+  it('passes matching frameWidth and frameHeight (square frames) for every explosion key', async () => {
+    const { Preloader } = await import('../Preloader');
+    const { scene } = buildScene();
+    const instance = Object.assign(new Preloader(), scene);
+    instance.preload();
+    const sheetCalls: any[][] = (scene.load.spritesheet as jest.Mock).mock.calls;
+    for (const [key, , cfg] of sheetCalls) {
+      if ((key as string).startsWith('explosion-')) {
+        expect(cfg.frameWidth).toBe(cfg.frameHeight);
+        expect(cfg.frameWidth).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('loads explosion-tiny variants before explosion-high variants', async () => {
+    const { Preloader } = await import('../Preloader');
+    const { scene } = buildScene();
+    const instance = Object.assign(new Preloader(), scene);
+    instance.preload();
+    const keys: string[] = (scene.load.spritesheet as jest.Mock).mock.calls
+      .map((c: any[]) => c[0] as string)
+      .filter(k => k.startsWith('explosion-'));
+    const tinyIdx = keys.findIndex(k => k.startsWith('explosion-tiny'));
+    const highIdx = keys.findIndex(k => k.startsWith('explosion-high'));
+    expect(tinyIdx).toBeLessThan(highIdx);
+  });
+});

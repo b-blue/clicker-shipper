@@ -4,39 +4,6 @@ describe('AssetLoader', () => {
   // ── getAtlasKey ───────────────────────────────────────────────────────────
 
   describe('getAtlasKey', () => {
-    it('routes arm* icons to atlas-armaments', () => {
-      expect(AssetLoader.getAtlasKey('arm1')).toBe('atlas-armaments');
-      expect(AssetLoader.getAtlasKey('arm40')).toBe('atlas-armaments');
-    });
-
-    it('routes melee* icons to atlas-melee', () => {
-      expect(AssetLoader.getAtlasKey('melee1')).toBe('atlas-melee');
-    });
-
-    it('routes mining* and named mining icons to atlas-mining', () => {
-      expect(AssetLoader.getAtlasKey('mining1')).toBe('atlas-mining');
-      expect(AssetLoader.getAtlasKey('pickaxe')).toBe('atlas-mining');
-      expect(AssetLoader.getAtlasKey('pickaxe-broken')).toBe('atlas-mining');
-      expect(AssetLoader.getAtlasKey('shovel')).toBe('atlas-mining');
-      expect(AssetLoader.getAtlasKey('jackhammer')).toBe('atlas-mining');
-      expect(AssetLoader.getAtlasKey('cthonic-bore')).toBe('atlas-mining');
-      expect(AssetLoader.getAtlasKey('handheld-cthonic-bore')).toBe('atlas-mining');
-      expect(AssetLoader.getAtlasKey('ice-core-augur')).toBe('atlas-mining');
-    });
-
-    it('routes radioactive* and Iconset10 to atlas-radioactive', () => {
-      expect(AssetLoader.getAtlasKey('radioactive1')).toBe('atlas-radioactive');
-      expect(AssetLoader.getAtlasKey('Iconset10')).toBe('atlas-radioactive');
-    });
-
-    it('routes resource* icons to atlas-resources', () => {
-      expect(AssetLoader.getAtlasKey('resource1')).toBe('atlas-resources');
-    });
-
-    it('routes streetwear* icons to atlas-streetwear', () => {
-      expect(AssetLoader.getAtlasKey('streetwear1')).toBe('atlas-streetwear');
-    });
-
     it('routes skill-*, Skillicon14_*, frame, and hash-sign to atlas-nav', () => {
       expect(AssetLoader.getAtlasKey('skill-diagram')).toBe('atlas-nav');
       expect(AssetLoader.getAtlasKey('skill-down')).toBe('atlas-nav');
@@ -45,7 +12,8 @@ describe('AssetLoader', () => {
       expect(AssetLoader.getAtlasKey('hash-sign')).toBe('atlas-nav');
     });
 
-    it('returns null for unknown / one-off icon keys', () => {
+    it('returns null for action-item icons and other standalone keys', () => {
+      expect(AssetLoader.getAtlasKey('reorient1')).toBeNull();
       expect(AssetLoader.getAtlasKey('rootDialIcon')).toBeNull();
       expect(AssetLoader.getAtlasKey('')).toBeNull();
     });
@@ -54,23 +22,17 @@ describe('AssetLoader', () => {
   // ── preloadAtlases ────────────────────────────────────────────────────────
 
   describe('preloadAtlases', () => {
-    it('calls scene.load.atlas for each of the 7 atlas groups', () => {
+    it('calls scene.load.atlas for the 1 nav atlas group', () => {
       const mockScene: any = { load: { atlas: jest.fn() } };
       AssetLoader.preloadAtlases(mockScene);
-      expect(mockScene.load.atlas).toHaveBeenCalledTimes(7);
+      expect(mockScene.load.atlas).toHaveBeenCalledTimes(1);
     });
 
-    it('passes correct keys and paths for each atlas', () => {
+    it('passes correct key and paths for the nav atlas', () => {
       const mockScene: any = { load: { atlas: jest.fn() } };
       AssetLoader.preloadAtlases(mockScene);
       const calls: [string, string, string][] = mockScene.load.atlas.mock.calls;
       const keys = calls.map(c => c[0]);
-      expect(keys).toContain('atlas-armaments');
-      expect(keys).toContain('atlas-melee');
-      expect(keys).toContain('atlas-mining');
-      expect(keys).toContain('atlas-radioactive');
-      expect(keys).toContain('atlas-resources');
-      expect(keys).toContain('atlas-streetwear');
       expect(keys).toContain('atlas-nav');
       // PNG and JSON paths are correctly paired
       calls.forEach(([key, png, json]) => {
@@ -94,15 +56,15 @@ describe('AssetLoader', () => {
     }
 
     it('returns true when the atlas is loaded and the frame exists', () => {
-      expect(AssetLoader.textureExists(makeScene(true, true), 'arm1')).toBe(true);
+      expect(AssetLoader.textureExists(makeScene(true, true), 'skill-diagram')).toBe(true);
     });
 
     it('returns false when the atlas is not yet loaded', () => {
-      expect(AssetLoader.textureExists(makeScene(false, false), 'arm1')).toBe(false);
+      expect(AssetLoader.textureExists(makeScene(false, false), 'skill-diagram')).toBe(false);
     });
 
     it('returns false when the atlas is loaded but frame is absent', () => {
-      expect(AssetLoader.textureExists(makeScene(true, false), 'arm1')).toBe(false);
+      expect(AssetLoader.textureExists(makeScene(true, false), 'skill-diagram')).toBe(false);
     });
 
     it('falls through to scene.textures.exists for non-atlas icons', () => {
@@ -123,8 +85,8 @@ describe('AssetLoader', () => {
 
     it('passes atlas key + frame name for atlas sprites', () => {
       const scene = makeScene();
-      AssetLoader.createImage(scene, 10, 20, 'arm1');
-      expect(scene.add.image).toHaveBeenCalledWith(10, 20, 'atlas-armaments', 'arm1');
+      AssetLoader.createImage(scene, 10, 20, 'skill-diagram');
+      expect(scene.add.image).toHaveBeenCalledWith(10, 20, 'atlas-nav', 'skill-diagram');
     });
 
     it('uses icon key directly for non-atlas sprites', () => {

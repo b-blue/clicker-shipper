@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
 import {
   ProgressionManager,
-  ALL_CATEGORY_IDS,
-  CATEGORY_ICON_KEYS,
 } from '../../managers/ProgressionManager';
+import { GameManager } from '../../managers/GameManager';
+import { RadDialConfig } from '../../types/RadDialTypes';
 import { AssetLoader } from '../../managers/AssetLoader';
 import { Colors } from '../../constants/Colors';
 import { labelStyle, readoutStyle } from '../../constants/FontStyle';
@@ -56,8 +56,19 @@ export class CatalogPanel {
     const progression = ProgressionManager.getInstance();
 
     this.panelWidth = width;
-    this.tabScrollOffsets   = ALL_CATEGORY_IDS.map(() => 0);
-    this.tabMinOffsets      = ALL_CATEGORY_IDS.map(() => 0);
+
+    // Build action list from the rad-dial config — this is the source of truth
+    // for what tabs to show.  Fallback to whatever GameManager has loaded if the
+    // cache isn't hot yet (shouldn't happen in normal flow).
+    const radDial = (this.scene as any)?.cache?.json?.get?.('rad-dial') as RadDialConfig | null;
+    const actionIds: string[] = radDial
+      ? radDial.actions.map((a) => a.id)
+      : GameManager.getInstance().getAllModeStores().map((s) => s.actionId);
+    const actionIconMap: Record<string, string> = {};
+    if (radDial) radDial.actions.forEach((a) => { actionIconMap[a.id] = a.icon; });
+
+    this.tabScrollOffsets   = actionIds.map(() => 0);
+    this.tabMinOffsets      = actionIds.map(() => 0);
     this.tabContainers      = [];
     this.activeTabIndex     = 0;
 
@@ -72,7 +83,7 @@ export class CatalogPanel {
     const allCatalogCategories = getCatalogRows(items);
     const catMap = new Map(allCatalogCategories.map((c: any) => [c.category.id, c]));
 
-    ALL_CATEGORY_IDS.forEach((catId: string, tabIndex: number) => {
+    actionIds.forEach((catId: string, tabIndex: number) => {
       const isUnlocked = progression.isUnlocked(catId);
       const catData    = catMap.get(catId);
 
@@ -145,7 +156,7 @@ export class CatalogPanel {
         const badgeR    = badgeSize / 2;
         const badgeX    = width - badgeR - 10;
         const badgeY    = rowY;
-        const catIconKey = CATEGORY_ICON_KEYS[catId] ?? 'skill-diagram';
+        const catIconKey = actionIconMap[catId] ?? 'skill-diagram';
         const badgeG = this.scene.add.graphics();
         badgeG.fillStyle(Colors.PANEL_MEDIUM, 1);
         badgeG.fillCircle(badgeX, badgeY, badgeR);
@@ -171,7 +182,7 @@ export class CatalogPanel {
     });
 
     // ── Tab icon bar ─────────────────────────────────────────────────────
-    const tabCount     = ALL_CATEGORY_IDS.length;
+    const tabCount     = actionIds.length;
     const tabIconSize  = 32;
     const tabBarPad    = 4;
     const totalTabW    = tabCount * tabIconSize + (tabCount - 1) * tabBarPad;
@@ -223,9 +234,9 @@ export class CatalogPanel {
       this.activeTabIndex = targetIndex;
       (redrawHl ?? redrawTabHighlight)(targetIndex);
     };
-    ALL_CATEGORY_IDS.forEach((catId: string, tabIndex: number) => {
+    actionIds.forEach((catId: string, tabIndex: number) => {
       const isUnlocked = progression.isUnlocked(catId);
-      const iconKey    = CATEGORY_ICON_KEYS[catId] ?? 'skill-blocked';
+      const iconKey    = actionIconMap[catId] ?? 'skill-blocked';
       const tx         = tabBarStartX + tabIndex * (tabIconSize + tabBarPad) + tabIconSize / 2;
 
       const tabBg = this.scene.add.rectangle(tx, tabBarCenterY, tabIconSize, tabIconSize, Colors.PANEL_MEDIUM, 0.7);
@@ -273,10 +284,10 @@ export class CatalogPanel {
         const direction = dx < 0 ? 1 : -1;
         const cur = this.activeTabIndex;
         let next = cur + direction;
-        while (next >= 0 && next < ALL_CATEGORY_IDS.length && !progression.isUnlocked(ALL_CATEGORY_IDS[next])) {
+        while (next >= 0 && next < actionIds.length && !progression.isUnlocked(actionIds[next])) {
           next += direction;
         }
-        if (next >= 0 && next < ALL_CATEGORY_IDS.length && next !== cur) {
+        if (next >= 0 && next < actionIds.length && next !== cur) {
           switchTab(next, redrawTabHighlight);
         }
       }
@@ -321,7 +332,7 @@ export class CatalogPanel {
     // ── Return public handles ────────────────────────────────────────────
     return {
       openToCategory: (categoryId: string) => {
-        const tabIndex = ALL_CATEGORY_IDS.indexOf(categoryId);
+        const tabIndex = actionIds.indexOf(categoryId);
         if (tabIndex !== -1 && tabIndex !== this.activeTabIndex) {
           const old    = this.tabContainers[this.activeTabIndex];
           const homeX  = old ? old.x : 0;

@@ -7,7 +7,6 @@ import { RadDialConfig } from '../../types/RadDialTypes';
 import { AssetLoader } from '../../managers/AssetLoader';
 import { Colors } from '../../constants/Colors';
 import { labelStyle, readoutStyle } from '../../constants/FontStyle';
-import { getCatalogRows } from '../../utils/OrderUtils';
 import { MenuItem } from '../../types/GameTypes';
 
 /** Public callback surface exposed by buildContent(). */
@@ -43,7 +42,7 @@ export class CatalogPanel {
     y: number,
     width: number,
     height: number,
-    items: any,
+    _items: any,
     onSwitchToCatalogTab?: () => void,
   ): CatalogPanelHandles {
     const tabBarH    = this.tabBarHeight;
@@ -80,12 +79,10 @@ export class CatalogPanel {
     const mask = maskG.createGeometryMask();
 
     // ── One scrollable list per category ────────────────────────────────
-    const allCatalogCategories = getCatalogRows(items);
-    const catMap = new Map(allCatalogCategories.map((c: any) => [c.category.id, c]));
+    const gm = GameManager.getInstance();
 
     actionIds.forEach((catId: string, tabIndex: number) => {
       const isUnlocked = progression.isUnlocked(catId);
-      const catData    = catMap.get(catId);
 
       const listContainer = this.scene.add.container(listLeft, listAreaTop);
       listContainer.setMask(mask);
@@ -93,7 +90,7 @@ export class CatalogPanel {
       this.tabContainers.push(listContainer);
       container.add(listContainer);
 
-      if (!isUnlocked || !catData) {
+      if (!isUnlocked) {
         const lockBg = this.scene.add.graphics();
         lockBg.fillStyle(Colors.PANEL_DARK, 0.85);
         lockBg.fillRect(0, 0, width, listAreaH);
@@ -110,27 +107,14 @@ export class CatalogPanel {
       }
 
       type CatalogEntry = { item: MenuItem; dialDepth: number };
-      const collectEntries = (node: MenuItem, depth: number, unlockedDepth: number): CatalogEntry[] => {
-        if (!node.children) return [];
-        const result: CatalogEntry[] = [];
-        node.children.forEach((child: MenuItem) => {
-          const downMatch = child.id.match(/_down_(\d+)$/);
-          if (downMatch) {
-            const levelN = parseInt(downMatch[1], 10);
-            if (levelN < unlockedDepth) result.push(...collectEntries(child, levelN + 1, unlockedDepth));
-            return;
-          }
-          const isNavDown = child.icon === 'skill-down' || child.id.includes('_down_');
-          if (!isNavDown && child.cost !== undefined) result.push({ item: child, dialDepth: depth });
-        });
-        return result;
-      };
 
-      const unlockedDepth = progression.getUnlockedDepth(catId);
-      const rootNode      = (catData as any)?.category ?? null;
-      const entries: CatalogEntry[] = rootNode
-        ? collectEntries(rootNode, 1, unlockedDepth).sort((a, b) => a.item.name.localeCompare(b.item.name))
-        : [];
+      // Source items directly from the mode store — flat item arrays (e.g. the
+      // reorient items.json) have no nav-tree children so getCatalogRows would
+      // always return [] for them.  Querying the store directly ensures icons show.
+      const storeItems = gm.getModeStore(catId)?.flat ?? [];
+      const entries: CatalogEntry[] = storeItems
+        .map((item: MenuItem) => ({ item, dialDepth: 1 }))
+        .sort((a: CatalogEntry, b: CatalogEntry) => a.item.name.localeCompare(b.item.name));
 
       entries.forEach((entry, index) => {
         const { item, dialDepth } = entry;

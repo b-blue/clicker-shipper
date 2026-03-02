@@ -3,13 +3,13 @@
     {
       "id": "action_reorient",
       "name": "RE-ORIENT",
-      "icon": "skill-gear",
+      "icon": "skill-refresh",
       "terminalMode": "reorient",
       "enabled": true,
       "itemsFile": "data/modes/reorient/items.json",
       "layers": [
-        { "texture": "skill-gear", "depth": 3 },
-        { "texture": "frame",      "depth": 2 }
+        { "texture": "skill-refresh", "depth": 3 },
+        { "texture": "frame",         "depth": 2 }
       ]
     },
     {

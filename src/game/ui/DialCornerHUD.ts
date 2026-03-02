@@ -281,7 +281,7 @@ export class DialCornerHUD {
     const categoryItem = this.activeCategoryItem;
     const iconKey: string =
       depth === 0 || !categoryItem
-        ? 'skill-diagram'
+        ? 'skill-refresh'
         : (categoryItem.icon ?? categoryItem.id);
 
     if (AssetLoader.textureExists(this.scene, iconKey)) {

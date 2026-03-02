@@ -196,12 +196,17 @@ export function generateOrder(
   const MAX_TOTAL_QTY = 7; // no more than this total items across the whole order
 
   const numItems = Math.min(Math.floor(rng() * 5) + 1, shippable.length);
+
+  // Fisher-Yates partial shuffle — picks numItems unique indices in O(n),
+  // avoiding the infinite-loop risk of rejection sampling when rng is
+  // deterministic (e.g. a fixed constant passed from tests).
+  const pool = shippable.slice();
   const selected: MenuItem[] = [];
-  const indices = new Set<number>();
-  while (indices.size < numItems) {
-    indices.add(Math.floor(rng() * shippable.length));
+  for (let i = 0; i < numItems; i++) {
+    const j = i + Math.floor(rng() * (pool.length - i));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+    selected.push(pool[i]);
   }
-  indices.forEach(i => selected.push(shippable[i]));
 
   const requirements: OrderRequirement[] = selected.map(item => ({
     itemId: item.id,

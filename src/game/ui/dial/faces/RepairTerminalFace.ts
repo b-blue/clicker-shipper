@@ -20,6 +20,7 @@ export class RepairTerminalFace implements IDialFace {
 
   // ── Private repair state ───────────────────────────────────────────────────
   private repairItemRotationDeg: number;
+  private repairTargetRotationDeg: number;
   private arcRadius: number = 0;
 
   // ── Drag tracking ──────────────────────────────────────────────────────────
@@ -43,9 +44,10 @@ export class RepairTerminalFace implements IDialFace {
 
   private ctx: DialContext | null = null;
 
-  constructor(item: MenuItem, currentRotationDeg: number, _targetRotationDeg: number) {
-    this.item                  = item;
-    this.repairItemRotationDeg = currentRotationDeg;
+  constructor(item: MenuItem, currentRotationDeg: number, targetRotationDeg: number) {
+    this.item                    = item;
+    this.repairItemRotationDeg   = currentRotationDeg;
+    this.repairTargetRotationDeg = targetRotationDeg;
   }
 
   // ── IDialFace lifecycle ────────────────────────────────────────────────────
@@ -164,7 +166,7 @@ export class RepairTerminalFace implements IDialFace {
       if (normalized <= -180) normalized += 360;
       this.repairItemRotationDeg = normalized;
 
-      const success = Math.abs(normalized) <= 10;
+      const success = this._diffFromTarget() <= 10;
       this.redraw();
       this.ctx.emit({ type: 'repairSettled', success });
       return;
@@ -187,11 +189,16 @@ export class RepairTerminalFace implements IDialFace {
   }
 
   private getStatusColor(): number {
-    let normDeg = this.repairItemRotationDeg % 360;
-    if (normDeg > 180)  normDeg -= 360;
-    if (normDeg <= -180) normDeg += 360;
-    const absDeg = Math.abs(normDeg);
-    return absDeg <= 10 ? 0x44ff88 : (absDeg <= 30 ? 0xffd700 : 0xaaaacc);
+    const diff = this._diffFromTarget();
+    return diff <= 10 ? 0x44ff88 : (diff <= 30 ? 0xffd700 : 0xaaaacc);
+  }
+
+  /** Absolute angular distance (0–180) between current and target rotation. */
+  private _diffFromTarget(): number {
+    let diff = (this.repairItemRotationDeg - this.repairTargetRotationDeg) % 360;
+    if (diff > 180)  diff -= 360;
+    if (diff <= -180) diff += 360;
+    return Math.abs(diff);
   }
 
   private _drawFrame(): void {
@@ -263,6 +270,17 @@ export class RepairTerminalFace implements IDialFace {
       g.strokePath();
     }
 
+    // ── Target tick ──────────────────────────────────────────────────────────
+    const targetAngle = this.repairTargetRotationDeg * (Math.PI / 180) - Math.PI / 2;
+    const tickInner   = this.arcRadius - this.triggerHitRadius - 4;
+    const tickOuter   = this.arcRadius + this.triggerHitRadius + 4;
+    g.lineStyle(3, 0xffffff, 0.55);
+    g.beginPath();
+    g.moveTo(dialX + Math.cos(targetAngle) * tickInner, dialY + Math.sin(targetAngle) * tickInner);
+    g.lineTo(dialX + Math.cos(targetAngle) * tickOuter, dialY + Math.sin(targetAngle) * tickOuter);
+    g.strokePath();
+
+    // ── Draggable indicator dot ──────────────────────────────────────────────
     const currentAngle = this.repairItemRotationDeg * (Math.PI / 180) - Math.PI / 2;
     const dotX = dialX + Math.cos(currentAngle) * this.arcRadius;
     const dotY = dialY + Math.sin(currentAngle) * this.arcRadius;
